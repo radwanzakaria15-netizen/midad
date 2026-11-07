@@ -23,12 +23,12 @@
       '<div class="form-field full"><label for="expSource">محتوى الدرس (اختياري لكنه يساعد على دقة النتائج)</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو التعريفات والقواعد والأمثلة هنا..."></textarea><small class="muted">عند إدخال المحتوى، سيعتمد الذكاء الاصطناعي عليه ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
-      '<button class="experience-mode board-mode" onclick="generateExperience(\\'board\\')"><span class="experience-icon">▤</span><b>السبورة التعليمية</b><small>'+modeDescriptions.board+'</small><span class="mode-action">إنشاء الشرح ←</span></button>'+
-      '<button class="experience-mode interactive-mode" onclick="generateExperience(\\'interactive\\')"><span class="experience-icon">◇</span><b>الشرح التفاعلي</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء التجربة ←</span></button>'+
-      '<button class="experience-mode summary-mode" onclick="generateExperience(\\'summary\\')"><span class="experience-icon">▧</span><b>الملخص الممتع</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
+      '<button class="experience-mode board-mode" onclick="generateExperience(\'board\')"><span class="experience-icon">▤</span><b>السبورة التعليمية</b><small>'+modeDescriptions.board+'</small><span class="mode-action">إنشاء الشرح ←</span></button>'+
+      '<button class="experience-mode interactive-mode" onclick="generateExperience(\'interactive\')"><span class="experience-icon">◇</span><b>الشرح التفاعلي</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء التجربة ←</span></button>'+
+      '<button class="experience-mode summary-mode" onclick="generateExperience(\'summary\')"><span class="experience-icon">▧</span><b>الملخص الممتع</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
       '</div>'+
       '<section class="experience-saved"><div class="section-title"><div><h3>تجاربي المحفوظة</h3><p>يمكنك فتحها وتعديلها وإعادة استخدامها.</p></div></div>'+
-      (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\\''+safe(x.id)+'\\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\\''+safe(x.id)+'\\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
+      (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
       '</section>';
   }
 
@@ -38,8 +38,8 @@
     const data=item.data||{};
     const header=pageHead(modeNames[item.mode]||"تجربة تعليمية",safe(item.title),
       safe(item.subject||"")+(item.level?" · "+safe(item.level):""),
-      '<button class="btn light" onclick="navigate(\\'experience\\')">العودة</button>');
-    const tools='<div class="experience-toolbar"><button class="btn secondary" onclick="editExperience(\\''+item.id+'\\')">تعديل المحتوى</button><button class="btn light" onclick="printExperience()">طباعة</button><button class="btn primary" onclick="saveExperienceNow()">حفظ التعديلات</button></div>';
+      '<button class="btn light" onclick="navigate(\'experience\')">العودة</button>');
+    const tools='<div class="experience-toolbar"><button class="btn secondary" onclick="editExperience(\''+item.id+'\')">تعديل المحتوى</button><button class="btn light" onclick="printExperience()">طباعة</button><button class="btn primary" onclick="saveExperienceNow()">حفظ التعديلات</button></div>';
     let body="";
     if(item.mode==="board") body=renderBoard(item);
     else if(item.mode==="interactive") body=renderInteractive(item);
@@ -119,7 +119,7 @@
   window.goExperienceStep=function(i){experienceStep=i;render()};
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
   window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
-  window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\\''+idValue+'\\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
+  window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
   window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;save();closeModal();render();toast("تم حفظ التعديلات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
   window.saveExperienceNow=function(){save();toast("تم حفظ التجربة في مساحة مِداد على هذا الجهاز")};
   window.printExperience=function(){window.print()};
@@ -136,7 +136,7 @@
   window.navigate=function(p){if(p==="experience"){page=p;render();window.scrollTo({top:0,behavior:"smooth"})}else baseNavigate(p)};
   const originalHome=window.homePage;
   if(typeof originalHome==="function"){
-    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>حوّل درسك إلى تجربة تعليمية ممتعة</h3><p>سبورة تعليمية، شرح تفاعلي، أو ملخص ممتع.</p></div><button class="btn primary" onclick="navigate(\\'experience\\')">ابدأ الآن ←</button></section><section class="stats">')};
+    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>حوّل درسك إلى تجربة تعليمية ممتعة</h3><p>سبورة تعليمية، شرح تفاعلي، أو ملخص ممتع.</p></div><button class="btn primary" onclick="navigate(\'experience\')">ابدأ الآن ←</button></section><section class="stats">')};
   }
   document.querySelectorAll(".nav button").forEach(b=>{});
   const nav=[...document.querySelectorAll(".nav")].find(n=>n.querySelector('[data-page="lessons"]'));
