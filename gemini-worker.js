@@ -75,7 +75,12 @@ export default {
       });
       const result = await upstream.json();
       if (!upstream.ok) {
-        return json({ error: "تعذر على Gemini إنشاء المحتوى. تحقق من إعداد المفتاح وحدود الخدمة." }, 502, origin);
+        const apiMessage = String(result?.error?.message || "لم تُرجع Google تفاصيل إضافية.").slice(0, 500);
+        const apiStatus = String(result?.error?.status || upstream.statusText || "UNKNOWN").slice(0, 80);
+        return json({
+          error: "رفضت خدمة Gemini الطلب (" + upstream.status + " - " + apiStatus + "): " + apiMessage,
+          diagnostic: { httpStatus: upstream.status, apiStatus }
+        }, 502, origin);
       }
       const text = result?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
       if (!text) return json({ error: "لم يُرجع Gemini محتوى. حاول مرة أخرى." }, 502, origin);
