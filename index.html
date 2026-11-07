@@ -197,9 +197,9 @@ th{background:#f5ece2;color:#78553e}th,td{padding:14px 15px}td{font-size:12px}
 <div class="toast" id="toast"></div>
 <script>
 const KEY='midad_workspace_v3';
-const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[]};
+const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'https://hidden-boat-c81b.radwanzakaria15.workers.dev/',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[]};
 let db=load(),page='home',board=null,boardCtx=null,boardDrawing=false,boardTool='pen',boardColor='#563829',boardSize=4,boardHistory=[];
-function load(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return {...defaults}}}
+function load(){try{const saved=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));if(!saved.aiEndpoint)saved.aiEndpoint=defaults.aiEndpoint;return saved}catch(e){return {...defaults}}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(s){let t=document.getElementById('toast');t.textContent=s;t.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>t.classList.remove('show'),2600)}
