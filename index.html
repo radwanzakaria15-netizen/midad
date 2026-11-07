@@ -125,6 +125,24 @@ th{background:#f5ece2;color:#78553e}th,td{padding:14px 15px}td{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
+
+/* Alphabet sing-along lesson */
+.alphabet-song{background:linear-gradient(145deg,#fffaf2,#ead8c5);border:1px solid #e2cbb5;border-radius:24px;padding:clamp(16px,3vw,28px);color:#563829}
+.alphabet-song .song-stage{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(255,255,255,.72);border:1px solid #ead8c5;border-radius:22px;padding:22px;box-shadow:inset 3px 3px 8px rgba(121,81,61,.08),inset -3px -3px 8px #fff}
+.alphabet-song .song-letter{font-size:clamp(76px,18vw,126px);font-weight:900;line-height:1.15;color:#79513d;text-shadow:3px 4px 0 #ead8c5;animation:letterPop .35s ease}
+.alphabet-song .song-line{font-size:clamp(18px,4vw,25px);font-weight:800;line-height:1.9;margin-top:12px}
+.alphabet-song .song-word{display:inline-block;margin-top:8px;padding:5px 14px;border-radius:999px;background:#f1e2d2;color:#79513d;font-weight:700}
+.alphabet-song .song-progress{height:8px;background:#ead8c5;border-radius:20px;overflow:hidden;margin:18px 0 8px}
+.alphabet-song .song-progress span{display:block;height:100%;background:#79513d;border-radius:20px;transition:width .25s}
+.alphabet-song .song-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:16px}
+.alphabet-song .song-controls button{border:0;border-radius:14px;padding:11px 17px;background:#fffaf2;color:#563829;font:inherit;font-weight:800;box-shadow:4px 4px 9px #d7c1ad,-4px -4px 9px #fff;cursor:pointer}
+.alphabet-song .song-controls button.primary-song{background:#79513d;color:white}
+.alphabet-song .song-controls button:active{box-shadow:inset 3px 3px 7px rgba(86,56,41,.2)}
+.alphabet-song .song-note{font-size:12px;color:#79513d;text-align:center;margin-top:12px;line-height:1.8}
+.alphabet-feature{border:1px solid #e2cbb5;background:linear-gradient(120deg,#fffaf2,#f0e1d2);border-radius:20px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px;flex-wrap:wrap}
+.alphabet-feature h3{margin:0 0 5px;color:#563829}.alphabet-feature p{margin:0;color:#79513d;font-size:13px}
+@keyframes letterPop{from{opacity:.35;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+
 </style>
 </head>
 <body>
@@ -199,7 +217,79 @@ function studentRow(s){let c=db.classes.find(x=>x.id===s.classId);return '<tr da
 function attendancePage(){let cls=db.classes[0]?.id||'';return pageHead('متابعة التلاميذ','الحضور والغياب','سجّل حالة التلاميذ لكل يوم واحتفظ بسجل قابل للمراجعة.')+'<div class="card"><div class="toolbar"><select class="filter" id="attClass" onchange="fillAttendanceClass()"><option value="">اختر القسم</option>'+db.classes.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('')+'</select><input class="filter" type="date" id="attDate" value="'+dateNow()+'"><button class="btn primary" onclick="saveAttendance()">حفظ سجل اليوم</button></div><div id="attendanceList">'+(db.classes.length?'اختر القسم لعرض القائمة.':empty('أنشئ قسماً أولاً','تحتاج إلى قسم وتلاميذ قبل تسجيل الحضور.'))+'</div></div><div class="card" style="margin-top:16px"><div class="section-title"><h3>السجلات السابقة</h3><span class="pill">'+count(db.attendance)+' سجل</span></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>القسم</th><th>الحالة</th></tr></thead><tbody>'+(db.attendance.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(a=>{let s=db.students.find(x=>x.id===a.studentId),c=db.classes.find(x=>x.id===a.classId);return '<tr><td>'+dateLabel(a.date)+'</td><td>'+esc(s?s.name:'تلميذ محذوف')+'</td><td>'+esc(c?c.name:'—')+'</td><td><span class="status '+(a.status==='غائب'?'absent':'')+'">'+esc(a.status)+'</span></td></tr>'}).join('')||'<tr><td colspan="4" class="muted">لا توجد سجلات سابقة.</td></tr>')+'</tbody></table></div></div>'}
 function fillAttendanceClass(){let sel=document.getElementById('attClass');if(!sel)return;let cid=sel.value;let date=document.getElementById('attDate')?.value||dateNow();let list=document.getElementById('attendanceList');if(!cid){list.innerHTML='اختر القسم لعرض القائمة.';return}let students=db.students.filter(s=>s.classId===cid);if(!students.length){list.innerHTML=empty('لا يوجد تلاميذ في هذا القسم','أضف التلاميذ أولاً من صفحة التلاميذ.');return}list.innerHTML='<div class="table-wrap"><table><thead><tr><th>التلميذ</th><th>حاضر</th><th>غائب</th><th>متأخر</th></tr></thead><tbody>'+students.map(s=>{let old=db.attendance.find(a=>a.studentId===s.id&&a.date===date);let v=old?old.status:'حاضر';return '<tr><td class="student-name">'+esc(s.name)+'</td><td><input type="radio" name="att_'+s.id+'" value="حاضر" '+(v==='حاضر'?'checked':'')+'></td><td><input type="radio" name="att_'+s.id+'" value="غائب" '+(v==='غائب'?'checked':'')+'></td><td><input type="radio" name="att_'+s.id+'" value="متأخر" '+(v==='متأخر'?'checked':'')+'></td></tr>'}).join('')+'</tbody></table></div>'}
 function saveAttendance(){let cid=document.getElementById('attClass')?.value,date=document.getElementById('attDate')?.value||dateNow();if(!cid){toast('اختر القسم أولاً');return}db.attendance=db.attendance.filter(a=>!(a.classId===cid&&a.date===date));db.students.filter(s=>s.classId===cid).forEach(s=>{let checked=document.querySelector('input[name="att_'+s.id+'"]:checked');db.attendance.push({id:id(),classId:cid,studentId:s.id,date,status:checked?checked.value:'حاضر'})});save();render();toast('تم حفظ سجل الحضور')}
-function lessonsPage(){return pageHead('صناعة المحتوى','الدروس والتحضير','خطّط الدرس واكتب مراحله وارسم ملخصاً بصرياً في مساحة العمل.',btn('＋ تحضير درس',"openLesson()"))+'<div class="toolbar"><input class="field-search" placeholder="ابحث في الدروس..." oninput="filterCards(\'lessonCards\',this.value)"></div><div class="cards" id="lessonCards">'+(db.lessons.length?db.lessons.slice().reverse().map(l=>'<article class="item-card" data-search="'+esc((l.title+' '+l.subject+' '+l.level).toLowerCase())+'"><div class="item-top"><div class="item-symbol">▤</div><span class="pill">'+esc(l.subject||'درس')+'</span></div><h3>'+esc(l.title)+'</h3><p>'+esc(l.level||'')+' · '+dateLabel(l.created)+'</p><div class="item-meta"><span class="pill green">'+(l.drawing?'يتضمن ملخصاً مرسوماً':'تحضير نصي')+'</span></div><div class="item-actions">'+btn('عرض',"viewLesson('"+l.id+"')",'light small')+btn('تعديل',"editLesson('"+l.id+"')",'secondary small')+btn('حذف',"deleteItem('lessons','"+l.id+"')",'danger small')+'</div></article>').join(''):empty('مساحة الدروس فارغة','أنشئ درساً يتضمن الأهداف والشرح والأنشطة والملخص البصري.',btn('تحضير أول درس',"openLesson()")) )+'</div>'}
+
+const alphabetSong=[
+['أ','ألف أرنب يجري يلعب، يأكل جزرًا كي لا يتعب','أرنب'],
+['ب','باء بطة تمشي فرحانة، تسبح في الماء بأمان','بطة'],
+['ت','تاء تفاحة حمراء، طعمها حلو يا أصدقاء','تفاحة'],
+['ث','ثاء ثعلب فوق التل، ينظر حوله وقت الأكل','ثعلب'],
+['ج','جيم جمل يمشي بالصحراء، يصبر في الحرّ والعناء','جمل'],
+['ح','حاء حصان يجري سعيدًا، يقفز في الحقل بعيدًا','حصان'],
+['خ','خاء خروف يأكل عشبًا، وصوفه دافئ ناعم','خروف'],
+['د','دال ديك يصحو مبكرًا، يعلن أن الصبح أتى','ديك'],
+['ذ','ذال ذرة لونها أصفر، نأكلها في وقت الظهر','ذرة'],
+['ر','راء رمان أحمر جميل، حبّاته كاللؤلؤ الأصيل','رمان'],
+['ز','زاي زهرة في البستان، تنشر عطرًا في كل مكان','زهرة'],
+['س','سين سمكة في البحار، تسبح بين الموج والمرجان','سمكة'],
+['ش','شين شمس تضيء الدنيا، تمنحنا دفئًا ونورًا','شمس'],
+['ص','صاد صقر يطير عاليًا، فوق الجبال يرى الوادي','صقر'],
+['ض','ضاد ضفدع يقفز فرحان، قرب النهر بين الأغصان','ضفدع'],
+['ط','طاء طائرة في السماء، تمضي بنا نحو الأصدقاء','طائرة'],
+['ظ','ظاء ظرف فيه رسالة، يحمل كلماتٍ طيبة','ظرف'],
+['ع','عين عصفور فوق الغصن، يغني لحنًا وقت الصبح','عصفور'],
+['غ','غين غيمة تمطر خيرًا، تسقي أرضًا وزرعًا كثيرًا','غيمة'],
+['ف','فاء فراشة فوق الأزهار، تطير بألوان زاهية','فراشة'],
+['ق','قاف قطة تلعب بالكرة، وتقفز خلفها في مرح','قطة'],
+['ك','كاف كتاب فيه حكاية، نقرأه بحبّ وعناية','كتاب'],
+['ل','لام ليمونة صفراء، طعمها منعش يا أصدقاء','ليمونة'],
+['م','ميم موز أصفر لذيذ، طعمه حلو ومفيد','موز'],
+['ن','نون نحلة فوق الزهور، تصنع عسلًا بكل سرور','نحلة'],
+['هـ','هاء هدهد فوق الشجرة، يطلّ علينا في بهجة','هدهد'],
+['و','واو وردة في البستان، تزيّن بيتًا وكل مكان','وردة'],
+['ي','ياء يد تكتب الحروف، وتتعلم علمًا بكل شغف','يد']
+];
+function ensureAlphabetLesson(){
+ if(!db.lessons.some(x=>x.kind==='alphabet-song')){
+  db.lessons.push({id:'midad-alphabet-song',kind:'alphabet-song',title:'أنشودة الحروف الأبجدية من أ إلى ي',subject:'اللغة العربية',level:'الطور الابتدائي',created:dateNow(),objectives:'التعرّف إلى الحروف الأبجدية العربية بالترتيب، وربط كل حرف بكلمة مألوفة.',intro:'استمع إلى الأنشودة وردّد الحروف والكلمات.',content:'أنشودة تعليمية تفاعلية تعرض الحروف من الألف إلى الياء.',practice:'ردّد الحرف، ثم اذكر كلمة أخرى تبدأ به.'});
+  save();
+ }
+}
+let alphabetIndex=0,alphabetAuto=false,alphabetTimer=null;
+function alphabetSongStage(){
+ const item=alphabetSong[alphabetIndex],pct=((alphabetIndex+1)/alphabetSong.length)*100;
+ return '<div class="alphabet-song"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><b>أنشودة حروفي الجميلة</b><span class="pill">'+(alphabetIndex+1)+' / '+alphabetSong.length+'</span></div><div class="song-stage"><div class="song-letter" id="alphabetLetter">'+item[0]+'</div><div class="song-line" id="alphabetLine">'+item[1]+'</div><span class="song-word" id="alphabetWord">كلمة: '+item[2]+'</span></div><div class="song-progress"><span id="alphabetProgress" style="width:'+pct+'%"></span></div><div style="text-align:center;font-size:12px;color:#79513d" id="alphabetCounter">الحرف '+(alphabetIndex+1)+' من '+alphabetSong.length+'</div><div class="song-controls"><button type="button" onclick="alphabetPrev()">السابق</button><button type="button" class="primary-song" id="alphabetPlay" onclick="alphabetSpeak()">استمع إلى البيت</button><button type="button" onclick="alphabetNext()">التالي</button><button type="button" onclick="alphabetToggleAuto()" id="alphabetAutoBtn">عرض متتابع</button></div><div class="song-note">يمكنك الاستماع إلى نطق البيت بصوت عربي آلي إذا كان جهازك يدعم ذلك. هذا نطق إرشادي وليس تسجيلاً غنائياً.</div></div>';
+}
+function openAlphabetSong(){
+ alphabetStop();alphabetIndex=0;
+ openModal('أنشودة الحروف الأبجدية','درس مرئي تفاعلي — من الألف إلى الياء',alphabetSongStage(),true);
+}
+function alphabetUpdate(){
+ const item=alphabetSong[alphabetIndex],letter=document.getElementById('alphabetLetter');
+ if(!letter)return;
+ letter.textContent=item[0];letter.style.animation='none';void letter.offsetWidth;letter.style.animation='';
+ document.getElementById('alphabetLine').textContent=item[1];
+ document.getElementById('alphabetWord').textContent='كلمة: '+item[2];
+ document.getElementById('alphabetProgress').style.width=((alphabetIndex+1)/alphabetSong.length*100)+'%';
+ document.getElementById('alphabetCounter').textContent='الحرف '+(alphabetIndex+1)+' من '+alphabetSong.length;
+}
+function alphabetNext(){if(alphabetIndex<alphabetSong.length-1){alphabetIndex++;alphabetUpdate()}else{alphabetStop();toast('أحسنت! أكملت الحروف الأبجدية.')}}
+function alphabetPrev(){if(alphabetIndex>0){alphabetIndex--;alphabetUpdate()}}
+function alphabetSpeak(){
+ if(!('speechSynthesis' in window)){toast('ميزة النطق غير متاحة في هذا المتصفح');return}
+ speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(alphabetSong[alphabetIndex][1]);
+ u.lang='ar-SA';u.rate=.82;u.pitch=1.08;
+ u.onend=()=>{if(alphabetAuto){if(alphabetIndex<alphabetSong.length-1){alphabetIndex++;alphabetUpdate();alphabetSpeak()}else{alphabetStop();toast('انتهت الأنشودة التعليمية.')}}};
+ speechSynthesis.speak(u);
+}
+function alphabetToggleAuto(){
+ alphabetAuto=!alphabetAuto;
+ const b=document.getElementById('alphabetAutoBtn');if(b)b.textContent=alphabetAuto?'إيقاف العرض المتتابع':'عرض متتابع';
+ if(alphabetAuto)alphabetSpeak();else if('speechSynthesis' in window)speechSynthesis.cancel();
+}
+function alphabetStop(){alphabetAuto=false;if('speechSynthesis' in window)speechSynthesis.cancel();if(alphabetTimer)clearInterval(alphabetTimer);alphabetTimer=null}
+
+function lessonsPage(){return pageHead('صناعة المحتوى','الدروس والتحضير','خطّط الدرس واكتب مراحله وارسم ملخصاً بصرياً في مساحة العمل.',btn('＋ تحضير درس',"openLesson()"))+'<section class="alphabet-feature"><div><h3>الدرس الأول: أنشودة الحروف الأبجدية</h3><p>رحلة مرئية تفاعلية من أ إلى ي، مع كلمة وجملة لكل حرف.</p></div>'+btn('ابدأ الأنشودة','openAlphabetSong()')+'</section><div class="toolbar"><input class="field-search" placeholder="ابحث في الدروس..." oninput="filterCards(\'lessonCards\',this.value)"></div><div class="cards" id="lessonCards">'+(db.lessons.length?db.lessons.slice().reverse().map(l=>'<article class="item-card" data-search="'+esc((l.title+' '+l.subject+' '+l.level).toLowerCase())+'"><div class="item-top"><div class="item-symbol">▤</div><span class="pill">'+esc(l.subject||'درس')+'</span></div><h3>'+esc(l.title)+'</h3><p>'+esc(l.level||'')+' · '+dateLabel(l.created)+'</p><div class="item-meta"><span class="pill green">'+(l.drawing?'يتضمن ملخصاً مرسوماً':'تحضير نصي')+'</span></div><div class="item-actions">'+btn('عرض',"viewLesson('"+l.id+"')",'light small')+btn('تعديل',"editLesson('"+l.id+"')",'secondary small')+btn('حذف',"deleteItem('lessons','"+l.id+"')",'danger small')+'</div></article>').join(''):empty('مساحة الدروس فارغة','أنشئ درساً يتضمن الأهداف والشرح والأنشطة والملخص البصري.',btn('تحضير أول درس',"openLesson()")) )+'</div>'}
 function activitiesPage(){return pageHead('صناعة المحتوى','الأنشطة التفاعلية','أنشئ أنشطة صفية قابلة للتعديل والطباعة، مثل البطاقات والأسئلة والمطابقة.',btn('＋ نشاط جديد',"openActivity()"))+'<div class="cards">'+(db.activities.length?db.activities.slice().reverse().map(a=>'<article class="item-card"><div class="item-top"><div class="item-symbol">◇</div><span class="pill blue">'+esc(a.type)+'</span></div><h3>'+esc(a.title)+'</h3><p>'+esc(a.subject||'')+' · '+esc(a.level||'')+'</p><div class="item-meta"><span class="pill">'+(a.items||[]).length+' عناصر</span></div><div class="item-actions">'+btn('فتح',"viewActivity('"+a.id+"')",'light small')+btn('تعديل',"editActivity('"+a.id+"')",'secondary small')+btn('حذف',"deleteItem('activities','"+a.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد أنشطة بعد','أنشئ بطاقات مراجعة أو نشاط سؤال وجواب لتستخدمه في القسم.',btn('إنشاء نشاط',"openActivity()")) )+'</div>'}
 function assessmentsPage(){return pageHead('متابعة التعلم','التقويم والاختبارات','جهّز تقويماً قصيراً بأسئلة واضحة ومفتاح إجابة وملاحظات.',btn('＋ إعداد تقويم',"openAssessment()"))+'<div class="cards">'+(db.assessments.length?db.assessments.slice().reverse().map(a=>'<article class="item-card"><div class="item-top"><div class="item-symbol">▧</div><span class="pill rose">'+esc(a.kind||'تقويم')+'</span></div><h3>'+esc(a.title)+'</h3><p>'+esc(a.subject||'')+' · '+esc(a.level||'')+'</p><div class="item-meta"><span class="pill">'+(a.questions||[]).length+' أسئلة</span><span class="pill">'+esc(a.duration||'—')+' دقيقة</span></div><div class="item-actions">'+btn('عرض / طباعة',"viewAssessment('"+a.id+"')",'light small')+btn('تعديل',"editAssessment('"+a.id+"')",'secondary small')+btn('حذف',"deleteItem('assessments','"+a.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد تقويمات بعد','أنشئ تقويماً يتضمن أسئلة متنوعة ومفتاح الإجابة.',btn('إعداد أول تقويم',"openAssessment()")) )+'</div>'}
 function libraryPage(){return pageHead('موارد الأستاذ','مكتبة الموارد','اجمع روابطك وملفاتك وملاحظاتك التعليمية في مكان واحد.',btn('＋ إضافة مورد',"openResource()"))+'<div class="cards">'+(db.resources.length?db.resources.slice().reverse().map(r=>'<article class="item-card"><div class="item-top"><div class="item-symbol">▣</div><span class="pill">'+esc(r.kind||'مورد')+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.note||'لا توجد ملاحظات')+'</p><div class="item-actions">'+(r.url?'<a class="btn light small" target="_blank" rel="noopener" href="'+esc(r.url)+'">فتح الرابط ↗</a>':'')+btn('تعديل',"editResource('"+r.id+"')",'secondary small')+btn('حذف',"deleteItem('resources','"+r.id+"')",'danger small')+'</div></article>').join(''):empty('مكتبتك تنتظر مواردك','أضف رابطاً أو مرجعاً أو ملاحظة لتعود إليها وقت الحاجة.',btn('إضافة أول مورد',"openResource()")) )+'</div>'}
@@ -243,6 +333,7 @@ function saveSettings(e){e.preventDefault();let v=Object.fromEntries(new FormDat
 function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='midad-backup-'+dateNow()+'.json';a.click();URL.revokeObjectURL(a.href);toast('تم تجهيز النسخة الاحتياطية')}
 function importData(e){let file=e.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=()=>{try{let v=JSON.parse(reader.result);if(!v||typeof v!=='object'||!Array.isArray(v.classes)||!Array.isArray(v.students))throw new Error();db=Object.assign({},defaults,v);save();render();toast('تم استيراد البيانات بنجاح')}catch(err){toast('الملف غير صالح أو ليس نسخة مِداد')}};reader.readAsText(file)}
 function confirmReset(){if(!confirm('سيتم حذف جميع بيانات مِداد من هذا المتصفح. هل أنشأت نسخة احتياطية؟'))return;if(!confirm('تأكيد أخير: حذف جميع الأقسام والتلاميذ والدروس؟'))return;db={...defaults};save();render();toast('تمت إعادة تهيئة المساحة')}
+ensureAlphabetLesson();
 render();
 </script>
 </body></html>
