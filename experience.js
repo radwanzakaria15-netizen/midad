@@ -1,5 +1,4 @@
 (function(){
-  if (!window.db) return;
   db.experiences = Array.isArray(db.experiences) ? db.experiences : [];
   let currentExperienceId = null;
   let experienceStep = 0;
