@@ -176,6 +176,111 @@ button:focus-visible,[data-page]:focus-visible{outline:3px solid #a87955;outline
 #attClass option,.field option{background:#fffdf8;color:#3d2b25}
 @media(max-width:900px){.side{background:#eadbc9;box-shadow:0 18px 35px rgba(91,62,45,.2),inset 0 -7px 13px rgba(116,83,61,.13),inset 0 7px 13px rgba(255,255,255,.9)}}
 
+
+/* MIDAD REFINED WORKSPACE LAYOUT */
+:root{
+ --bg:#f6f0e7;--ink:#392920;--muted:#806d60;--green:#79513d;--green2:#563829;
+ --clay-shadow:0 14px 30px rgba(83,57,40,.12),inset 0 -5px 10px rgba(116,83,61,.09),inset 0 5px 10px rgba(255,255,255,.92);
+ --clay-shadow-small:0 7px 16px rgba(83,57,40,.11),inset 0 -4px 8px rgba(116,83,61,.08),inset 0 4px 8px rgba(255,255,255,.94);
+}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(145deg,#f8f3eb 0%,#f1e7da 100%);min-height:100vh}
+.top{height:76px;padding-inline:max(22px,calc((100vw - 1440px)/2));background:rgba(250,247,241,.9);border-bottom:1px solid rgba(121,81,61,.09);box-shadow:0 5px 22px rgba(83,57,40,.06)}
+.brand{gap:14px;letter-spacing:-.4px}
+.brand span{font-size:25px}
+.mark{width:46px;height:46px;border-radius:16px;background:linear-gradient(145deg,#fffaf2,#e5cfb9);font-size:23px}
+.topright{gap:16px;color:#725a49;font-weight:600}
+.avatar{width:42px;height:42px;border:1px solid rgba(121,81,61,.12);background:linear-gradient(145deg,#fffaf2,#e4cdb6)}
+.layout{max-width:1440px;grid-template-columns:248px minmax(0,1fr);gap:28px;padding:28px 26px 70px}
+.side{top:98px;min-height:calc(100vh - 126px);padding:20px 15px;background:rgba(235,221,205,.88);border:1px solid rgba(121,81,61,.08);border-radius:28px}
+.side-label{font-weight:800;letter-spacing:.2px;padding:12px 13px 16px}
+.nav{gap:7px}
+.nav button{min-height:48px;padding:12px 14px;font-size:15px;border:1px solid transparent}
+.nav button.active{border-color:rgba(121,81,61,.1);background:linear-gradient(145deg,#e4cfba,#d5b99d)}
+.nav .ico{width:26px;height:26px;display:grid;place-items:center;border-radius:9px;background:rgba(255,250,242,.55);font-size:16px}
+.side .notice{font-size:13px;line-height:1.9;padding:14px 15px}
+.main{min-width:0}
+.welcome{position:relative;overflow:hidden;isolation:isolate;min-height:190px;margin:2px 0 24px;padding:30px 32px;border-radius:30px;background:linear-gradient(112deg,#fffaf2 0%,#f0e1d0 62%,#e5cfb9 100%);border:1px solid rgba(121,81,61,.09);box-shadow:0 18px 34px rgba(83,57,40,.12),inset 0 -6px 12px rgba(116,83,61,.08),inset 0 6px 12px rgba(255,255,255,.95)}
+.welcome:after{content:"مِداد";position:absolute;z-index:-1;left:5%;bottom:-38px;font-size:132px;font-weight:800;letter-spacing:-8px;color:rgba(121,81,61,.055);pointer-events:none}
+.welcome>div{max-width:620px}
+.welcome .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:30px;background:rgba(255,255,255,.58);color:#79513d;font-size:13px}
+.welcome h1{font-size:clamp(27px,3vw,38px);letter-spacing:-.8px;margin:13px 0 8px;color:#3d2b25}
+.welcome p{font-size:16px;line-height:1.8;color:#806b5d}
+.welcome .primary{min-width:174px;align-self:center}
+.stats{gap:16px}
+.stat{position:relative;overflow:hidden;min-height:132px;padding:20px 21px;border:1px solid rgba(121,81,61,.07);transition:transform .2s,box-shadow .2s}
+.stat:hover{transform:translateY(-3px);box-shadow:0 18px 28px rgba(83,57,40,.16),inset 0 -5px 10px rgba(116,83,61,.09),inset 0 5px 10px rgba(255,255,255,.92)}
+.stat small{font-size:14px;font-weight:600}
+.stat strong{font-size:34px;line-height:1.2;margin-top:12px;color:#493327}
+.stat .symbol{float:left;width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:rgba(255,250,242,.58);font-size:18px}
+.columns{grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:18px;margin-top:22px}
+.panel{padding:23px;border:1px solid rgba(121,81,61,.07);border-radius:27px}
+.panel h2,.panel h3{font-size:19px;letter-spacing:-.2px}
+.quick{gap:14px}
+.quick button{min-height:112px;padding:19px;border:1px solid rgba(121,81,61,.07);position:relative;overflow:hidden}
+.quick button b{font-size:16px;margin:9px 0 5px}
+.quick button small{font-size:13px;line-height:1.7}
+.quick button:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:rgba(121,81,61,.18);border-radius:4px}
+#recent .item{padding:13px 15px}
+.pagehead{padding:13px 2px 17px;margin:5px 0 17px;border-bottom:1px solid rgba(121,81,61,.12)}
+.pagehead h1{font-size:30px;letter-spacing:-.5px;color:#493327}
+.pagehead p{font-size:15px;line-height:1.7}
+.toolbar{align-items:center;gap:12px;margin:0 0 19px}
+.toolbar .field{max-width:360px;min-height:46px}
+.toolbar .primary{min-height:46px}
+.item{min-height:68px;padding:16px 19px;border:1px solid rgba(121,81,61,.07)}
+.item b{font-size:15px}
+.item small{display:inline-block;margin-top:5px;line-height:1.5}
+.tag{white-space:nowrap;font-weight:600}
+.tablewrap{border:1px solid rgba(121,81,61,.08)}
+td,th{padding:16px}
+.formgrid{gap:16px}
+.formgrid label{font-size:14px;color:#634b3d;margin:0 0 8px}
+.field{min-height:46px}
+textarea.field{min-height:110px}
+.modal{border:1px solid rgba(121,81,61,.12)}
+.actions .primary,.actions .soft{min-width:100px}
+button{transition:transform .18s,box-shadow .18s,background .18s}
+button:focus-visible,[data-page]:focus-visible{outline:3px solid #9a6b49;outline-offset:3px}
+.toast{font-weight:700}
+@media(max-width:1100px){
+ .layout{grid-template-columns:220px minmax(0,1fr);gap:20px;padding-inline:18px}
+ .stats{gap:12px}
+ .columns{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+ .top{height:68px;padding-inline:16px}
+ .layout{display:block;padding:18px 15px 50px}
+ .side{top:78px;right:14px;bottom:14px;width:min(290px,calc(100vw - 28px));padding:18px;z-index:9}
+ .welcome{min-height:0;padding:25px 23px;gap:18px}
+ .welcome:after{font-size:100px}
+ .welcome .primary{width:auto}
+ .columns{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ .topright>span{display:none}
+ .brand span{font-size:22px}
+ .layout{padding:13px 12px 42px}
+ .welcome{padding:22px 19px;border-radius:24px;margin-bottom:16px}
+ .welcome h1{font-size:27px}
+ .welcome p{font-size:14px}
+ .welcome .primary{width:100%}
+ .stats{gap:10px}
+ .stat{min-height:112px;padding:14px;border-radius:21px}
+ .stat strong{font-size:29px;margin-top:10px}
+ .stat .symbol{width:32px;height:32px}
+ .panel{padding:17px;border-radius:23px}
+ .quick{grid-template-columns:1fr 1fr;gap:10px}
+ .quick button{min-height:108px;padding:14px}
+ .quick button b{font-size:14px}
+ .quick button small{font-size:12px}
+ .pagehead h1{font-size:25px}
+ .toolbar .field{max-width:none;flex:1 1 100%}
+ .toolbar .primary{width:100%}
+ .item{padding:13px 14px;align-items:flex-start}
+ .item>div:last-child{gap:5px;flex-wrap:wrap;justify-content:flex-end}
+}
+
 </style></head>
 <body>
 <header class="top"><div class="brand"><div class="mark">م</div><span>مِداد</span></div><div class="topright"><button class="soft mobile" id="menu">القائمة</button><span>مساحة الأستاذ</span><div class="avatar">أ</div></div></header>
