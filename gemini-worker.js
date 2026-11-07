@@ -52,8 +52,8 @@ export default {
         ? '{"title":"عنوان قصير","type":"نوع النشاط","items":[{"q":"تعليمة أو سؤال واضح للتلميذ","a":"الإجابة أو الحل النموذجي"}]}'
         : '{"title":"عنوان التقويم","subject":"المادة","level":"المستوى","duration":10,"questions":[{"q":"سؤال قصير واضح","a":"الإجابة النموذجية"}]}';
       task = kind === "activity"
-        ? "أنشئ نشاطاً تعليمياً واحداً من 5 إلى 7 عناصر. نوع النشاط: " + activityType + "."
-        : "أنشئ تقويماً قصيراً من خمسة أسئلة متنوعة مع إجابة نموذجية لكل سؤال.";
+        ? "صمّم لعبة تعليمية حقيقية قابلة للعب من نوع " + activityType + ". أخرج 5 إلى 7 أزواج متطابقة فقط في items: q بطاقة السؤال أو العنصر، وa البطاقة المطابقة لها. اجعل كل زوج فريداً، قصيراً، واضحاً، مناسباً للمستوى، ويمكن للطفل حلّه بالاختيار والمطابقة. لا تكتب أسئلة تقويم تقليدية ولا تعرض الإجابة داخل q."
+        : "أنشئ تقويماً قصيراً من خمسة أسئلة واضحة ومتنوعة مرتبطة بالدرس، مع إجابة نموذجية دقيقة لكل سؤال. اجعل الأسئلة مستقلة وقابلة للطباعة، ولا تحوّل التقويم إلى لعبة.";
     }
 
     const prompt = [
@@ -75,7 +75,7 @@ export default {
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: kind === "experience" ? 6500 : 2200 }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: kind === "experience" ? 4200 : kind === "activity" ? 1200 : 1500 }
         })
       });
       const result = await upstream.json();
