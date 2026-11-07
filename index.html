@@ -10,6 +10,58 @@
 @media(max-width:900px){.layout{grid-template-columns:1fr;padding:14px}.side{position:fixed;z-index:8;right:12px;top:75px;bottom:12px;width:260px;min-height:0;background:var(--bg);transform:translateX(120%);transition:transform .2s}.side.open{transform:none}.mobile{display:inline-flex}.stats{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}}
 @media(max-width:560px){.welcome{align-items:flex-start;flex-direction:column}.welcome .primary{width:100%}.stats{gap:10px}.stat{padding:14px}.stat strong{font-size:25px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.layout{padding:10px}.top{padding:0 14px}.quick{gap:9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* MIDAD CLAYMORPHISM THEME */
+:root{
+ --bg:#edf2ed;--ink:#26372f;--muted:#58685f;--green:#285f49;--green2:#194b38;
+ --clay-shadow:0 16px 28px rgba(48,69,57,.18),inset 0 -7px 13px rgba(63,83,69,.14),inset 0 7px 13px rgba(255,255,255,.62);
+ --clay-shadow-small:0 9px 17px rgba(48,69,57,.17),inset 0 -5px 9px rgba(63,83,69,.13),inset 0 5px 9px rgba(255,255,255,.62);
+ --radius:26px;
+}
+body{background:var(--bg);color:var(--ink)}
+.top{background:rgba(237,242,237,.94);box-shadow:0 7px 18px rgba(48,69,57,.08)}
+.mark{background:#d9e9dc;color:#24543d;border-radius:17px;box-shadow:var(--clay-shadow)}
+.avatar{background:#f3dfc9;color:#684a2e;box-shadow:var(--clay-shadow)}
+.side{background:#dce9df;border-radius:30px;box-shadow:var(--clay-shadow)}
+.nav button{border-radius:19px;color:#344c3d;transition:box-shadow .18s,transform .18s,background .18s}
+.nav button:hover{background:#eaf3eb;box-shadow:var(--clay-shadow-small);transform:translateY(-1px)}
+.nav button.active{background:#c8dfce;color:#174a31;box-shadow:0 10px 18px rgba(42,78,54,.16),inset 0 -6px 10px rgba(49,86,60,.15),inset 0 6px 10px rgba(255,255,255,.72)}
+.welcome .eyebrow{color:#315f46}
+.stat,.panel,.card{border-radius:28px;box-shadow:var(--clay-shadow)}
+.stat{background:#dcebdc}
+.stat:nth-child(2){background:#e9e2f4}
+.stat:nth-child(3){background:#f7e6d6}
+.stat:nth-child(4){background:#dceaf1}
+.stat small{color:#40544a}
+.stat .symbol{color:#315e48}
+.panel{background:#f6f0e3}
+.columns .panel:nth-child(2){background:#e5eaf4}
+.quick button{background:#dcebe0;border-radius:23px;box-shadow:var(--clay-shadow-small);transition:transform .18s,box-shadow .18s}
+.quick button:nth-child(2){background:#e9e2f4}
+.quick button:nth-child(3){background:#f8e6d6}
+.quick button:nth-child(4){background:#dceaf1}
+.quick button:hover{transform:translateY(-2px);box-shadow:0 15px 22px rgba(48,69,57,.2),inset 0 -7px 13px rgba(63,83,69,.16),inset 0 7px 13px rgba(255,255,255,.7)}
+.quick button:active,.primary:active,.soft:active{transform:translateY(2px);box-shadow:0 5px 10px rgba(48,69,57,.15),inset 0 -3px 8px rgba(35,57,43,.2),inset 0 5px 9px rgba(255,255,255,.42)}
+.primary{background:#28664b;color:#fff;border-radius:19px;box-shadow:0 12px 20px rgba(30,83,55,.25),inset 0 -6px 10px rgba(12,55,34,.2),inset 0 5px 10px rgba(255,255,255,.25);transition:transform .18s,box-shadow .18s,background .18s}
+.primary:hover{background:#20573f;box-shadow:0 15px 23px rgba(30,83,55,.27),inset 0 -7px 12px rgba(12,55,34,.24),inset 0 6px 11px rgba(255,255,255,.25)}
+.soft{background:#dce9df;color:#244d36;border-radius:19px;box-shadow:var(--clay-shadow-small);transition:transform .18s,box-shadow .18s}
+.item{background:#e4eee5;border-radius:23px;box-shadow:var(--clay-shadow-small)}
+.list .item:nth-child(3n+2){background:#eee8f5}
+.list .item:nth-child(3n){background:#f8eadc}
+.field{background:#fffefa;color:#26372f;border:1px solid rgba(76,99,80,.08);border-radius:18px;box-shadow:inset 0 -5px 9px rgba(76,91,77,.12),inset 0 5px 9px rgba(255,255,255,.95),0 6px 13px rgba(48,69,57,.08)}
+.field:focus{outline:3px solid #285f49;outline-offset:3px;box-shadow:inset 0 -5px 9px rgba(76,91,77,.12),inset 0 5px 9px rgba(255,255,255,.95),0 7px 15px rgba(48,69,57,.12)}
+.tag{background:#c9e1ce;color:#244d36;border-radius:30px;box-shadow:inset 0 -3px 5px rgba(45,83,55,.1),inset 0 3px 5px rgba(255,255,255,.65)}
+.empty,.notice{background:#e5eee6;border-radius:22px;box-shadow:inset 0 -6px 11px rgba(72,92,75,.12),inset 0 6px 11px rgba(255,255,255,.72);color:#394e40}
+.tablewrap{background:#f5f0e5;border-radius:23px;box-shadow:var(--clay-shadow-small)}
+td,th{border-bottom:1px solid rgba(75,96,78,.16)}
+.modal{background:#edf2ed;border-radius:30px;box-shadow:0 25px 45px rgba(34,54,41,.24),inset 0 -7px 13px rgba(63,83,69,.12),inset 0 7px 13px rgba(255,255,255,.7)}
+.modalhead .soft{background:#e4eaf4}
+.delete{border-radius:13px}
+button:focus-visible,[data-page]:focus-visible{outline:3px solid #174d34;outline-offset:4px}
+.toast{background:#244d36;box-shadow:0 12px 24px rgba(26,54,37,.25);border-radius:18px}
+@media(max-width:900px){.side{background:#dce9df;box-shadow:0 18px 35px rgba(38,61,45,.24),inset 0 -7px 13px rgba(63,83,69,.14),inset 0 7px 13px rgba(255,255,255,.62)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
 </style></head>
 <body>
 <header class="top"><div class="brand"><div class="mark">م</div><span>مِداد</span></div><div class="topright"><button class="soft mobile" id="menu">القائمة</button><span>مساحة الأستاذ</span><div class="avatar">أ</div></div></header>
