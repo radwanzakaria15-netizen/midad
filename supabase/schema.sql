@@ -6,7 +6,6 @@ begin;
 
 create extension if not exists pgcrypto;
 
--- Teacher profile
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null default '',
@@ -16,7 +15,6 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists school_name text not null default '';
 alter table public.profiles add column if not exists school_year text not null default '2026 / 2027';
 
--- Classes
 create table if not exists public.classes (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -29,7 +27,6 @@ alter table public.classes add column if not exists stage text not null default 
 alter table public.classes add column if not exists year text not null default '2026 / 2027';
 alter table public.classes add column if not exists capacity text not null default '';
 
--- Students. full_name is mapped to the current UI field "name".
 create table if not exists public.students (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -40,7 +37,6 @@ create table if not exists public.students (
 );
 alter table public.students add column if not exists student_number text not null default '';
 
--- Lesson upload batches. Actual files are stored in the private Storage bucket below.
 create table if not exists public.lessons (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -54,31 +50,6 @@ create table if not exists public.lessons (
 );
 alter table public.lessons add column if not exists created_on date not null default current_date;
 
-create table if not exists public.lesson_files (
-  id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
-  lesson_id uuid not null,
-  file_name text not null,
-  content_type text not null default 'application/octet-stream',
-  file_size bigint not null default 0 check (file_size >= 0),
-  storage_path text not null unique,
-  created_at timestamptz not null default now()
-);
-
--- AI/manual activities and games
-create table if not exists public.activities (
-  id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
-  title text not null,
-  subject text not null default '',
-  level text not null default '',
-  activity_type text not null default 'متنوع',
-  items jsonb not null default '[]'::jsonb,
-  created_at timestamptz not null default now(),
-  constraint activities_items_array check (jsonb_typeof(items) = 'array')
-);
-
--- Tests and assessments
 create table if not exists public.assessments (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -93,7 +64,36 @@ alter table public.assessments add column if not exists kind text not null defau
 alter table public.assessments add column if not exists duration integer not null default 10;
 alter table public.assessments add column if not exists questions jsonb not null default '[]'::jsonb;
 
--- Daily attendance: one status per student per day in the current app.
+-- Unique indexes are created before adding composite foreign keys below.
+create unique index if not exists classes_id_owner_uidx on public.classes(id, owner_id);
+create unique index if not exists students_id_owner_uidx on public.students(id, owner_id);
+create unique index if not exists students_id_class_owner_uidx on public.students(id, class_id, owner_id);
+create unique index if not exists lessons_id_owner_uidx on public.lessons(id, owner_id);
+
+-- File metadata only. File bytes go to the private Storage bucket, not into JSON/localStorage.
+create table if not exists public.lesson_files (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  lesson_id uuid not null,
+  file_name text not null,
+  content_type text not null default 'application/octet-stream',
+  file_size bigint not null default 0 check (file_size >= 0),
+  storage_path text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.activities (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  subject text not null default '',
+  level text not null default '',
+  activity_type text not null default 'متنوع',
+  items jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  constraint activities_items_array check (jsonb_typeof(items) = 'array')
+);
+
 create table if not exists public.attendance (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -105,7 +105,6 @@ create table if not exists public.attendance (
   unique (owner_id, student_id, attendance_date)
 );
 
--- Teacher resource library
 create table if not exists public.resources (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -116,7 +115,6 @@ create table if not exists public.resources (
   created_at timestamptz not null default now()
 );
 
--- Generated teaching experiences (board, interactive explanation, summary)
 create table if not exists public.experiences (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
@@ -129,14 +127,7 @@ create table if not exists public.experiences (
   created_at timestamptz not null default now()
 );
 
--- Composite unique indexes allow foreign keys to enforce same-teacher ownership.
-create unique index if not exists classes_id_owner_uidx on public.classes(id, owner_id);
-create unique index if not exists students_id_owner_uidx on public.students(id, owner_id);
-create unique index if not exists students_id_class_owner_uidx on public.students(id, class_id, owner_id);
-create unique index if not exists lessons_id_owner_uidx on public.lessons(id, owner_id);
-
--- Replace the older single-column student/class FK with a tenant-safe composite FK.
-alter table public.students drop constraint if exists students_class_id_fkey;
+-- Replace the old single-column FK with a same-owner FK; clear only any invalid cross-owner references.
 update public.students s
 set class_id = null
 where s.class_id is not null
@@ -144,21 +135,17 @@ where s.class_id is not null
     select 1 from public.classes c
     where c.id = s.class_id and c.owner_id = s.owner_id
   );
+alter table public.students drop constraint if exists students_class_id_fkey;
+
 do $$
 begin
-  if not exists (
-    select 1 from pg_constraint where conname = 'students_class_owner_fkey'
-  ) then
+  if not exists (select 1 from pg_constraint where conname = 'students_class_owner_fkey') then
     alter table public.students
       add constraint students_class_owner_fkey
       foreign key (class_id, owner_id)
       references public.classes(id, owner_id)
       on delete cascade;
   end if;
-end $$;
-
-do $$
-begin
   if not exists (select 1 from pg_constraint where conname = 'lesson_files_lesson_owner_fkey') then
     alter table public.lesson_files
       add constraint lesson_files_lesson_owner_fkey
@@ -186,7 +173,6 @@ create index if not exists attendance_owner_date_idx on public.attendance(owner_
 create index if not exists resources_owner_idx on public.resources(owner_id);
 create index if not exists experiences_owner_idx on public.experiences(owner_id);
 
--- Enable row-level security on every application table.
 alter table public.profiles enable row level security;
 alter table public.classes enable row level security;
 alter table public.students enable row level security;
@@ -198,7 +184,6 @@ alter table public.attendance enable row level security;
 alter table public.resources enable row level security;
 alter table public.experiences enable row level security;
 
--- Keep the legacy v1 attendance tables protected if they already exist.
 do $$
 begin
   if to_regclass('public.attendance_sessions') is not null then
@@ -224,42 +209,34 @@ drop policy if exists "classes_owner_all" on public.classes;
 create policy "classes_owner_all" on public.classes
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "students_owner_all" on public.students;
 create policy "students_owner_all" on public.students
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "lessons_owner_all" on public.lessons;
 create policy "lessons_owner_all" on public.lessons
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "lesson_files_owner_all" on public.lesson_files;
 create policy "lesson_files_owner_all" on public.lesson_files
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "activities_owner_all" on public.activities;
 create policy "activities_owner_all" on public.activities
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "assessments_owner_all" on public.assessments;
 create policy "assessments_owner_all" on public.assessments
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "attendance_owner_all" on public.attendance;
 create policy "attendance_owner_all" on public.attendance
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "resources_owner_all" on public.resources;
 create policy "resources_owner_all" on public.resources
   for all to authenticated using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
-
 drop policy if exists "experiences_owner_all" on public.experiences;
 create policy "experiences_owner_all" on public.experiences
   for all to authenticated using (owner_id = (select auth.uid()))
@@ -271,7 +248,6 @@ grant select, insert, update, delete on
   public.attendance, public.resources, public.experiences
 to authenticated;
 
--- Private file storage: object paths must begin with the authenticated teacher's UUID.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'midad-lesson-files',
@@ -298,40 +274,21 @@ set public = false,
 drop policy if exists "midad_lesson_files_read_own" on storage.objects;
 create policy "midad_lesson_files_read_own" on storage.objects
   for select to authenticated
-  using (
-    bucket_id = 'midad-lesson-files'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  );
-
+  using (bucket_id = 'midad-lesson-files' and (storage.foldername(name))[1] = (select auth.uid())::text);
 drop policy if exists "midad_lesson_files_insert_own" on storage.objects;
 create policy "midad_lesson_files_insert_own" on storage.objects
   for insert to authenticated
-  with check (
-    bucket_id = 'midad-lesson-files'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  );
-
+  with check (bucket_id = 'midad-lesson-files' and (storage.foldername(name))[1] = (select auth.uid())::text);
 drop policy if exists "midad_lesson_files_update_own" on storage.objects;
 create policy "midad_lesson_files_update_own" on storage.objects
   for update to authenticated
-  using (
-    bucket_id = 'midad-lesson-files'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  )
-  with check (
-    bucket_id = 'midad-lesson-files'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  );
-
+  using (bucket_id = 'midad-lesson-files' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'midad-lesson-files' and (storage.foldername(name))[1] = (select auth.uid())::text);
 drop policy if exists "midad_lesson_files_delete_own" on storage.objects;
 create policy "midad_lesson_files_delete_own" on storage.objects
   for delete to authenticated
-  using (
-    bucket_id = 'midad-lesson-files'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
-  );
+  using (bucket_id = 'midad-lesson-files' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
--- Auto-create a profile when a teacher signs up through Supabase Auth.
 create or replace function public.handle_new_midad_user()
 returns trigger
 language plpgsql
