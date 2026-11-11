@@ -37,6 +37,7 @@ export default {
     const difficulty = clean(input.difficulty || "سهل", 30);
     const activityType = clean(input.activityType || "متنوع", 60);
     const content = clean(input.content, 18000);
+    const sourceUrl = clean(input.sourceUrl, 1000);
     const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
     const include = input.include && typeof input.include === "object" ? input.include : {};
     const mode = ["board", "interactive", "summary"].includes(input.mode) ? input.mode : ["board", "interactive", "summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
@@ -105,6 +106,7 @@ export default {
         }));
         parsed.title = clean(parsed.title || lessonTitle, 180);
         parsed.intro = clean(parsed.intro, 700);
+        parsed.scene = parsed.scene && typeof parsed.scene === "object" ? { type: clean(parsed.scene.type || "none", 30), steps: Array.isArray(parsed.scene.steps) ? parsed.scene.steps.slice(0, 6).map(x => clean(x, 220)) : [] } : { type: "none", steps: [] };
         parsed.scene = parsed.scene && typeof parsed.scene === "object" ? { type: clean(parsed.scene.type || "none", 30), steps: Array.isArray(parsed.scene.steps) ? parsed.scene.steps.slice(0, 6).map(x => clean(x, 220)) : [] } : { type: "none", steps: [] };
         parsed.questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, 6).map(q => ({
           question: clean(q.question || q.q, 400),
