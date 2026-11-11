@@ -106,11 +106,12 @@
     const cards=[...document.querySelectorAll(".experience-mode")];
     cards.forEach(b=>{b.disabled=true;b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ الإنشاء...</span>"});
     if(window.midadTaskStart)window.midadTaskStart(taskId,"جارٍ إنشاء التجربة التعليمية في الخلفية");
-    let succeeded=false;
+    let succeeded=false,failureMessage="تعذّر إكمال التجربة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.";
     try{
       const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
-      const payload=await response.json();
-      if(!response.ok)throw new Error(payload.error||"تعذر الاتصال بخدمة الذكاء الاصطناعي");
+      const raw=await response.text();let payload={};
+      try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
+      if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
       const data=payload.result||payload;
       if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
       const item={id:id(),title:data.title||title,subject,level,source:content,mode,data,created:new Date().toISOString()};
@@ -119,10 +120,10 @@
         currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
       }
       toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
-    }catch(e){toast(e.message||"حدث خطأ أثناء التوليد")}
+    }catch(e){failureMessage=e.message||failureMessage;toast(failureMessage)}
     finally{
       cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});
-      if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":"تعذّر إكمال التجربة");
+      if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage);
     }
   };
 
