@@ -65,3 +65,6 @@
 .flashcard.flipped .flashcard-inner{transform:rotateY(180deg)}
 .flashcard-front,.flashcard-back{position:absolute;inset:0;display:grid;align-content:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:16px;background:#fff;backface-visibility:hidden;box-shadow:0 6px 16px #273e3210}
 .flashcard-back{display:grid;transform:rotateY(180deg);background:#edf5ef}
+
+.flashcard.flipped .flashcard-front{display:grid!important}
+.flashcard:not(.flipped) .flashcard-back{display:grid!important}
