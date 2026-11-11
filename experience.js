@@ -20,7 +20,9 @@
       '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
       '<div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" placeholder="العلوم"></div>'+
       '<div class="form-field"><label for="expLevel">الطور والمستوى</label><input id="expLevel" placeholder="السنة الرابعة ابتدائي"></div>'+
-      '<div class="form-field full"><label for="expSource">محتوى الدرس (اختياري لكنه يساعد على دقة النتائج)</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو التعريفات والقواعد والأمثلة هنا..."></textarea><small class="muted">عند إدخال المحتوى، سيعتمد الذكاء الاصطناعي عليه ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
+      '<div class="form-field full"><label for="expUrl">رابط فيديو أو مصدر تعليمي (اختياري)</label><input id="expUrl" type="url" placeholder="https://..."><small class="muted">أرفق نص الفيديو أو تفريغه أيضاً؛ لا يمكن استخراج كلام كل فيديو تلقائياً.</small></div>'+
+      '<div class="form-field full"><label for="expFile">رفع ملف الدرس النصي</label><input id="expFile" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown"><small class="muted">يدعم حالياً TXT وMD وCSV وJSON. لملفات PDF وWord الصق النص في الحقل أدناه.</small></div>'+
+      '<div class="form-field full"><label for="expSource">محتوى الدرس أو تفريغ الفيديو</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو محتوى الملف أو تفريغ الفيديو هنا..."></textarea><small class="muted">سيعتمد التوليد على المصدر الذي توفره ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
       '<button class="experience-mode summary-mode" onclick="generateExperience(\'summary\')"><span class="experience-icon">▧</span><b>الملخّص الإبداعي</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
@@ -118,6 +120,7 @@
     const level=document.getElementById("expLevel")?.value.trim()||"";
     const content=document.getElementById("expSource")?.value.trim()||"";
     const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
+    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
     if(!title){toast("اكتب عنوان الدرس أولاً");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
     const taskId="experience-"+id();
@@ -153,7 +156,7 @@
   window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
   window.goExperienceStep=function(i){experienceStep=i;render()};
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
-  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
+  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";if(document.getElementById("expUrl"))document.getElementById("expUrl").value=x.sourceUrl||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
   window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
   window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;save();closeModal();render();toast("تم حفظ التعديلات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
   window.saveExperienceNow=function(){save();toast("تم حفظ التجربة في مساحة مِداد على هذا الجهاز")};
