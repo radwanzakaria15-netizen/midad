@@ -15,7 +15,7 @@
 
   function featurePage(){
     return pageHead("صناعة المحتوى بالذكاء الاصطناعي","حوّل درسك إلى تجربة تعليمية ممتعة",
-      "أدخل عنوان الدرس أو الصق محتواه، ثم اختر طريقة تقديمه.")+
+      "أدخل عنوان الدرس أو ارفع محتواه أو أضف رابط مصدر، ثم اختر ما تريد إنشاءه.")+
       '<section class="card experience-input"><div class="form-grid">'+
       '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
       '<div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" placeholder="العلوم"></div>'+
