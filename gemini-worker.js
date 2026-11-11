@@ -103,7 +103,7 @@ export default {
         if (!Array.isArray(parsed.sections) || !parsed.sections.length) return json({ error: "نتيجة الدرس غير مكتملة." }, 502, origin);
         parsed.sections = parsed.sections.slice(0, 8).filter(s => s && clean(s.heading, 180) && clean(s.body, 1400)).map(s => ({
           heading: clean(s.heading, 180), body: clean(s.body, 1400), example: clean(s.example, 700),
-          visual: { type: clean(s.visual?.type || "none", 20), labels: Array.isArray(s.visual?.labels) ? s.visual.labels.slice(0, 6).map(x => clean(x, 100)) : [] }
+          visual: s.visual && typeof s.visual === "object" ? s.visual : {}
         }));
         parsed.title = clean(parsed.title || lessonTitle, 180);
         parsed.intro = clean(parsed.intro, 700);
