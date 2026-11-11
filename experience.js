@@ -102,9 +102,9 @@
     if(!title){toast("اكتب عنوان الدرس أولاً");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
     const cards=document.querySelectorAll(".experience-mode");
-    cards.forEach(b=>{b.disabled=true;b.classList.add("loading")});
+    cards.forEach(b=>{b.disabled=true;b.classList.add("loading");b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ إنشاء المحتوى...</span>"});
     try{
-      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"experience",mode,lessonTitle:title,subject,level,content})});
+      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
       const payload=await response.json();
       if(!response.ok)throw new Error(payload.error||"تعذر الاتصال بخدمة الذكاء الاصطناعي");
       const data=payload.result||payload;
@@ -112,7 +112,7 @@
       const item={id:id(),title:data.title||title,subject,level,source:content,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});toast("تم إنشاء التجربة وحفظها");
     }catch(e){toast(e.message||"حدث خطأ أثناء التوليد")}
-    finally{cards.forEach(b=>{b.disabled=false;b.classList.remove("loading")})}
+    finally{cards.forEach(b=>{b.disabled=false;b.classList.remove("loading");if(b.dataset.previousText)b.innerHTML=b.dataset.previousText})}
   };
 
   window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
