@@ -1,5 +1,5 @@
 const ALLOWED_ORIGIN = "https://radwanzakaria15-netizen.github.io";
-const MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-3.5-flash-lite";
 
 function cors(origin) {
   return {
@@ -28,8 +28,9 @@ export default {
 
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
-    const kind = input.kind === "experience" ? "experience" : input.kind === "assessment" ? "assessment" : input.kind === "activity" ? "activity" : input.kind === "revision" ? "revision" : "";
-    const lessonTitle = clean(input.lessonTitle, 180);
+    const rawKind = clean(input.kind || input.outputType || input.type, 40).toLowerCase();
+    const kind = ["experience","assessment","activity","revision"].includes(rawKind) ? rawKind : ["board","interactive","summary"].includes(rawKind) ? "experience" : "";
+    const lessonTitle = clean(input.lessonTitle || input.title || input.topic, 180);
     const subject = clean(input.subject, 100);
     const level = clean(input.level, 100);
     const difficulty = clean(input.difficulty || "سهل", 30);
@@ -37,8 +38,9 @@ export default {
     const content = clean(input.content, 18000);
     const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
     const include = input.include && typeof input.include === "object" ? input.include : {};
-    const mode = ["board", "interactive", "summary"].includes(input.mode) ? input.mode : "";
-    if (!kind || !lessonTitle) return json({ error: "حدد نوع المخرج وعنوان الدرس." }, 400, origin);
+    const mode = ["board", "interactive", "summary"].includes(input.mode) ? input.mode : ["board", "interactive", "summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
+    if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
+    if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
 
     let format, task;
@@ -80,7 +82,7 @@ export default {
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: kind === "experience" ? 4200 : kind === "activity" ? 1200 : kind === "revision" ? 3800 : 1500 }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 850 : kind === "revision" ? 2600 : 1000 }
         })
       });
       const result = await upstream.json();
