@@ -264,7 +264,7 @@ export default {
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 1400 : kind === "revision" ? 2600 : 1000 }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 1000 }
         })
       });
       const result = await upstream.json();
