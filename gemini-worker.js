@@ -28,13 +28,15 @@ export default {
 
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
-    const kind = input.kind === "experience" ? "experience" : input.kind === "assessment" ? "assessment" : input.kind === "activity" ? "activity" : "";
+    const kind = input.kind === "experience" ? "experience" : input.kind === "assessment" ? "assessment" : input.kind === "activity" ? "activity" : input.kind === "revision" ? "revision" : "";
     const lessonTitle = clean(input.lessonTitle, 180);
     const subject = clean(input.subject, 100);
     const level = clean(input.level, 100);
     const difficulty = clean(input.difficulty || "سهل", 30);
     const activityType = clean(input.activityType || "متنوع", 60);
     const content = clean(input.content, 18000);
+    const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
+    const include = input.include && typeof input.include === "object" ? input.include : {};
     const mode = ["board", "interactive", "summary"].includes(input.mode) ? input.mode : "";
     if (!kind || !lessonTitle) return json({ error: "حدد نوع المخرج وعنوان الدرس." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
@@ -47,6 +49,9 @@ export default {
         interactive: "أنشئ تجربة تفاعلية من 3 إلى 5 مقاطع قصيرة، و3 إلى 5 أسئلة اختيار متعدد. لكل سؤال ثلاثة خيارات، وحدد correctIndex من 0 إلى 2 وقدم تغذية راجعة. اجعل الأسئلة مرتبطة بما سبق شرحه.",
         summary: "أنشئ ملخصاً من 3 إلى 5 أفكار أساسية، و4 إلى 8 كلمات مفتاحية، وخريطة أفكار من عناوين الأقسام، وتحدياً بسيطاً في النهاية."
       }[mode];
+    } else if (kind === "revision") {
+      format = '{"title":"عنوان المراجعة","questions":[{"type":"mcq","topic":"مفهوم محدد","question":"سؤال واضح","options":["أ","ب","ج","د"],"correctIndex":0,"explanation":"تفسير تعليمي موجز"}],"flashcards":[{"front":"سؤال البطاقة","back":"الإجابة الدقيقة","topic":"المفهوم"}],"topics":[{"name":"اسم المفهوم","questionCount":2}]}';
+      task = "أنشئ " + questionCount + " سؤالاً اعتماداً حصراً على نص الدرس. أنواع الأسئلة المطلوبة: " + [include.mcq ? "اختيار من متعدد" : "", include.tf ? "صح أو خطأ" : ""].filter(Boolean).join(" و ") + ". أنشئ بطاقات مراجعة: " + (include.flashcards ? "نعم، من 4 إلى 8 بطاقات" : "لا") + ". وزّع الأسئلة على المفاهيم الفعلية الواردة في الدرس، واجعل لكل سؤال topic محدداً، وخيارات غير ملتبسة، ومؤشراً صحيحاً يبدأ من الصفر، وتفسيراً يشرح سبب صحة الإجابة. أسئلة الصح والخطأ يجب أن تستخدم type=tf وخيارين هما صح وخطأ. لا تجعل كل الإجابات الصحيحة في الموضع نفسه. لا تضف معلومة غير موجودة في المصدر، ولا تنشئ أسئلة من جملة مبتورة أو غير مفهومة. إذا كان النص غير كافٍ لعدد الأسئلة المطلوب، أعد العدد الذي يمكن دعمه فقط.";
     } else {
       format = kind === "activity"
         ? '{"title":"عنوان قصير","type":"نوع النشاط","items":[{"q":"تعليمة أو سؤال واضح للتلميذ","a":"الإجابة أو الحل النموذجي"}]}'
@@ -75,7 +80,7 @@ export default {
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: kind === "experience" ? 4200 : kind === "activity" ? 1200 : 1500 }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.45, maxOutputTokens: kind === "experience" ? 4200 : kind === "activity" ? 1200 : kind === "revision" ? 3800 : 1500 }
         })
       });
       const result = await upstream.json();
@@ -108,6 +113,20 @@ export default {
       } else if (kind === "activity") {
         if (!Array.isArray(parsed.items)) return json({ error: "نتيجة النشاط غير مكتملة." }, 502, origin);
         parsed.items = parsed.items.slice(0, 7).filter(x => x && clean(x.q, 500)).map(x => ({ q: clean(x.q, 500), a: clean(x.a, 500) }));
+      } else if (kind === "revision") {
+        if (!Array.isArray(parsed.questions) || !parsed.questions.length) return json({ error: "لم يتم إنشاء أسئلة مراجعة صالحة." }, 502, origin);
+        parsed.questions = parsed.questions.slice(0, questionCount).map(q => ({
+          type: q.type === "tf" || q.type === "true_false" ? "tf" : "mcq",
+          topic: clean(q.topic || "مفهوم الدرس", 120),
+          question: clean(q.question || q.q, 500),
+          options: Array.isArray(q.options) ? q.options.slice(0, 4).map(x => clean(x, 220)) : [],
+          correctIndex: Number.isInteger(Number(q.correctIndex)) ? Number(q.correctIndex) : 0,
+          explanation: clean(q.explanation || q.feedback, 700)
+        })).filter(q => q.question && q.options.length >= 2 && q.correctIndex >= 0 && q.correctIndex < q.options.length);
+        if (!parsed.questions.length) return json({ error: "الأسئلة المولدة غير مكتملة أو لا تحتوي إجابات صالحة." }, 502, origin);
+        parsed.flashcards = Array.isArray(parsed.flashcards) ? parsed.flashcards.slice(0, 10).map(c => ({ front: clean(c.front || c.question, 350), back: clean(c.back || c.answer, 500), topic: clean(c.topic || "مراجعة", 120) })).filter(c => c.front && c.back) : [];
+        parsed.topics = Array.isArray(parsed.topics) ? parsed.topics.slice(0, 12).map(t => ({ name: clean(t.name || t.topic, 120), questionCount: Math.max(0, Number(t.questionCount) || 0) })).filter(t => t.name) : [];
+        parsed.title = clean(parsed.title || lessonTitle, 180);
       } else {
         if (!Array.isArray(parsed.questions)) return json({ error: "نتيجة التقويم غير مكتملة." }, 502, origin);
         parsed.questions = parsed.questions.slice(0, 5).filter(x => x && clean(x.q, 500)).map(x => ({ q: clean(x.q, 500), a: clean(x.a, 500) }));
