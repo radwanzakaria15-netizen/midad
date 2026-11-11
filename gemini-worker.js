@@ -52,9 +52,10 @@ async function getGoogleAccessToken(env) {
 }
 async function notebookRequest(env, path, options = {}) {
   const accessToken = await getGoogleAccessToken(env);
+  if (!env.GOOGLE_CLOUD_PROJECT_ID) throw new Error("أضف معرّف مشروع Google Cloud في Cloudflare باسم GOOGLE_CLOUD_PROJECT_ID.");
   const response = await fetch(NOTEBOOK_API + path, {
     ...options,
-    headers: { "Authorization": "Bearer " + accessToken, "Content-Type": "application/json", ...(options.headers || {}) }
+    headers: { "Authorization": "Bearer " + accessToken, "x-goog-user-project": env.GOOGLE_CLOUD_PROJECT_ID, "Content-Type": "application/json", ...(options.headers || {}) }
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error?.message || "خطأ من Gemini Notebook API (" + response.status + ").");
