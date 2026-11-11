@@ -315,7 +315,7 @@
     render();
   };
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
-  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";if(document.getElementById("expSourceType")){document.getElementById("expSourceType").value=x.sourceType||"text";midadExperienceSourceTypeChanged()}if(document.getElementById("expUrl"))document.getElementById("expUrl").value=x.sourceUrl||"";if(document.getElementById("expFileText"))document.getElementById("expFileText").value=x.source||"";if(document.getElementById("expVideoTranscript"))document.getElementById("expVideoTranscript").value=x.source||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
+  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{const type=x.sourceType||"text";const selector=document.getElementById("expSourceType");if(selector){selector.value=type;midadExperienceSourceTypeChanged()}const textId=type==="file"?"expFileText":type==="video"?"expVideoTranscript":"expSource";const box=document.getElementById(textId);if(box)box.value=x.source||"";const url=document.getElementById("expUrl");if(url)url.value=x.sourceUrl||"";toast("أصبح المصدر جاهزاً لإعادة الاستخدام")},0)};
   window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
   window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;save();closeModal();render();toast("تم حفظ التعديلات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
   window.saveExperienceNow=function(){save();toast("تم حفظ التجربة في مساحة مِداد على هذا الجهاز")};
@@ -347,17 +347,7 @@
     const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>✦</span>تجربة";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
   }
 
-  document.addEventListener("change",async function(e){
-    if(e.target&&e.target.id==="expFile"&&e.target.files&&e.target.files[0]){
-      const file=e.target.files[0];
-      if(file.size>180000){toast("الملف كبير؛ الحد الأقصى 180 كيلوبايت حالياً");e.target.value="";return}
-      try{
-        const textContent=await file.text();
-        const box=document.getElementById("expSource");
-        if(box){box.value=textContent.slice(0,18000);toast("تم إدراج محتوى الملف. راجعه ثم اختر نوع المخرج.")}
-      }catch(_){toast("تعذر قراءة الملف النصي. انسخ محتواه والصقه يدوياً.")}
-    }
-  });
+
 
   handleNotebookOAuthReturn();
   render();
