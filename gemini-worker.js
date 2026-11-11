@@ -5,7 +5,7 @@ function cors(origin) {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
   };
@@ -18,10 +18,170 @@ function json(data, status, origin) {
 }
 function clean(value, max) { return String(value || "").trim().slice(0, max); }
 
+
+const NOTEBOOK_API = "https://notebook.googleapis.com/v1";
+const APP_URL = "https://radwanzakaria15-netizen.github.io/midad/";
+const NOTEBOOK_SCOPE = "https://www.googleapis.com/auth/notebook";
+
+function randomToken(bytes = 32) {
+  const data = new Uint8Array(bytes);
+  crypto.getRandomValues(data);
+  return Array.from(data, b => b.toString(16).padStart(2, "0")).join("");
+}
+function cookieValue(request, name) {
+  const raw = request.headers.get("Cookie") || "";
+  const part = raw.split(";").map(x => x.trim()).find(x => x.startsWith(name + "="));
+  return part ? part.slice(name.length + 1) : "";
+}
+function htmlPage(message) {
+  return new Response("<!doctype html><html lang=\"ar\" dir=\"rtl\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>مِداد</title><body style=\"font-family:Arial,sans-serif;background:#f4f7f3;padding:32px;color:#26352d\"><main style=\"max-width:520px;margin:10vh auto;background:white;padding:28px;border-radius:18px;text-align:center\"><h2>مِداد</h2><p>" + message + "</p></main></body></html>", { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
+async function getGoogleAccessToken(env) {
+  const refreshToken = await env.MIDAD_GOOGLE_SESSIONS.get("google:refresh_token");
+  if (!refreshToken) throw new Error("لم يتم ربط حساب Google بعد.");
+  const body = new URLSearchParams({
+    client_id: env.GOOGLE_CLIENT_ID,
+    client_secret: env.GOOGLE_CLIENT_SECRET,
+    refresh_token: refreshToken,
+    grant_type: "refresh_token"
+  });
+  const response = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
+  const data = await response.json();
+  if (!response.ok || !data.access_token) throw new Error(data.error_description || data.error || "تعذر تحديث صلاحية Google.");
+  return data.access_token;
+}
+async function notebookRequest(env, path, options = {}) {
+  const accessToken = await getGoogleAccessToken(env);
+  const response = await fetch(NOTEBOOK_API + path, {
+    ...options,
+    headers: { "Authorization": "Bearer " + accessToken, "Content-Type": "application/json", ...(options.headers || {}) }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error?.message || "خطأ من Gemini Notebook API (" + response.status + ").");
+  return data;
+}
+async function requireMidadSession(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token || !await env.MIDAD_GOOGLE_SESSIONS.get("session:" + token)) return false;
+  return true;
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
+
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    if (path === "/oauth/google/start" && request.method === "GET") {
+      if (!env.MIDAD_GOOGLE_SESSIONS || !env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+        return htmlPage("إعدادات الربط غير مكتملة في Cloudflare Worker.");
+      }
+      const state = randomToken(24);
+      await env.MIDAD_GOOGLE_SESSIONS.put("oauth_state:" + state, "1", { expirationTtl: 600 });
+      const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+      authUrl.search = new URLSearchParams({
+        client_id: env.GOOGLE_CLIENT_ID,
+        redirect_uri: "https://hidden-boat-c81b.radwanzakaria15.workers.dev/oauth/google/callback",
+        response_type: "code",
+        scope: NOTEBOOK_SCOPE,
+        access_type: "offline",
+        prompt: "consent",
+        state
+      }).toString();
+      return Response.redirect(authUrl.toString(), 302, {
+        headers: { "Set-Cookie": "midad_oauth_state=" + state + "; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=600" }
+      });
+    }
+
+    if (path === "/oauth/google/callback" && request.method === "GET") {
+      const state = url.searchParams.get("state") || "";
+      const code = url.searchParams.get("code") || "";
+      const savedState = cookieValue(request, "midad_oauth_state");
+      if (!state || state !== savedState || !await env.MIDAD_GOOGLE_SESSIONS.get("oauth_state:" + state)) {
+        return htmlPage("تعذر التحقق من طلب الربط. ارجع إلى مِداد وابدأ الربط من جديد.");
+      }
+      await env.MIDAD_GOOGLE_SESSIONS.delete("oauth_state:" + state);
+      if (!code) return htmlPage("لم تكتمل موافقة Google. يمكنك العودة إلى مِداد والمحاولة مجدداً.");
+      const tokenBody = new URLSearchParams({
+        code,
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: "https://hidden-boat-c81b.radwanzakaria15.workers.dev/oauth/google/callback",
+        grant_type: "authorization_code"
+      });
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: tokenBody
+      });
+      const tokenData = await tokenResponse.json().catch(() => ({}));
+      if (!tokenResponse.ok || !tokenData.refresh_token) {
+        return htmlPage("لم يكتمل حفظ صلاحية Google. تأكد من إعدادات OAuth ثم أعد المحاولة من مِداد.");
+      }
+      await env.MIDAD_GOOGLE_SESSIONS.put("google:refresh_token", tokenData.refresh_token);
+      const ticket = randomToken(24);
+      await env.MIDAD_GOOGLE_SESSIONS.put("oauth_ticket:" + ticket, "1", { expirationTtl: 180 });
+      return Response.redirect(APP_URL + "?google_ticket=" + ticket, 302, {
+        headers: { "Set-Cookie": "midad_oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=0", "Cache-Control": "no-store" }
+      });
+    }
+
+    if (path === "/oauth/exchange" && request.method === "POST") {
+      if (!env.MIDAD_GOOGLE_SESSIONS) return json({ error: "مساحة التخزين غير مربوطة." }, 503, origin);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
+      const ticket = clean(body.ticket, 120);
+      if (!ticket || !await env.MIDAD_GOOGLE_SESSIONS.get("oauth_ticket:" + ticket)) return json({ error: "انتهت صلاحية رابط الربط. أعد الربط من مِداد." }, 401, origin);
+      await env.MIDAD_GOOGLE_SESSIONS.delete("oauth_ticket:" + ticket);
+      const session = randomToken(32);
+      await env.MIDAD_GOOGLE_SESSIONS.put("session:" + session, "linked", { expirationTtl: 21600 });
+      return json({ ok: true, sessionToken: session }, 200, origin);
+    }
+
+    if (path.startsWith("/notebook/")) {
+      if (!env.MIDAD_GOOGLE_SESSIONS || !await requireMidadSession(request, env)) return json({ error: "اربط حساب Google من مِداد أولاً." }, 401, origin);
+      try {
+        if (path === "/notebook/list" && request.method === "GET") {
+          return json(await notebookRequest(env, "/notebooks"), 200, origin);
+        }
+        if (path === "/notebook/create" && request.method === "POST") {
+          const body = await request.json();
+          const displayName = clean(body.displayName || "مِداد - دفتر الدرس", 180);
+          return json(await notebookRequest(env, "/notebooks", { method: "POST", body: JSON.stringify({ display_name: displayName }) }), 200, origin);
+        }
+        if (path === "/notebook/source" && request.method === "POST") {
+          const body = await request.json();
+          const notebookName = clean(body.notebookName, 240);
+          const displayName = clean(body.displayName || "مصدر من مِداد", 500);
+          if (!/^notebooks\/[A-Za-z0-9_-]+$/.test(notebookName)) return json({ error: "معرّف الدفتر غير صالح." }, 400, origin);
+          let source = { display_name: displayName };
+          if (body.url) {
+            const sourceUrl = new URL(String(body.url));
+            if (sourceUrl.protocol !== "https:") return json({ error: "يجب أن يكون رابط المصدر آمناً ويبدأ بـ HTTPS." }, 400, origin);
+            source.web_content = { url: sourceUrl.toString() };
+          } else if (body.text) {
+            source.mime_type = body.mimeType === "text/markdown" ? "text/markdown" : "text/plain";
+            source.text_content = { content: clean(body.text, 1000000) };
+          } else {
+            return json({ error: "أرسل رابطاً عاماً أو نصاً للمصدر." }, 400, origin);
+          }
+          return json(await notebookRequest(env, "/" + notebookName + "/sources", { method: "POST", body: JSON.stringify(source) }), 200, origin);
+        }
+        if (path === "/notebook/source-status" && request.method === "POST") {
+          const body = await request.json();
+          const sourceName = clean(body.sourceName, 400);
+          if (!/^notebooks\/[A-Za-z0-9_-]+\/sources\/[A-Za-z0-9_-]+$/.test(sourceName)) return json({ error: "معرّف المصدر غير صالح." }, 400, origin);
+          return json(await notebookRequest(env, "/" + sourceName), 200, origin);
+        }
+        return json({ error: "مسار Notebook غير معروف." }, 404, origin);
+      } catch (error) {
+        return json({ error: clean(error.message || "تعذر الاتصال بـ Gemini Notebook.", 500) }, 502, origin);
+      }
+    }
+
     if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
     if (request.method === "GET") return json({ ok: true, service: "Midad Gemini Worker", model: MODEL, keyConfigured: !!env.GEMINI_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
