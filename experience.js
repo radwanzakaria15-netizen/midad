@@ -119,7 +119,6 @@
     const level=document.getElementById("expLevel")?.value.trim()||"";
     const content=document.getElementById("expSource")?.value.trim()||"";
     const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
-    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
     if(!title){toast("اكتب عنوان الدرس أولاً");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
     const taskId="experience-"+id();
