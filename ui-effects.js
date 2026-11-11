@@ -1,15 +1,23 @@
 (function(){
   const style=document.createElement("style");
   style.textContent=`
+    @keyframes midadPageEnter{
+      from{opacity:0;transform:translateY(9px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    #main>*,main>.experience-input,main>.experience-modes,main>.experience-saved{
+      animation:midadPageEnter .32s cubic-bezier(.2,.75,.25,1) both;
+    }
     .nav button,.mobile-nav button,.btn,.quick,.item-card,.icon-btn,.tool,.experience-mode,.quiz-option,.match-card{
-      transition:background-color .12s ease,color .12s ease,border-color .12s ease,box-shadow .12s ease!important;
-      transform:none!important;
+      transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease,transform .22s cubic-bezier(.2,.75,.25,1)!important;
     }
     .nav button:hover,.btn:hover,.quick:hover,.item-card:hover,.icon-btn:hover,.tool:hover,.experience-mode:hover{
-      transform:none!important;
+      transform:translateY(-2px)!important;
     }
-    main,#main,.page-enter{animation:none!important;filter:none!important}
-    .tap-feedback{animation:none!important}
+    .btn:active,.nav button:active,.mobile-nav button:active,.experience-mode:active{
+      transform:translateY(1px)!important;
+    }
+    main,#main,.page-enter{filter:none!important}
     .midad-task-indicator{
       position:fixed;z-index:95;bottom:22px;left:18px;max-width:min(360px,calc(100vw - 36px));
       display:none;align-items:center;gap:11px;padding:12px 16px;border-radius:15px;
@@ -20,11 +28,14 @@
     .midad-task-indicator.done .midad-task-dot{background:#9ec5a3}
     .midad-task-text{line-height:1.5}
     @media(max-width:760px){.midad-task-indicator{bottom:calc(76px + env(safe-area-inset-bottom));left:12px}}
+    @media(prefers-reduced-motion:reduce){
+      #main>*,main>.experience-input,main>.experience-modes,main>.experience-saved{animation:none!important}
+      .nav button,.mobile-nav button,.btn,.quick,.item-card,.icon-btn,.tool,.experience-mode,.quiz-option,.match-card{transition:none!important}
+    }
   `;
   document.head.appendChild(style);
   let audio=null,lastSound=0,enabled=localStorage.getItem("midad_ui_sound")!=="off";
-  const jobs=new Map();
-  let hideTimer=null;
+  const jobs=new Map();let hideTimer=null;
   function taskNode(){
     let n=document.getElementById("midadTaskIndicator");
     if(!n){n=document.createElement("div");n.id="midadTaskIndicator";n.className="midad-task-indicator";n.innerHTML='<span class="midad-task-dot"></span><span class="midad-task-text"></span>';document.body.appendChild(n)}
@@ -34,10 +45,9 @@
     const n=taskNode(),active=[...jobs.values()].filter(x=>!x.done);
     const label=active.length?(active.length===1?active[0].label:"هناك "+active.length+" مهام تعمل في الخلفية"):message;
     n.querySelector(".midad-task-text").textContent=label||"اكتملت المهمة";
-    n.classList.toggle("done",!active.length&&!!done);
-    n.classList.toggle("visible",!!active.length||!!message);
+    n.classList.toggle("done",!active.length&&!!done);n.classList.toggle("visible",!!active.length||!!message);
     if(hideTimer)clearTimeout(hideTimer);
-    if(!active.length&&message)hideTimer=setTimeout(()=>n.classList.remove("visible"),4500);
+    if(!active.length&&message)hideTimer=setTimeout(()=>n.classList.remove("visible"),5200);
   }
   window.midadTaskStart=function(id,label){jobs.set(id,{label:label||"جارٍ تنفيذ المهمة في الخلفية",done:false});updateTasks()};
   window.midadTaskFinish=function(id,success,message){
@@ -48,19 +58,15 @@
   };
   function play(){
     if(!enabled)return;
-    const now=Date.now();if(now-lastSound<65)return;lastSound=now;
+    const now=Date.now();if(now-lastSound<75)return;lastSound=now;
     try{
       const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
       audio=audio||new Ctx();if(audio.state==="suspended")audio.resume();
-      const t=audio.currentTime;
-      [[660,0,.045],[880,.055,.055]].forEach(([hz,delay,duration])=>{
-        const osc=audio.createOscillator(),gain=audio.createGain();
-        osc.type="sine";osc.frequency.setValueAtTime(hz,t+delay);
-        gain.gain.setValueAtTime(.0001,t+delay);
-        gain.gain.exponentialRampToValueAtTime(.025,t+delay+.008);
-        gain.gain.exponentialRampToValueAtTime(.0001,t+delay+duration);
-        osc.connect(gain);gain.connect(audio.destination);osc.start(t+delay);osc.stop(t+delay+duration+.01);
-      });
+      const t=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
+      osc.type="sine";osc.frequency.setValueAtTime(420,t);osc.frequency.exponentialRampToValueAtTime(330,t+.055);
+      gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.014,t+.009);
+      gain.gain.exponentialRampToValueAtTime(.0001,t+.065);
+      osc.connect(gain);gain.connect(audio.destination);osc.start(t);osc.stop(t+.075);
     }catch(_){}
   }
   function paintToggle(){
