@@ -46,11 +46,11 @@ export default {
 
     let format, task;
     if (kind === "experience") {
-      format = '{"title":"عنوان الدرس","intro":"تمهيد قصير","sections":[{"heading":"عنوان الفكرة","body":"شرح دقيق ومبسط","example":"مثال تطبيقي مناسب","visual":{"type":"flow","labels":["مرحلة 1","مرحلة 2"]}}],"questions":[{"question":"سؤال واضح","options":["خيار أ","خيار ب","خيار ج"],"correctIndex":0,"feedback":"تفسير موجز للإجابة"}],"keyTerms":[{"term":"مصطلح","definition":"تعريف موجز"}],"challenge":{"question":"تحد بسيط","answer":"إجابة مقترحة"}}';
+      format = '{"title":"عنوان الدرس","intro":"تمهيد قصير","scene":{"type":"water-cycle","steps":["التبخر","التكاثف","الهطول","التجمع"]},"sections":[{"heading":"عنوان الفكرة","body":"شرح دقيق ومبسط","example":"مثال تطبيقي مناسب","visual":{"type":"flow","labels":["مرحلة 1","مرحلة 2"]}}],"questions":[{"question":"سؤال واضح","options":["خيار أ","خيار ب","خيار ج"],"correctIndex":0,"feedback":"تفسير موجز للإجابة"}],"keyTerms":[{"term":"مصطلح","definition":"تعريف موجز"}],"challenge":{"question":"تحد بسيط","answer":"إجابة مقترحة"}}';
       task = {
         board: "أنشئ شرح سبورة من 4 إلى 7 مراحل متسلسلة. في كل مرحلة عنوان وفكرة مشروحة ومثال تطبيقي، وأضف مخططاً صغيراً عند الحاجة. أعد سؤال تحقق واحداً أو اثنين. اكتب مادة الشرح الفعلية لا وصفاً لما يجب عرضه.",
-        interactive: "أنشئ تجربة تفاعلية من 3 إلى 5 مقاطع قصيرة، و3 إلى 5 أسئلة اختيار متعدد. لكل سؤال ثلاثة خيارات، وحدد correctIndex من 0 إلى 2 وقدم تغذية راجعة. اجعل الأسئلة مرتبطة بما سبق شرحه.",
-        summary: "أنشئ ملخصاً من 3 إلى 5 أفكار أساسية، و4 إلى 8 كلمات مفتاحية، وخريطة أفكار من عناوين الأقسام، وتحدياً بسيطاً في النهاية."
+        interactive: "أنشئ شرحاً تفاعلياً من 4 إلى 6 مراحل، مع 3 أسئلة تحقق. إذا كان الموضوع دورة الماء فاجعل scene.type يساوي water-cycle واملأ scene.steps بأربع مراحل: التبخر والتكاثف والهطول والتجمع، واشرح دور الشمس والغيوم والمطر. للموضوعات الأخرى اجعل scene.type يساوي none. اكتب وصفاً تعليمياً واضحاً لكل مرحلة يصلح لمشهد مرئي متحرك، لا تكتف بعناوين عامة.",
+        summary: "أنشئ ملخصاً بصرياً إبداعياً من 4 إلى 7 أفكار أساسية، و4 إلى 8 كلمات مفتاحية، وخريطة ذهنية واضحة، وأمثلة قصيرة وإطارات معلوماتية وتحدياً في النهاية. اجعل النصوص مختصرة وجذابة وقابلة للعرض في بطاقات ملونة ورسوم توضيحية."
       }[mode];
     } else if (kind === "revision") {
       format = '{"title":"عنوان المراجعة","questions":[{"type":"mcq","topic":"مفهوم محدد","question":"سؤال واضح","options":["أ","ب","ج","د"],"correctIndex":0,"explanation":"تفسير تعليمي موجز"}],"flashcards":[{"front":"سؤال البطاقة","back":"الإجابة الدقيقة","topic":"المفهوم"}],"topics":[{"name":"اسم المفهوم","questionCount":2}]}';
@@ -105,6 +105,7 @@ export default {
         }));
         parsed.title = clean(parsed.title || lessonTitle, 180);
         parsed.intro = clean(parsed.intro, 700);
+        parsed.scene = parsed.scene && typeof parsed.scene === "object" ? { type: clean(parsed.scene.type || "none", 30), steps: Array.isArray(parsed.scene.steps) ? parsed.scene.steps.slice(0, 6).map(x => clean(x, 220)) : [] } : { type: "none", steps: [] };
         parsed.questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, 6).map(q => ({
           question: clean(q.question || q.q, 400),
           options: Array.isArray(q.options) ? q.options.slice(0, 4).map(x => clean(x, 180)) : [],
