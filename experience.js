@@ -84,7 +84,7 @@
 
   function renderInteractive(item){
     const d=item.data||{}, sections=arr(d.sections), questions=arr(d.questions);
-    return '<section class="interactive-lesson"><div class="interactive-hero"><span>رحلة تعلم تفاعلية</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+renderAnimatedScene(d.scene)+
+    return '<section class="interactive-lesson"><div class="interactive-hero"><span>رحلة تعلم تفاعلية</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+(/الماء|تبخر|التبخر|دورة الماء|الهطول|التكاثف/i.test(String(d.title||item.title)+" "+String(d.intro||""))?renderWaterWorld(d.title||item.title):renderAnimatedScene(d.scene))+
       sections.map((s,i)=>'<article class="interactive-section"><span class="pill">الجزء '+(i+1)+'</span><h3>'+safe(s.heading)+'</h3><p>'+safe(s.body)+'</p>'+(s.example?'<div class="board-example"><b>جرّب أن تفهم</b><p>'+safe(s.example)+'</p></div>':"")+'</article>').join("")+
       '<section class="quiz-area"><h3>اختبر فهمك</h3>'+questions.map((q,i)=>renderQuestion(q,i)).join("")+'</section></section>';
   }
@@ -109,6 +109,10 @@
   }
 
 
+  function renderWaterWorld(title){
+    return '<section class="midad-water-lab"><div class="midad-lab-head"><div><span>مختبر مِداد ثلاثي الأبعاد</span><h3>'+safe(title||"دورة الماء في الطبيعة")+'</h3><p>اسحب الشمس داخل المشهد أو غيّر شدة الإشعاع، ولاحظ أثر ذلك في التبخر والسحب.</p></div><span class="midad-live">محاكاة تفاعلية</span></div><div id="midad-water-world" class="midad-water-world"><div class="midad-3d-loading">جارٍ تجهيز المشهد ثلاثي الأبعاد…</div></div><div class="midad-lab-controls"><label>شدة الإشعاع الشمسي <input id="midad-sun-power" type="range" min="15" max="100" value="70"></label><button class="btn light small" onclick="window.Midad3D&&window.Midad3D.resetWater()">إعادة ضبط</button><button class="btn light small" onclick="window.Midad3D&&window.Midad3D.toggleWater()">إيقاف / تشغيل</button></div><div class="midad-lab-readouts"><div><small>الحرارة النسبية</small><b id="midad-temp">دافئة</b></div><div><small>التبخر</small><b id="midad-evap">متوسط</b></div><div><small>السحب</small><b id="midad-cloud">نشطة</b></div></div><p class="midad-lab-note">محاكاة مبسطة لتوضيح العلاقة بين التسخين والتبخر والتكاثف، وليست قياساً علمياً للطقس.</p></section>';
+  }
+
   function renderAnimatedScene(scene){
     if(!scene||(!arr(scene.nodes).length&&!arr(scene.steps).length))return "";
     const steps=arr(scene.steps), nodes=arr(scene.nodes);
@@ -121,7 +125,8 @@
   function renderMatchingGame(pairs){
     pairs=arr(pairs).slice(0,8);if(pairs.length<2)return "";
     const rightOrder=pairs.map((_,i)=>i).reverse();
-    return '<section class="matching-game"><div class="matching-head"><div><span>لعبة تفاعلية</span><h3>صل كل عنصر بما يناسبه</h3><p>اختر بطاقة من العمود الأول ثم البطاقة المطابقة من العمود الثاني.</p></div><b>'+matchState.matched.length+' / '+pairs.length+'</b></div><div class="matching-columns"><div>'+pairs.map((p,i)=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.left===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'left\','+i+')">'+safe(p.left)+'</button>').join("")+'</div><div>'+rightOrder.map(i=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.right===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'right\','+i+')">'+safe(pairs[i].right)+'</button>').join("")+'</div></div><p class="match-feedback">'+(matchState.matched.length===pairs.length?"أحسنت! أكملت المطابقة بنجاح.":matchState.left!==null&&matchState.right!==null&&matchState.left!==matchState.right?"ليست مطابقة، حاول مجدداً.":"اختر زوجاً صحيحاً للمتابعة.")+'</p></section>';
+    window.__midadMatchedPairs=matchState.matched.slice();
+    return '<section class="matching-game"><div class="matching-head"><div><span>لعبة تفاعلية</span><h3>صل كل عنصر بما يناسبه</h3><p>اختر بطاقة من العمود الأول ثم البطاقة المطابقة من العمود الثاني.</p></div><b>'+matchState.matched.length+' / '+pairs.length+'</b></div><div class="matching-board"><svg class="matching-lines" aria-hidden="true"></svg><div class="matching-columns"><div>'+pairs.map((p,i)=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.left===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'left\','+i+')">'+safe(p.left)+'</button>').join("")+'</div><div>'+rightOrder.map(i=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.right===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'right\','+i+')">'+safe(pairs[i].right)+'</button>').join("")+'</div></div></div><p class="match-feedback">'+(matchState.matched.length===pairs.length?"أحسنت! أكملت المطابقة بنجاح.":matchState.left!==null&&matchState.right!==null&&matchState.left!==matchState.right?"ليست مطابقة، حاول مجدداً.":"اختر زوجاً صحيحاً للمتابعة.")+'</p></section>';
   }
 
   function renderSummary(item){
@@ -199,6 +204,7 @@
       document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page==="experience"));
       document.getElementById("teacherName").textContent=db.teacher||"الأستاذ";
       document.getElementById("avatar").textContent=(db.teacher||"أ").trim().charAt(0);
+      setTimeout(function(){if(window.Midad3D){window.Midad3D.mountWater();window.Midad3D.drawMatches()}},80);
     }else baseRender();
   };
   const baseNavigate=window.navigate;
