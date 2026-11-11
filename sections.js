@@ -15,17 +15,40 @@ window.activitiesPage=function(){
 };
 window.openTask=function(category,edit){
  const old=edit?(db.activities||[]).find(x=>x.id===edit):null;
- const kind=category||old?.category||"واجب منزلي";
- const a=old||{};
- openModal(old?"تعديل المهمة":"إنشاء "+kind,"أدخل تفاصيل المهمة وتعليماتها.",'<form onsubmit="saveTask(event,\''+(edit||'')+'\')"><div class="form-grid">'+
+ const kind=category||old?.category||"واجب منزلي",a=old||{};
+ if(!old){
+  openModal("إنشاء "+kind,"اختر نوع المهمة ثم مصدرها ليُنشئ الذكاء الاصطناعي المهمة.",'<form onsubmit="generateTaskFromSource(event)"><div class="form-grid">'+
+  '<div class="form-field full"><label>نوع المهمة</label><select name="category" id="taskCategory">'+taskKinds.map(k=>'<option '+(k===kind?'selected':'')+'>'+k+'</option>').join("")+'</select></div>'+
+  '<div class="form-field full"><label>المصدر</label><select name="sourceType" id="taskSourceType" onchange="midadTaskSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
+  '<div class="form-field full" id="taskTextSource"><label>نص الدرس</label><textarea id="taskSourceText" rows="7" placeholder="الصق نص الدرس هنا..."></textarea></div>'+
+  '<div class="form-field full" id="taskVideoSource" style="display:none"><label>رابط YouTube</label><input id="taskSourceUrl" type="url" placeholder="https://www.youtube.com/..."><label style="margin-top:10px">تفريغ الفيديو أو نصه</label><textarea id="taskVideoTranscript" rows="6" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يستخرج الكلام تلقائياً."></textarea></div>'+
+  '<div class="form-field full" id="taskFileSource" style="display:none"><label>رفع ملف نصي</label><input id="taskSourceFile" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown" onchange="midadReadTaskFile(this)"><small class="muted">يدعم TXT وMD وCSV وJSON. حوّل PDF أو Word إلى نص قبل رفعه.</small><textarea id="taskFileText" rows="6" placeholder="سيظهر النص المستخرج هنا..." style="margin-top:10px"></textarea></div>'+
+  '<p class="muted full" id="taskSourceHint">أدخل نص المصدر ليبني الذكاء الاصطناعي المهمة عليه.</p></div><div class="modal-actions"><button class="btn primary" id="taskGenerateButton">إنشاء المهمة بالذكاء الاصطناعي</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>');
+  return;
+ }
+ openModal("تعديل المهمة","يمكنك تعديل تفاصيل المهمة المحفوظة.",'<form onsubmit="saveTask(event,\''+(edit||'')+'\')"><div class="form-grid">'+
  '<div class="form-field"><label>نوع المهمة</label><select name="category">'+taskKinds.map(k=>'<option '+(k===kind?'selected':'')+'>'+k+'</option>').join("")+'</select></div>'+
  '<div class="form-field"><label>عنوان المهمة</label><input name="title" required value="'+escTask(a.title||"")+'" placeholder="عنوان واضح ومحدد"></div>'+
- '<div class="form-field"><label>المادة</label><input name="subject" value="'+escTask(a.subject||"")+'" placeholder="مثال: اللغة العربية"></div>'+
- '<div class="form-field"><label>المستوى</label><input name="level" value="'+escTask(a.level||"")+'" placeholder="مثال: السنة الرابعة ابتدائي"></div>'+
  '<div class="form-field"><label>موعد التسليم أو الإنجاز</label><input name="due" type="date" value="'+escTask(a.due||"")+'"></div>'+
  '<div class="form-field"><label>المدة (للاختبار أو الامتحان)</label><input name="duration" type="number" min="1" value="'+escTask(a.duration||"")+'" placeholder="بالدقائق"></div>'+
- '<div class="form-field full"><label>التعليمات والمطلوب</label><textarea name="details" required placeholder="اكتب المطلوب من التلاميذ بالتفصيل...">'+escTask(a.details||"")+'</textarea></div>'+
- '<div class="form-field full"><label>ملاحظات أو مصادر (اختياري)</label><textarea name="notes" placeholder="مصادر البحث أو ملاحظات إضافية...">'+escTask(a.notes||"")+'</textarea></div></div><div class="modal-actions"><button class="btn primary">حفظ المهمة</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>');
+ '<div class="form-field full"><label>التعليمات والمطلوب</label><textarea name="details" required>'+escTask(a.details||"")+'</textarea></div>'+
+ '<div class="form-field full"><label>ملاحظات أو مصادر (اختياري)</label><textarea name="notes">'+escTask(a.notes||"")+'</textarea></div></div><div class="modal-actions"><button class="btn primary">حفظ المهمة</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>');
+};
+window.midadTaskSourceTypeChanged=function(){const type=$("taskSourceType")?.value||"text";["taskTextSource","taskVideoSource","taskFileSource"].forEach(id=>{const el=$(id);if(el)el.style.display="none"});const el=$(type==="video"?"taskVideoSource":type==="file"?"taskFileSource":"taskTextSource");if(el)el.style.display="";const hint=$("taskSourceHint");if(hint)hint.textContent=type==="video"?"أدخل رابط YouTube وتفريغ الكلام يدوياً؛ لا نستخرج الصوت تلقائياً حالياً.":type==="file"?"تُقرأ الملفات النصية المدعومة قبل تحليلها.":"أدخل نص المصدر ليبني الذكاء الاصطناعي المهمة عليه."};
+window.midadReadTaskFile=async function(input){const file=input?.files?.[0],out=$("taskFileText");if(!file||!out)return;try{if(file.size>2*1024*1024)throw Error("حجم الملف يتجاوز 2 ميغابايت.");out.value=(await file.text()).slice(0,18000);toast("تم استخراج النص من الملف.")}catch(e){out.value="";toast(e.message||"تعذرت قراءة الملف.")}};
+window.generateTaskFromSource=async function(e){
+ e.preventDefault();const form=e.target,category=$("taskCategory")?.value||"واجب منزلي",type=$("taskSourceType")?.value||"text",content=(type==="file"?$("taskFileText")?.value:type==="video"?$("taskVideoTranscript")?.value:$("taskSourceText")?.value)||"",sourceUrl=type==="video"?$("taskSourceUrl")?.value.trim()||"":"",button=$("taskGenerateButton");
+ if(content.trim().length<80){toast(type==="video"?"أدخل تفريغ الفيديو بما لا يقل عن 80 حرفاً.":"أدخل نصاً لا يقل عن 80 حرفاً.");return}
+ if(type==="video"&&!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)){toast("أدخل رابط YouTube صحيحاً يبدأ بـ HTTPS.");return}
+ if(!db?.aiEndpoint){toast("لم يُضبط رابط الذكاء الاصطناعي في إعدادات مِداد.");return}
+ if(button){button.disabled=true;button.textContent="يجري إنشاء المهمة..."}
+ try{
+  const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"task",taskCategory,category,content,sourceUrl,sourceType:type})});
+  const payload=await response.json();if(!response.ok)throw Error(payload.error||"تعذر إنشاء المهمة.");
+  const result=payload.result||payload,details=[result.instructions||"",...(Array.isArray(result.sections)?result.sections.map(x=>(x.heading||"")+(x.content?"\n"+x.content:"")):[]),...(Array.isArray(result.questions)?result.questions.map((q,i)=>(i+1)+". "+(q.question||q.q||"")+(q.answer?"\nالإجابة النموذجية: "+q.answer:"")):[])].filter(Boolean).join("\n\n");
+  const item={id:taskId(),kind:"task",category,title:result.title||category,details,notes:"المصدر: "+(type==="video"?"رابط YouTube وتفريغ الفيديو":type==="file"?"ملف نصي":"نص")+(sourceUrl?"\n"+sourceUrl:""),sourceType:type,sourceUrl,generatedData:result,created:new Date().toISOString()};
+  db.activities=db.activities||[];db.activities.push(item);save();closeModal();render();toast("تم إنشاء المهمة وحفظها.");
+ }catch(err){toast(err.message||"تعذر إنشاء المهمة.");if(button){button.disabled=false;button.textContent="إنشاء المهمة بالذكاء الاصطناعي"}}
 };
 window.saveTask=function(e,edit){
  e.preventDefault();const v=Object.fromEntries(new FormData(e.target).entries());
