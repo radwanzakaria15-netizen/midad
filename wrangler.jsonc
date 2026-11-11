@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hidden-boat-c81b",
+  "main": "gemini-worker.js",
+  "compatibility_date": "2026-11-11",
+  "account_id": "2a481904d29d94559258bb790f68dc88",
+  "workers_dev": true,
+  "keep_vars": true,
+  "kv_namespaces": [
+    {
+      "binding": "MIDAD_GOOGLE_SESSIONS",
+      "id": "f584f9dad410478e835012834eb5a401"
+    }
+  ]
+}
