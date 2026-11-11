@@ -95,6 +95,13 @@
       (arr(d.flashcards).length?'<section class="flashcards-area"><h3>بطاقات المراجعة</h3><div class="flashcards-grid">'+arr(d.flashcards).map((f,i)=>'<button class="flashcard" onclick="this.classList.toggle(\'flipped\')"><span class="flashcard-front"><small>اقلب البطاقة · '+(i+1)+'</small><b>'+safe(f.front)+'</b></span><span class="flashcard-back"><small>الإجابة</small><b>'+safe(f.back)+'</b></span></button>').join("")+'</div></section>':"")+'</section>';
   }
 
+
+  function renderAnimatedScene(scene){
+    if(!scene||scene.type!=="water-cycle")return "";
+    const steps=arr(scene.steps);
+    return '<section class="animated-scene"><div class="scene-heading"><b>شاهد دورة الماء وهي تحدث</b><span>مشهد تعليمي متحرك</span></div><div class="water-world"><div class="sun-orb"></div><div class="cloud cloud-one"><i></i><i></i><i></i></div><div class="cloud cloud-two"><i></i><i></i><i></i></div><div class="rain-drops">'+Array.from({length:9},(_,i)=>'<i style="--drop:'+i+'"></i>').join("")+'</div><div class="evaporation">'+Array.from({length:5},(_,i)=>'<i style="--vapor:'+i+'"></i>').join("")+'</div><div class="mountain"></div><div class="sea"><span>المسطح المائي</span></div></div><div class="scene-steps">'+steps.slice(0,4).map((v,i)=>'<span><b>'+(i+1)+'</b>'+safe(v)+'</span>').join("")+'</div></section>';
+  }
+
   function renderSummary(item){
     const d=item.data||{};
     return '<section class="summary-sheet"><div class="summary-heading"><span>خلاصة الدرس</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+
@@ -110,6 +117,7 @@
     const subject=document.getElementById("expSubject")?.value.trim()||"";
     const level=document.getElementById("expLevel")?.value.trim()||"";
     const content=document.getElementById("expSource")?.value.trim()||"";
+    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
     if(!title){toast("اكتب عنوان الدرس أولاً");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
     const taskId="experience-"+id();
@@ -121,14 +129,14 @@
     const controller=new AbortController();const requestTimer=setTimeout(()=>controller.abort(),90000);
     try{
       const requestKind=mode==="assessment"?"revision":"experience";
-      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:requestKind,outputType:requestKind,mode,lessonTitle:title,title,subject,level,content,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
+      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:requestKind,outputType:requestKind,mode,lessonTitle:title,title,subject,level,content,sourceUrl,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
       const raw=await response.text();let payload={};
       try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
       const data=payload.result||payload;
       if(mode==="assessment"&&(!Array.isArray(data.questions)||!data.questions.length))throw new Error("لم تُنشأ أسئلة صالحة؛ أعد المحاولة");
       if(mode!=="assessment"&&(!Array.isArray(data.sections)||!data.sections.length))throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
-      const item={id:id(),title:data.title||title,subject,level,source:content,mode,data,created:new Date().toISOString()};
+      const item={id:id(),title:data.title||title,subject,level,source:content,sourceUrl,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;
       if(page==="experience"||page==="experience-result"){
         currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
@@ -175,5 +183,18 @@
   if(mobile&&!mobile.querySelector('[data-page="experience"]')){
     const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>✦</span>تجربة";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
   }
+
+  document.addEventListener("change",async function(e){
+    if(e.target&&e.target.id==="expFile"&&e.target.files&&e.target.files[0]){
+      const file=e.target.files[0];
+      if(file.size>180000){toast("الملف كبير؛ الحد الأقصى 180 كيلوبايت حالياً");e.target.value="";return}
+      try{
+        const textContent=await file.text();
+        const box=document.getElementById("expSource");
+        if(box){box.value=textContent.slice(0,18000);toast("تم إدراج محتوى الملف. راجعه ثم اختر نوع المخرج.")}
+      }catch(_){toast("تعذر قراءة الملف النصي. انسخ محتواه والصقه يدوياً.")}
+    }
+  });
+
   render();
 })();
