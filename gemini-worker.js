@@ -196,12 +196,13 @@ export default {
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
     const rawKind = clean(input.kind || input.outputType || input.type, 40).toLowerCase();
-    const kind = ["experience","assessment","activity","revision"].includes(rawKind) ? rawKind : ["board","interactive","summary"].includes(rawKind) ? "experience" : "";
+    const kind = ["experience","assessment","activity","revision","task"].includes(rawKind) ? rawKind : ["board","interactive","summary"].includes(rawKind) ? "experience" : "";
     const lessonTitle = clean(input.lessonTitle || input.title || input.topic, 180);
     const subject = clean(input.subject, 100);
     const level = clean(input.level, 100);
     const difficulty = clean(input.difficulty || "سهل", 30);
     const activityType = clean(input.activityType || "متنوع", 60);
+    const taskCategory = clean(input.taskCategory || input.category || "واجب منزلي", 60);
     const content = clean(input.content, 18000);
     const sourceUrl = clean(input.sourceUrl, 1000);
     const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
@@ -223,6 +224,15 @@ export default {
     } else if (kind === "revision") {
       format = '{"title":"عنوان المراجعة","questions":[{"type":"mcq","topic":"مفهوم محدد","question":"سؤال واضح","options":["أ","ب","ج","د"],"correctIndex":0,"explanation":"تفسير تعليمي موجز"}],"flashcards":[{"front":"سؤال البطاقة","back":"الإجابة الدقيقة","topic":"المفهوم"}],"matchPairs":[{"left":"مصطلح أو عنصر","right":"تعريفه أو ما يناسبه"}],"fillBlanks":[{"sentence":"جملة فيها فراغ ____","answer":"الكلمة الناقصة","explanation":"تفسير موجز"}],"topics":[{"name":"اسم المفهوم","questionCount":2}]}';
       task = "أنشئ " + questionCount + " سؤالاً اعتماداً حصراً على نص الدرس. أنواع الأسئلة المطلوبة: " + [include.mcq ? "اختيار من متعدد" : "", include.tf ? "صح أو خطأ" : ""].filter(Boolean).join(" و ") + ". أنشئ بطاقات مراجعة: " + (include.flashcards ? "نعم، من 4 إلى 8 بطاقات" : "لا") + ". وأنشئ أزواج مطابقة matchPairs: " + (include.matching ? "نعم، من 4 إلى 6 أزواج" : "لا") + ". وأنشئ تمارين إكمال فراغات fillBlanks: " + (include.blanks ? "نعم، من 3 إلى 5 جمل مع الإجابة والتفسير" : "لا") + ". وزّع الأسئلة على المفاهيم الفعلية الواردة في الدرس، واجعل لكل سؤال topic محدداً، وخيارات غير ملتبسة، ومؤشراً صحيحاً يبدأ من الصفر، وتفسيراً يشرح سبب صحة الإجابة. أسئلة الصح والخطأ يجب أن تستخدم type=tf وخيارين هما صح وخطأ. لا تجعل كل الإجابات الصحيحة في الموضع نفسه. لا تضف معلومة غير موجودة في المصدر، ولا تنشئ أسئلة من جملة مبتورة أو غير مفهومة. إذا كان النص غير كافٍ لعدد الأسئلة المطلوب، أعد العدد الذي يمكن دعمه فقط.";
+    } else if (kind === "task") {
+      format = '{"title":"عنوان المهمة","instructions":"تعليمات واضحة","sections":[{"heading":"المحور","content":"تفاصيل مناسبة للمهمة"}],"questions":[{"question":"السؤال أو المطلوب","answer":"إجابة أو معيار تصحيح"}]}';
+      task = taskCategory === "بحث"
+        ? "أنشئ تكليف بحث مدرسي متكاملاً: عنواناً محدداً، إشكالية واضحة، أهدافاً، خطة من محاور مرتبة، أسئلة إرشادية، طريقة عمل، ومعايير تقييم ومصادر موثوقة مقترحة. لا تخترع بيانات ببليوغرافية لمراجع بعينها."
+        : taskCategory === "امتحان"
+        ? "أنشئ امتحاناً منظماً من 6 إلى 8 أسئلة متنوعة متدرجة الصعوبة، مع تعليمات ومدة مقترحة وتوزيع نقاط ومفتاح إجابة نموذجي منفصل."
+        : taskCategory === "اختبار"
+        ? "أنشئ اختباراً قصيراً من 5 إلى 7 أسئلة متنوعة لقياس الفهم، مع تعليمات ومفتاح إجابة نموذجي."
+        : "أنشئ واجباً منزلياً من 5 إلى 7 تمارين متنوعة ومتدرجة، مع تعليمات واضحة ومفتاح إجابة نموذجي منفصل.";
     } else {
       format = kind === "activity"
         ? '{"title":"عنوان قصير","type":"نوع النشاط","items":[{"q":"تعليمة أو سؤال واضح للتلميذ","a":"الإجابة أو الحل النموذجي"}]}'
@@ -236,7 +246,8 @@ export default {
       "أنت مصمم تعلم ومساعد تربوي متخصص. أخرج محتوى عربياً سليماً مناسباً للمستوى.",
       "المادة: " + (subject || "غير محددة"),
       "الطور والمستوى: " + (level || "غير محدد"),
-      "عنوان الدرس: " + lessonTitle,
+      "عنوان الدرس أو المصدر: " + lessonTitle,
+      kind === "task" ? "نوع المهمة المطلوب: " + taskCategory : "",
       content ? "المصدر الذي يجب تحليله والالتزام به:\n" + content : "لم يرفق الأستاذ نص الدرس. استخدم المعرفة الدراسية العامة الموثوقة، وتجنب الادعاءات الدقيقة غير المؤكدة.",
       sourceUrl ? "رابط المصدر الذي أرفقه الأستاذ (لا تدّع أنك شاهدت الفيديو أو استخرجت تفريغه ما لم يكن نصه مرفقاً): " + sourceUrl : "",
       content ? "تعليمات إلزامية: استخرج الأفكار الأساسية من المصدر، لا تحذف فكرة جوهرية، لا تضف معلومة تناقضه، ولا تختلق حقائق. إذا كان المصدر لا يكفي لإثبات معلومة فلا تقدمها كحقيقة." : "",
@@ -296,6 +307,12 @@ export default {
       } else if (kind === "activity") {
         if (!Array.isArray(parsed.items)) return json({ error: "نتيجة النشاط غير مكتملة." }, 502, origin);
         parsed.items = parsed.items.slice(0, 7).filter(x => x && clean(x.q, 500)).map(x => ({ q: clean(x.q, 500), a: clean(x.a, 500) }));
+      } else if (kind === "task") {
+        parsed.title = clean(parsed.title || taskCategory, 180);
+        parsed.instructions = clean(parsed.instructions, 1800);
+        parsed.sections = Array.isArray(parsed.sections) ? parsed.sections.slice(0, 10).map(s => ({ heading: clean(s.heading, 180), content: clean(s.content || s.body, 1400) })).filter(s => s.heading || s.content) : [];
+        parsed.questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, 12).map(q => ({ question: clean(q.question || q.q, 500), answer: clean(q.answer || q.a, 700) })).filter(q => q.question) : [];
+        if (!parsed.instructions && !parsed.sections.length && !parsed.questions.length) return json({ error: "لم يتم إنشاء تفاصيل صالحة للمهمة." }, 502, origin);
       } else if (kind === "revision") {
         if (!Array.isArray(parsed.questions) || !parsed.questions.length) return json({ error: "لم يتم إنشاء أسئلة مراجعة صالحة." }, 502, origin);
         parsed.questions = parsed.questions.slice(0, questionCount).map(q => ({
