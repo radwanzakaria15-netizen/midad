@@ -3,6 +3,8 @@
   let currentExperienceId = null;
   let experienceStep = 0;
   let experienceAnswers = {};
+  let experienceSceneStep = 0;
+  let matchState = { left: null, right: null, matched: [] };
 
   const modeNames = {board:"الشرح التفاعلي المتحرّك",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",assessment:"التقويم والأنشطة التفاعلية"};
   const modeDescriptions = {
@@ -66,8 +68,17 @@
   }
 
   function renderVisual(v){
-    if(!v||!arr(v.labels).length)return "";
+    if(!v)return "";
+    const nodes=arr(v.nodes).slice(0,10), edges=arr(v.edges).slice(0,14);
+    if(nodes.length){
+      const pos=nodes.map((n,i)=>({id:String(n.id||i),label:safe(n.label||n.title||"مفهوم"),x:Number.isFinite(Number(n.x))?Math.max(8,Math.min(92,Number(n.x))):18+(i%3)*32,y:Number.isFinite(Number(n.y))?Math.max(12,Math.min(88,Number(n.y))):25+Math.floor(i/3)*28}));
+      const byId=Object.fromEntries(pos.map(p=>[p.id,p]));
+      const lines=edges.map(e=>{const a=byId[String(e.from)],b=byId[String(e.to)];return a&&b?'<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="#9aaf9f" stroke-width="1.2" stroke-dasharray="2 1"/>':""}).join("");
+      const shapes=pos.map((p,i)=>'<g class="diagram-node" style="--node-delay:'+i+'"><rect x="'+(p.x-12)+'" y="'+(p.y-7)+'" width="24" height="14" rx="3" fill="'+(i%3===0?'#e8efe8':i%3===1?'#f4e8d9':'#e4edf0')+'" stroke="#8da895" stroke-width=".5"/><text x="'+p.x+'" y="'+(p.y+.8)+'" text-anchor="middle" dominant-baseline="middle" font-size="3.4" fill="#294b39">'+p.label+'</text></g>').join("");
+      return '<div class="generated-visual"><div class="generated-visual-label">رسم توضيحي مولّد من بنية الدرس</div><svg viewBox="0 0 100 100" role="img" aria-label="مخطط مفاهيم">'+lines+shapes+'</svg></div>';
+    }
     const labels=arr(v.labels);
+    if(!labels.length)return "";
     return '<div class="visual-flow" aria-label="مخطط توضيحي">'+labels.map((x,i)=>'<span>'+safe(x)+'</span>'+(i<labels.length-1?'<i>←</i>':"")).join("")+'</div>';
   }
 
@@ -93,14 +104,24 @@
     return '<section class="assessment-result"><div class="interactive-hero"><span>مركز التقويم الذكي</span><h2>'+safe(d.title||item.title)+'</h2><p>أجب عن الأسئلة ثم راجع التفسير التعليمي. يمكنك قلب بطاقات المراجعة.</p></div>'+
       '<div class="assessment-tools"><span class="pill blue">'+questions.length+' أسئلة</span><span class="pill green">'+arr(d.flashcards).length+' بطاقات</span></div>'+
       '<section class="quiz-area">'+questions.map((q,i)=>renderQuestion(q,i)).join("")+'</section>'+
+      renderMatchingGame(d.matchPairs)+
       (arr(d.flashcards).length?'<section class="flashcards-area"><h3>بطاقات المراجعة</h3><div class="flashcards-grid">'+arr(d.flashcards).map((f,i)=>'<button class="flashcard" onclick="this.classList.toggle(\'flipped\')"><span class="flashcard-front"><small>اقلب البطاقة · '+(i+1)+'</small><b>'+safe(f.front)+'</b></span><span class="flashcard-back"><small>الإجابة</small><b>'+safe(f.back)+'</b></span></button>').join("")+'</div></section>':"")+'</section>';
   }
 
 
   function renderAnimatedScene(scene){
-    if(!scene||scene.type!=="water-cycle")return "";
-    const steps=arr(scene.steps);
-    return '<section class="animated-scene"><div class="scene-heading"><b>شاهد دورة الماء وهي تحدث</b><span>مشهد تعليمي متحرك</span></div><div class="water-world"><div class="sun-orb"></div><div class="cloud cloud-one"><i></i><i></i><i></i></div><div class="cloud cloud-two"><i></i><i></i><i></i></div><div class="rain-drops">'+Array.from({length:9},(_,i)=>'<i style="--drop:'+i+'"></i>').join("")+'</div><div class="evaporation">'+Array.from({length:5},(_,i)=>'<i style="--vapor:'+i+'"></i>').join("")+'</div><div class="mountain"></div><div class="sea"><span>المسطح المائي</span></div></div><div class="scene-steps">'+steps.slice(0,4).map((v,i)=>'<span><b>'+(i+1)+'</b>'+safe(v)+'</span>').join("")+'</div></section>';
+    if(!scene||(!arr(scene.nodes).length&&!arr(scene.steps).length))return "";
+    const steps=arr(scene.steps), nodes=arr(scene.nodes);
+    const active=Math.max(0,Math.min(experienceSceneStep,Math.max(0,steps.length-1)));
+    return '<section class="animated-scene"><div class="scene-heading"><b>'+safe(scene.title||"مشهد تفاعلي")+'</b><span>اضغط على المراحل لاكتشافها</span></div>'+
+      renderVisual({nodes: nodes.length?nodes:steps.map((s,i)=>({id:String(i),label:s,x:18+(i%3)*32,y:25+Math.floor(i/3)*35})),edges:arr(scene.edges)})+
+      (steps.length?'<div class="scene-steps">'+steps.map((v,i)=>'<button class="scene-step '+(i===active?"active":"")+'" onclick="goExperienceSceneStep('+i+')"><b>'+(i+1)+'</b>'+safe(typeof v==="string"?v:v.title||v.label||"مرحلة")+'</button>').join("")+'</div><div class="scene-step-detail">'+safe(typeof steps[active]==="object"?(steps[active].description||steps[active].body||steps[active].title):steps[active])+'</div>':"")+
+      '</section>';
+  }
+  function renderMatchingGame(pairs){
+    pairs=arr(pairs).slice(0,8);if(pairs.length<2)return "";
+    const rightOrder=pairs.map((_,i)=>i).reverse();
+    return '<section class="matching-game"><div class="matching-head"><div><span>لعبة تفاعلية</span><h3>صل كل عنصر بما يناسبه</h3><p>اختر بطاقة من العمود الأول ثم البطاقة المطابقة من العمود الثاني.</p></div><b>'+matchState.matched.length+' / '+pairs.length+'</b></div><div class="matching-columns"><div>'+pairs.map((p,i)=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.left===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'left\','+i+')">'+safe(p.left)+'</button>').join("")+'</div><div>'+rightOrder.map(i=>'<button class="match-card '+(matchState.matched.includes(i)?"matched":matchState.right===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'right\','+i+')">'+safe(pairs[i].right)+'</button>').join("")+'</div></div><p class="match-feedback">'+(matchState.matched.length===pairs.length?"أحسنت! أكملت المطابقة بنجاح.":matchState.left!==null&&matchState.right!==null&&matchState.left!==matchState.right?"ليست مطابقة، حاول مجدداً.":"اختر زوجاً صحيحاً للمتابعة.")+'</p></section>';
   }
 
   function renderSummary(item){
@@ -138,7 +159,7 @@
       if(mode==="assessment"&&(!Array.isArray(data.questions)||!data.questions.length))throw new Error("لم تُنشأ أسئلة صالحة؛ أعد المحاولة");
       if(mode!=="assessment"&&(!Array.isArray(data.sections)||!data.sections.length))throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
       const item={id:id(),title:data.title||title,subject,level,source:content,sourceUrl,mode,data,created:new Date().toISOString()};
-      db.experiences.push(item);save();succeeded=true;
+      db.experiences.push(item);save();succeeded=true;experienceSceneStep=0;matchState={left:null,right:null,matched:[]};
       if(page==="experience"||page==="experience-result"){
         currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
       }
@@ -153,6 +174,17 @@
 
   window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
   window.goExperienceStep=function(i){experienceStep=i;render()};
+  window.goExperienceSceneStep=function(i){experienceSceneStep=i;render()};
+  window.selectMatchCard=function(side,index){
+    if(matchState.matched.includes(index))return;
+    matchState[side]=index;
+    if(matchState.left!==null&&matchState.right!==null){
+      if(matchState.left===matchState.right)matchState.matched=[...matchState.matched,matchState.left];
+      else {const failed={...matchState};matchState={...matchState,left:null,right:null};render();setTimeout(()=>{matchState=failed;matchState.left=null;matchState.right=null;render()},650);return}
+      matchState.left=null;matchState.right=null;
+    }
+    render();
+  };
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
   window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";if(document.getElementById("expUrl"))document.getElementById("expUrl").value=x.sourceUrl||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
   window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
