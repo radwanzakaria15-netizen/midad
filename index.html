@@ -176,6 +176,24 @@ body{background:#edf2ec;color:#26372e}
 .revision-question{background:#fbfdf9;border-color:#e1e9e0}.revision-option{background:#f3f7f1;border-color:#dfe8df}.revision-option.chosen{background:#e4eee2;border-color:#91b096}.revision-flash{background:linear-gradient(145deg,#fbfdf9,#e8f0e6)}.revision-stat{background:#edf4eb}
 @media(max-width:760px){.topbar{background:rgba(251,253,249,.97)}.mobile-nav{background:rgba(251,253,249,.98);border-color:#dfe8df;box-shadow:0 -5px 20px rgba(35,65,47,.07)}.mobile-nav button.active{color:#315640}.hero{border-radius:19px}}
 
+
+/* Interactive touch, transitions and refined icon system */
+.ni svg,.mobile-nav svg,.stat-icon svg,.item-symbol svg,.qico svg{width:21px;height:21px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav .ni{display:grid;place-items:center;width:25px;height:25px;flex:none}
+.mobile-nav button span{display:grid;place-items:center;width:27px;height:25px}
+.mobile-nav button span svg{width:22px;height:22px}
+.stat-icon,.item-symbol{display:grid;place-items:center}
+.stat-icon svg{width:23px;height:23px}.item-symbol svg{width:25px;height:25px}
+.nav button,.mobile-nav button,.btn,.quick,.item-card,.icon-btn,.tool,.experience-mode,.quiz-option,.match-card{transform-origin:center;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease,background .2s ease,color .2s ease}
+.nav button:active,.mobile-nav button:active,.btn:active,.quick:active,.icon-btn:active,.tool:active,.experience-mode:active,.quiz-option:active,.match-card:active{transform:scale(.96)}
+.nav button:active svg,.mobile-nav button:active svg{transform:scale(.88);transition:transform .18s}
+#main.page-enter{animation:midadPageEnter .34s cubic-bezier(.2,.7,.2,1)}
+@keyframes midadPageEnter{from{opacity:0;transform:translateY(11px) scale(.995);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+button.tap-feedback{animation:midadTap .24s ease}
+@keyframes midadTap{0%{transform:scale(1)}45%{transform:scale(.94)}100%{transform:scale(1)}}
+.sound-toggle{font-size:17px}
+.experience-mode.loading{opacity:.72;filter:saturate(.75);cursor:wait}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 <link rel="stylesheet" href="./experience.css">\n<link rel="stylesheet" href="./games.css">\n<link rel="stylesheet" href="./attendance.css">
 </head>
@@ -185,7 +203,7 @@ body{background:#edf2ec;color:#26372e}
  <div class="brand"><div class="brand-mark">م</div><div><div class="brand-name">مِداد</div><div class="brand-tag">مساحة الأستاذ لصناعة التعلّم</div></div></div>
  <div class="top-actions">
   <label class="search">⌕ <input id="globalSearch" placeholder="ابحث في المنصة..." oninput="globalSearch(this.value)"></label>
-  <button class="icon-btn" title="تصدير نسخة احتياطية" onclick="exportData()">⇩</button>
+  <button class="icon-btn sound-toggle" id="soundToggle" type="button" title="تشغيل أو إيقاف أصوات الواجهة" aria-label="أصوات الواجهة">♫</button><button class="icon-btn" title="تصدير نسخة احتياطية" onclick="exportData()">⇩</button>
   <div class="profile"><div class="avatar" id="avatar">أ</div><div><b id="teacherName">الأستاذ</b><small>مساحة العمل الشخصية</small></div></div>
  </div>
 </header>
@@ -193,34 +211,34 @@ body{background:#edf2ec;color:#26372e}
 <aside class="sidebar">
  <div class="side-heading"><b>مساحة العمل</b><p>كل أدواتك التعليمية في مكان واحد. أنشئ، نظّم، واحتفظ بمواردك.</p></div>
  <div class="nav-label">الرئيسية</div><nav class="nav">
-  <button class="active" data-page="home" onclick="navigate('home')"><span class="ni">⌂</span>لوحة التحكم</button>
+  <button class="active" data-page="home" onclick="navigate('home')"><span class="ni"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg></span>لوحة التحكم</button>
  </nav>
  <div class="nav-label">إدارة القسم</div><nav class="nav">
-  <button data-page="classes" onclick="navigate('classes')"><span class="ni">▦</span>الأقسام</button>
-  <button data-page="students" onclick="navigate('students')"><span class="ni">♙</span>التلاميذ</button>
-  <button data-page="attendance" onclick="navigate('attendance')"><span class="ni">✓</span>الحضور والغياب</button>
+  <button data-page="classes" onclick="navigate('classes')"><span class="ni"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="3" y="13" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/></svg></span>الأقسام</button>
+  <button data-page="students" onclick="navigate('students')"><span class="ni"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20z"/><path d="M16 5.5a3 3 0 0 1 0 5.8M18 14a4 4 0 0 1 3 4v2"/></svg></span>التلاميذ</button>
+  <button data-page="attendance" onclick="navigate('attendance')"><span class="ni"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="3"/><path d="M8 2v4m8-4v4M8 11h8m-8 4 2 2 4-4"/></svg></span>الحضور والغياب</button>
  </nav>
  <div class="nav-label">صناعة المحتوى</div><nav class="nav">
-  <button data-page="lessons" onclick="navigate('lessons')"><span class="ni">▤</span>الدروس والتحضير</button>
-  <button data-page="activities" onclick="navigate('activities')"><span class="ni">◇</span>الأنشطة التفاعلية</button>
-  <button data-page="assessments" onclick="navigate('assessments')"><span class="ni">▧</span>التقويم والاختبارات</button>
-  <button data-page="library" onclick="navigate('library')"><span class="ni">▣</span>مكتبة الموارد</button>
+  <button data-page="lessons" onclick="navigate('lessons')"><span class="ni"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h8"/></svg></span>الدروس والتحضير</button>
+  <button data-page="activities" onclick="navigate('activities')"><span class="ni"><svg viewBox="0 0 24 24"><path d="m12 3 2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9z"/></svg></span>الأنشطة التفاعلية</button>
+  <button data-page="assessments" onclick="navigate('assessments')"><span class="ni"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>التقويم والاختبارات</button>
+  <button data-page="library" onclick="navigate('library')"><span class="ni"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v17H6a2 2 0 0 1-2-2z"/><path d="M4 17a2 2 0 0 1 2-2h13M8 7h7"/></svg></span>مكتبة الموارد</button>
  </nav>
  <div class="nav-label">المتابعة</div><nav class="nav">
-  <button data-page="reports" onclick="navigate('reports')"><span class="ni">▥</span>التقارير</button>
-  <button data-page="settings" onclick="navigate('settings')"><span class="ni">⚙</span>الإعدادات</button>
+  <button data-page="reports" onclick="navigate('reports')"><span class="ni"><svg viewBox="0 0 24 24"><path d="M4 20V10m5 10V4m5 16v-7m5 7V7"/></svg></span>التقارير</button>
+  <button data-page="settings" onclick="navigate('settings')"><span class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8z"/></svg></span>الإعدادات</button>
  </nav>
  <div class="side-bottom">مِداد — إصدار الأستاذ<br>بياناتك محفوظة على هذا الجهاز.</div>
 </aside>
 <main id="main"></main>
 </div>
 <nav class="mobile-nav">
- <button class="active" data-page="home" onclick="navigate('home')"><span>⌂</span>الرئيسية</button>
- <button data-page="classes" onclick="navigate('classes')"><span>▦</span>الأقسام</button>
- <button data-page="lessons" onclick="navigate('lessons')"><span>▤</span>الدروس</button>
- <button data-page="activities" onclick="navigate('activities')"><span>◇</span>الأنشطة</button>
- <button data-page="students" onclick="navigate('students')"><span>♙</span>التلاميذ</button>
- <button data-page="settings" onclick="navigate('settings')"><span>⚙</span>المزيد</button>
+ <button class="active" data-page="home" onclick="navigate('home')"><span><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg></span>الرئيسية</button>
+ <button data-page="classes" onclick="navigate('classes')"><span><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="3" y="13" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/></svg></span>الأقسام</button>
+ <button data-page="lessons" onclick="navigate('lessons')"><span><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 12h8M8 16h8"/></svg></span>الدروس</button>
+ <button data-page="activities" onclick="navigate('activities')"><span><svg viewBox="0 0 24 24"><path d="m12 3 2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9z"/></svg></span>الأنشطة</button>
+ <button data-page="students" onclick="navigate('students')"><span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5a6 6 0 0 1 12 0V20z"/><path d="M16 5.5a3 3 0 0 1 0 5.8M18 14a4 4 0 0 1 3 4v2"/></svg></span>التلاميذ</button>
+ <button data-page="settings" onclick="navigate('settings')"><span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8z"/></svg></span>المزيد</button>
 </nav>
 </div>
 <div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()"><section class="modal" id="modal"></section></div>
@@ -240,13 +258,14 @@ function count(arr){return arr.length.toLocaleString('ar-DZ')}
 function pageHead(kicker,title,desc,action){return '<div class="page-head"><div><div class="eyebrow">'+kicker+'</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+(action||'')+'</div>'}
 function empty(title,desc,button){return '<div class="empty"><strong>'+title+'</strong><span>'+desc+'</span>'+(button?'<div style="margin-top:14px">'+button+'</div>':'')+'</div>'}
 function btn(label,fn,kind='primary',icon=''){return '<button class="btn '+kind+'" onclick="'+fn+'">'+(icon?icon+' ':'')+label+'</button>'}
+function uiIcon(name){return ({classes:"<svg viewBox=\"0 0 24 24\"><rect x=\"3\" y=\"4\" width=\"8\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"4\" width=\"8\" height=\"7\" rx=\"2\"/><rect x=\"3\" y=\"13\" width=\"8\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"7\" rx=\"2\"/></svg>",students:"<svg viewBox=\"0 0 24 24\"><circle cx=\"9\" cy=\"8\" r=\"3.2\"/><path d=\"M3 20v-1.5a6 6 0 0 1 12 0V20z\"/><path d=\"M16 5.5a3 3 0 0 1 0 5.8M18 14a4 4 0 0 1 3 4v2\"/></svg>",lessons:"<svg viewBox=\"0 0 24 24\"><path d=\"M5 3h10l4 4v14H5z\"/><path d=\"M14 3v5h5M8 12h8M8 16h8\"/></svg>",activities:"<svg viewBox=\"0 0 24 24\"><path d=\"m12 3 2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z\"/><path d=\"m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9z\"/></svg>"}[name]||'')}
 function navigate(p){page=p;document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render();window.scrollTo({top:0,behavior:'smooth'})}
 function render(){let m=document.getElementById('main');let views={home:homePage,classes:classesPage,students:studentsPage,attendance:attendancePage,lessons:lessonsPage,activities:activitiesPage,assessments:assessmentsPage,library:libraryPage,reports:reportsPage,settings:settingsPage};m.innerHTML=(views[page]||homePage)();document.getElementById('teacherName').textContent=db.teacher||'الأستاذ';document.getElementById('avatar').textContent=(db.teacher||'أ').trim().charAt(0);if(page==='attendance')fillAttendanceClass()}
 function homePage(){let today=db.attendance.filter(x=>x.date===dateNow());let recent=db.lessons.slice().sort((a,b)=>(b.created||'').localeCompare(a.created||'')).slice(0,4);return pageHead('مساحة العمل','مرحباً، '+esc(db.teacher||'أستاذنا')+'','ابدأ يومك بتنظيم القسم وصناعة تجربة تعلم أكثر فاعلية.',btn('＋ تحضير درس',"openLesson()"))+
 '<section class="hero"><div class="hero-copy"><div class="hero-kicker">مِداد — أدواتك، أفكارك، وأثرُك</div><h2>حوّل أفكارك التعليمية<br>إلى موارد جاهزة للتعلّم.</h2><p>خطّط دروسك، أنشئ أنشطة، تابع تلاميذك، واجمع أعمالك في مساحة واحدة مرتبة.</p><div class="hero-actions">'+btn('توليد نشاط بالذكاء الاصطناعي',"navigate(\'activities\')")+' '+btn('إنشاء قسم',"openClass()",'secondary')+' '+btn('إضافة تلميذ',"openStudent()",'secondary')+'</div></div><div class="hero-art"><div class="paper-stack"><span></span><span></span><span>مِداد</span></div></div></section>'+
-'<section class="stats"><div class="stat"><div class="stat-icon">▦</div><div><strong>'+count(db.classes)+'</strong><small>الأقسام المسجلة</small></div></div><div class="stat"><div class="stat-icon">♙</div><div><strong>'+count(db.students)+'</strong><small>التلاميذ</small></div></div><div class="stat"><div class="stat-icon">▤</div><div><strong>'+count(db.lessons)+'</strong><small>الدروس المحضّرة</small></div></div><div class="stat"><div class="stat-icon">✓</div><div><strong>'+count(today)+'</strong><small>سجلات حضور اليوم</small></div></div></section>'+
+'<section class="stats"><div class="stat"><div class="stat-icon">'+uiIcon('classes')+'</div><div><strong>'+count(db.classes)+'</strong><small>الأقسام المسجلة</small></div></div><div class="stat"><div class="stat-icon">'+uiIcon('students')+'</div><div><strong>'+count(db.students)+'</strong><small>التلاميذ</small></div></div><div class="stat"><div class="stat-icon">'+uiIcon('lessons')+'</div><div><strong>'+count(db.lessons)+'</strong><small>الدروس المحضّرة</small></div></div><div class="stat"><div class="stat-icon">✓</div><div><strong>'+count(today)+'</strong><small>سجلات حضور اليوم</small></div></div></section>'+
 '<section class="grid-two"><div class="card"><div class="section-title"><div><h3>ابدأ عملاً جديداً</h3><p>اختصارات لأكثر المهام استخداماً</p></div></div><div class="quick-grid"><button class="quick" onclick="openLesson()"><div class="qico">▤</div><b>تحضير درس</b><small>اكتب الأهداف والشرح وارسم</small></button><button class="quick" onclick="openActivity()"><div class="qico">◇</div><b>نشاط تفاعلي</b><small>العب لعبة تعليمية تفاعلية</small></button><button class="quick" onclick="openAssessment()"><div class="qico">▧</div><b>تقويم قصير</b><small>جهّز أسئلة التقييم</small></button><button class="quick" onclick="navigate(\'attendance\')"><div class="qico">✓</div><b>تسجيل الحضور</b><small>تابع حضور تلاميذك</small></button></div></div><div class="card"><div class="section-title"><div><h3>آخر الدروس</h3><p>أحدث ما أضفته إلى مكتبتك</p></div><button class="text-link" onclick="navigate(\'lessons\')">عرض الكل ←</button></div>'+(recent.length?'<div class="list">'+recent.map(x=>'<div class="list-row"><div class="list-main"><div class="mini-icon">▤</div><div><b>'+esc(x.title)+'</b><small>'+esc(x.subject||'دون مادة')+' · '+dateLabel(x.created)+'</small></div></div><button class="text-link" onclick="viewLesson(\''+x.id+'\')">فتح</button></div>').join('')+'</div>':empty('لم تحضّر أي درس بعد','ابدأ بإنشاء أول درس ليظهر هنا.',btn('تحضير أول درس',"openLesson()",'secondary')) )+'</div></section><div class="footer-note">مِداد — مساحة عمل تعليمية مستقلة</div>'}
-function classesPage(){return pageHead('إدارة القسم','الأقسام التعليمية','أنشئ أقسامك ونظّم قوائم التلاميذ حسب المستوى.',btn('＋ إنشاء قسم',"openClass()"))+'<div class="toolbar"><input class="field-search" id="classFilter" placeholder="ابحث عن قسم..." oninput="filterCards(\'classCards\',this.value)"></div><div class="cards" id="classCards">'+(db.classes.length?db.classes.map(c=>'<article class="item-card" data-search="'+esc((c.name+' '+c.level+' '+c.year).toLowerCase())+'"><div class="item-top"><div class="item-symbol">▦</div><span class="pill">'+esc(c.level||'قسم')+'</span></div><h3>'+esc(c.name)+'</h3><p>'+esc(c.year||db.year)+' · '+esc(c.stage||'')+'</p><div class="item-meta"><span class="pill green">'+count(db.students.filter(s=>s.classId===c.id))+' تلميذ</span><span class="pill">'+esc(c.capacity||'—')+' مقعد متوقع</span></div><div class="item-actions">'+btn('قائمة التلاميذ',"classStudents('"+c.id+"')",'light small')+btn('تعديل',"editClass('"+c.id+"')",'secondary small')+btn('حذف',"deleteItem('classes','"+c.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد أقسام بعد','أنشئ قسماً لتبدأ في تسجيل التلاميذ وتنظيم الدروس.',btn('إنشاء أول قسم',"openClass()")) )+'</div>'}
+function classesPage(){return pageHead('إدارة القسم','الأقسام التعليمية','أنشئ أقسامك ونظّم قوائم التلاميذ حسب المستوى.',btn('＋ إنشاء قسم',"openClass()"))+'<div class="toolbar"><input class="field-search" id="classFilter" placeholder="ابحث عن قسم..." oninput="filterCards(\'classCards\',this.value)"></div><div class="cards" id="classCards">'+(db.classes.length?db.classes.map(c=>'<article class="item-card" data-search="'+esc((c.name+' '+c.level+' '+c.year).toLowerCase())+'"><div class="item-top"><div class="item-symbol">'+uiIcon('classes')+'</div><span class="pill">'+esc(c.level||'قسم')+'</span></div><h3>'+esc(c.name)+'</h3><p>'+esc(c.year||db.year)+' · '+esc(c.stage||'')+'</p><div class="item-meta"><span class="pill green">'+count(db.students.filter(s=>s.classId===c.id))+' تلميذ</span><span class="pill">'+esc(c.capacity||'—')+' مقعد متوقع</span></div><div class="item-actions">'+btn('قائمة التلاميذ',"classStudents('"+c.id+"')",'light small')+btn('تعديل',"editClass('"+c.id+"')",'secondary small')+btn('حذف',"deleteItem('classes','"+c.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد أقسام بعد','أنشئ قسماً لتبدأ في تسجيل التلاميذ وتنظيم الدروس.',btn('إنشاء أول قسم',"openClass()")) )+'</div>'}
 function studentsPage(){return pageHead('إدارة القسم','التلاميذ','سجّل بيانات التلاميذ واربط كل تلميذ بقسمه.',btn('＋ إضافة تلميذ',"openStudent()"))+'<div class="toolbar"><input class="field-search" id="studentFilter" placeholder="ابحث بالاسم..." oninput="filterRows(this.value)"><select class="filter" id="studentClassFilter" onchange="filterRows(document.getElementById(\'studentFilter\').value)"><option value="">كل الأقسام</option>'+db.classes.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('')+'</select></div><div class="table-wrap"><table><thead><tr><th>التلميذ</th><th>القسم</th><th>رقم/معرّف</th><th>ملاحظات</th><th>إجراء</th></tr></thead><tbody id="studentRows">'+(db.students.length?db.students.map(s=>studentRow(s)).join(''):'<tr><td colspan="5">'+empty('لا يوجد تلاميذ مسجلون','أضف التلاميذ يدوياً أو أنشئ قسماً أولاً.',btn('إضافة تلميذ',"openStudent()",'secondary'))+'</td></tr>')+'</tbody></table></div>'}
 function studentRow(s){let c=db.classes.find(x=>x.id===s.classId);return '<tr data-search="'+esc((s.name+' '+(c?c.name:'')+' '+s.number).toLowerCase())+'" data-class="'+esc(s.classId||'')+'"><td class="student-name">'+esc(s.name)+'</td><td>'+esc(c?c.name:'غير محدد')+'</td><td>'+esc(s.number||'—')+'</td><td>'+esc(s.notes||'—')+'</td><td><button class="text-link" onclick="editStudent(\''+s.id+'\')">تعديل</button> <button class="text-link" style="color:#a35f57" onclick="deleteItem(\'students\',\''+s.id+'\')">حذف</button></td></tr>'}
 function attendancePage(){let cls=db.classes[0]?.id||'';return pageHead('متابعة التلاميذ','الحضور والغياب','سجّل حالة التلاميذ لكل يوم واحتفظ بسجل قابل للمراجعة.')+'<div class="card"><div class="toolbar"><select class="filter" id="attClass" onchange="fillAttendanceClass()"><option value="">اختر القسم</option>'+db.classes.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('')+'</select><input class="filter" type="date" id="attDate" value="'+dateNow()+'"><button class="btn primary" onclick="saveAttendance()">حفظ سجل اليوم</button></div><div id="attendanceList">'+(db.classes.length?'اختر القسم لعرض القائمة.':empty('أنشئ قسماً أولاً','تحتاج إلى قسم وتلاميذ قبل تسجيل الحضور.'))+'</div></div><div class="card" style="margin-top:16px"><div class="section-title"><h3>السجلات السابقة</h3><span class="pill">'+count(db.attendance)+' سجل</span></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>القسم</th><th>الحالة</th></tr></thead><tbody>'+(db.attendance.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(a=>{let s=db.students.find(x=>x.id===a.studentId),c=db.classes.find(x=>x.id===a.classId);return '<tr><td>'+dateLabel(a.date)+'</td><td>'+esc(s?s.name:'تلميذ محذوف')+'</td><td>'+esc(c?c.name:'—')+'</td><td><span class="status '+(a.status==='غائب'?'absent':'')+'">'+esc(a.status)+'</span></td></tr>'}).join('')||'<tr><td colspan="4" class="muted">لا توجد سجلات سابقة.</td></tr>')+'</tbody></table></div></div>'}
@@ -405,4 +424,5 @@ render();
 <script src="./games.js"></script>
 <script src="./attendance.js"></script>
 <script src="./revision.js"></script>
+<script src="./ui-effects.js"></script>
 </body></html>
