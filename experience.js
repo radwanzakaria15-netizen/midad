@@ -107,8 +107,9 @@
     cards.forEach(b=>{b.disabled=true;b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ الإنشاء...</span>"});
     if(window.midadTaskStart)window.midadTaskStart(taskId,"جارٍ إنشاء التجربة التعليمية في الخلفية");
     let succeeded=false,failureMessage="تعذّر إكمال التجربة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.";
+    const controller=new AbortController();const requestTimer=setTimeout(()=>controller.abort(),90000);
     try{
-      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
+      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
       const raw=await response.text();let payload={};
       try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
@@ -120,8 +121,9 @@
         currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
       }
       toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
-    }catch(e){failureMessage=e.message||failureMessage;toast(failureMessage)}
+    }catch(e){failureMessage=e.name==="AbortError"?"انتهت مهلة إنشاء التجربة بعد 90 ثانية. تحقق من نشر Worker ومفتاح Gemini ثم أعد المحاولة.":(e.message||failureMessage);toast(failureMessage)}
     finally{
+      clearTimeout(requestTimer);
       cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});
       if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage);
     }
