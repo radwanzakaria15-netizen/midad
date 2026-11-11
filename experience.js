@@ -173,7 +173,7 @@
     }
   };
 
-  window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
+  window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
   window.goExperienceStep=function(i){experienceStep=i;render()};
   window.goExperienceSceneStep=function(i){experienceSceneStep=i;render()};
   window.selectMatchCard=function(side,index){
