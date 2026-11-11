@@ -4,7 +4,7 @@ const MODEL = "gemini-3.5-flash-lite";
 function cors(origin) {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
@@ -22,9 +22,10 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
-    if (origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
+    if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
+    if (request.method === "GET") return json({ ok: true, service: "Midad Gemini Worker", model: MODEL, keyConfigured: !!env.GEMINI_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
-    if (!env.GEMINI_API_KEY) return json({ error: "لم يُضبط مفتاح Gemini السري في إعدادات الخادم." }, 503, origin);
+    if (!env.GEMINI_API_KEY) return json({ error: "لم يُضبط مفتاح Gemini السري في إعدادات الخادم. أضفه في Cloudflare Worker Secrets باسم GEMINI_API_KEY." }, 503, origin);
 
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
@@ -82,7 +83,7 @@ export default {
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 850 : kind === "revision" ? 2600 : 1000 }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 1400 : kind === "revision" ? 2600 : 1000 }
         })
       });
       const result = await upstream.json();
@@ -135,8 +136,9 @@ export default {
         parsed.duration = 10;
       }
       return json({ result: parsed }, 200, origin);
-    } catch {
-      return json({ error: "تعذر الاتصال بخدمة Gemini حالياً." }, 502, origin);
+    } catch (error) {
+      const detail = clean(error && error.message ? error.message : "خطأ غير معروف", 300);
+      return json({ error: "تعذر الاتصال بخدمة Gemini: " + detail }, 502, origin);
     }
   }
 };
