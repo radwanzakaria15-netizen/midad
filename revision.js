@@ -40,7 +40,7 @@ if(!d.questions.length)throw Error("صيغة الأسئلة التي أعاده�
 }
 window.revisionGenerate=async function(){
 const title=$("revTitle")?.value.trim(),source=$("revSource")?.value.trim()||"",subject=$("revSubject")?.value.trim()||"",level=$("revLevel")?.value.trim()||"",count=Number($("revCount")?.value||10),mcq=$("revMCQ")?.checked,tf=$("revTF")?.checked,cards=$("revCards")?.checked,matching=$("revMatching")?.checked;
-if(!title||source.length<80){toast("أدخل عنوان الدرس ونصاً لا يقل عن 80 حرفاً.");return}if(!mcq&&!tf&&!cards){toast("اختر نوعاً واحداً على الأقل.");return}
+if(!title||source.length<80){toast("أدخل عنوان الدرس ونصاً لا يقل عن 80 حرفاً.");return}if(!mcq&&!tf&&!cards&&!matching){toast("اختر نوعاً واحداً على الأقل.");return}
 const button=document.querySelector("#main button[onclick='revisionGenerate()']"),notice=$("revNotice");if(button){button.disabled=true;button.textContent="جارٍ إعداد المراجعة..."}if(notice)notice.textContent="يجري تحليل الدرس ومحاولة إنشاء الأسئلة...";
 try{
 let data,endpoint=db?.aiEndpoint||"";
