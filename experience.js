@@ -127,6 +127,7 @@
   function renderSummary(item){
     const d=item.data||{};
     return '<section class="summary-sheet"><div class="summary-heading"><span>خلاصة الدرس</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+
+      renderVisual(d.visual)+
       '<div class="summary-grid">'+arr(d.sections).map((s,i)=>'<article class="summary-point"><span>'+(i+1)+'</span><h3>'+safe(s.heading)+'</h3><p>'+safe(s.body)+'</p>'+(s.example?'<small>مثال: '+safe(s.example)+'</small>':"")+'</article>').join("")+'</div>'+
       (arr(d.keyTerms).length?'<section class="key-terms"><h3>كلمات مفتاحية</h3><div>'+arr(d.keyTerms).map(k=>'<article><b>'+safe(k.term)+'</b><p>'+safe(k.definition)+'</p></article>').join("")+'</div></section>':"")+
       (arr(d.sections).length?'<section class="mind-map"><h3>خريطة الأفكار</h3><div class="mind-root">'+safe(d.title||item.title)+'</div><div class="mind-branches">'+arr(d.sections).map(s=>'<span>'+safe(s.heading)+'</span>').join("")+'</div></section>':"")+
