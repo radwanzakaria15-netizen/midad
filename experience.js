@@ -54,13 +54,13 @@
     if(status)status.textContent="جارٍ تحميل الدفاتر...";
     try{
       const data=await notebookApi("/notebook/list");
-      const items=arr(data.notebooks||data.items);
+      const allItems=arr(data.notebooks||data.items); const items=allItems.filter(n=>/^مِداد\s*[-–—]/.test(String(n.display_name||n.displayName||"").trim()));
       const select=document.getElementById("midadNotebookSelect");
       if(!select) return;
       select.innerHTML='<option value="">اختر دفتراً</option>'+items.map(n=>'<option value="'+safe(n.name)+'">'+safe(n.display_name||n.displayName||n.name)+'</option>').join("");
       let saved="";try{saved=sessionStorage.getItem(notebookChoiceKey)||""}catch(_){}
       if(saved&&items.some(n=>n.name===saved))select.value=saved;
-      if(status)status.textContent=items.length?"تم تحميل "+items.length+" دفتر. اختر الدفتر المطلوب.":"لا توجد دفاتر بعد؛ أنشئ دفترًا جديدًا.";
+      if(status)status.textContent=items.length?"تم تحميل "+items.length+" دفترًا خاصًا بمِداد.":"لا توجد دفاتر أنشأتها مِداد بعد؛ أنشئ دفترًا من هنا.";
     }catch(e){if(status)status.textContent=e.message;else toast(e.message)}
   };
   window.midadCreateNotebook=async function(){
