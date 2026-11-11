@@ -82,7 +82,7 @@
   window.midadSendNotebookSource=async function(){
     const status=document.getElementById("midadNotebookStatus");
     const notebookName=document.getElementById("midadNotebookSelect")?.value||"";
-    const title=document.getElementById("expTitle")?.value.trim()||"مصدر من مِداد";
+    const title="مصدر من مِداد";
     const type=document.getElementById("expSourceType")?.value||"text";
     const content=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)?.trim()||"";
     const sourceUrl=type==="video"?document.getElementById("expUrl")?.value.trim()||"":"";
@@ -125,13 +125,12 @@
 
   function featurePage(){
     return pageHead("استوديو التعلم الذكي","حوّل مصادرك إلى محتوى تعليمي إبداعي","اختر نوع المصدر أولاً، ثم أضف محتواه واختر التجربة المطلوبة.")+
-      notebookPanel()+
       '<section class="card experience-input"><div class="form-grid">'+
       '<div class="form-field full"><label for="expSourceType">المصدر</label><select id="expSourceType" onchange="midadExperienceSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
       '<div class="form-field full" id="expTextSource"><label for="expSource">نص الدرس</label><textarea id="expSource" rows="7" maxlength="18000" placeholder="الصق نص الدرس هنا..."></textarea></div>'+
       '<div class="form-field full" id="expVideoSource" style="display:none"><label for="expUrl">رابط YouTube</label><input id="expUrl" type="url" placeholder="https://www.youtube.com/..."><label for="expVideoTranscript" style="margin-top:10px">تفريغ الكلام أو نص الفيديو</label><textarea id="expVideoTranscript" rows="6" maxlength="18000" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يتيح استخراج الكلام تلقائياً."></textarea></div>'+
       '<div class="form-field full" id="expFileSource" style="display:none"><label for="expFile">اختر ملفاً نصياً</label><input id="expFile" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown" onchange="midadReadExperienceFile(this)"><small class="muted">القراءة المباشرة متاحة لملفات TXT وMD وCSV وJSON. حوّل PDF أو Word إلى نص قبل رفعه.</small><textarea id="expFileText" rows="6" maxlength="18000" placeholder="سيظهر النص المستخرج من الملف هنا..." style="margin-top:10px"></textarea></div>'+
-      '<p class="muted full" id="expSourceHint">سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.</p></div></section>'+
+      '<p class="muted full" id="expSourceHint">سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.</p></div></section>'+notebookPanel()+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
       '<button class="experience-mode summary-mode" onclick="generateExperience(\'slides\')"><span class="experience-icon">▤</span><b>الملخص الإبداعي</b><small>'+modeDescriptions.slides+'</small><span class="mode-action">إنشاء الشرائح ←</span></button>'+
