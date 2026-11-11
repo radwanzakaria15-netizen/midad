@@ -307,6 +307,7 @@ export default {
         if (!parsed.questions.length) return json({ error: "الأسئلة المولدة غير مكتملة أو لا تحتوي إجابات صالحة." }, 502, origin);
         parsed.flashcards = Array.isArray(parsed.flashcards) ? parsed.flashcards.slice(0, 10).map(c => ({ front: clean(c.front || c.question, 350), back: clean(c.back || c.answer, 500), topic: clean(c.topic || "مراجعة", 120) })).filter(c => c.front && c.back) : [];
         parsed.matchPairs = Array.isArray(parsed.matchPairs) ? parsed.matchPairs.slice(0, 8).map(p => ({ left: clean(p.left,180), right: clean(p.right,220) })).filter(p => p.left && p.right) : [];
+        parsed.fillBlanks = Array.isArray(parsed.fillBlanks) ? parsed.fillBlanks.slice(0, 8).map(x => ({ sentence: clean(x.sentence || x.question, 400), answer: clean(x.answer, 180), explanation: clean(x.explanation, 400) })).filter(x => x.sentence && x.answer) : [];
         parsed.topics = Array.isArray(parsed.topics) ? parsed.topics.slice(0, 12).map(t => ({ name: clean(t.name || t.topic, 120), questionCount: Math.max(0, Number(t.questionCount) || 0) })).filter(t => t.name) : [];
         parsed.title = clean(parsed.title || lessonTitle, 180);
       } else {
