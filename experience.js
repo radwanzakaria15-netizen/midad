@@ -4,11 +4,11 @@
   let experienceStep = 0;
   let experienceAnswers = {};
 
-  const modeNames = {board:"السبورة التعليمية",interactive:"الشرح التفاعلي",summary:"الملخص الممتع"};
+  const modeNames = {board:"الشرح التفاعلي المتحرّك",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",assessment:"التقويم والأنشطة التفاعلية"};
   const modeDescriptions = {
-    board:"شرح متدرّج كأن الأستاذ يكتب على السبورة، مع أمثلة ومخططات.",
-    interactive:"مقاطع قصيرة وأسئلة وأنشطة مع تصحيح فوري.",
-    summary:"أهم الأفكار والكلمات المفتاحية في صورة مبسطة ومخطط ذهني."
+    board:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
+    interactive:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
+    summary:"ملخص بصري منظم بألوان وإطارات وخرائط ذهنية ورسوم توضيحية."
   };
   const safe = v => esc(v == null ? "" : String(v));
   const arr = v => Array.isArray(v) ? v : [];
@@ -17,16 +17,17 @@
     return pageHead("صناعة المحتوى بالذكاء الاصطناعي","حوّل درسك إلى تجربة تعليمية ممتعة",
       "أدخل عنوان الدرس أو الصق محتواه، ثم اختر طريقة تقديمه.")+
       '<section class="card experience-input"><div class="form-grid">'+
-      '<div class="form-field full"><label for="expTitle">عنوان الدرس</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
+      '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
       '<div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" placeholder="العلوم"></div>'+
       '<div class="form-field"><label for="expLevel">الطور والمستوى</label><input id="expLevel" placeholder="السنة الرابعة ابتدائي"></div>'+
       '<div class="form-field full"><label for="expSource">محتوى الدرس (اختياري لكنه يساعد على دقة النتائج)</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو التعريفات والقواعد والأمثلة هنا..."></textarea><small class="muted">عند إدخال المحتوى، سيعتمد الذكاء الاصطناعي عليه ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
-      '<button class="experience-mode board-mode" onclick="generateExperience(\'board\')"><span class="experience-icon">▤</span><b>السبورة التعليمية</b><small>'+modeDescriptions.board+'</small><span class="mode-action">إنشاء الشرح ←</span></button>'+
-      '<button class="experience-mode interactive-mode" onclick="generateExperience(\'interactive\')"><span class="experience-icon">◇</span><b>الشرح التفاعلي</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء التجربة ←</span></button>'+
-      '<button class="experience-mode summary-mode" onclick="generateExperience(\'summary\')"><span class="experience-icon">▧</span><b>الملخص الممتع</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
+      '<button class="experience-mode summary-mode" onclick="generateExperience(\'summary\')"><span class="experience-icon">▧</span><b>الملخّص الإبداعي</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
+      '<button class="experience-mode interactive-mode" onclick="generateExperience(\'interactive\')"><span class="experience-icon">◌</span><b>الشرح التفاعلي المتحرّك</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء المشهد ←</span></button>'+
+      '<button class="experience-mode assessment-mode" onclick="generateExperience(\'assessment\')"><span class="experience-icon">✓</span><b>التقويم والأنشطة التفاعلية</b><small>اختبارات وامتحانات واختيار متعدد وصحيح أو خطأ وبطاقات وألعاب مطابقة.</small><span class="mode-action">إنشاء الأسئلة والألعاب ←</span></button>'+
       '</div>'+
+/div>'+
       '<section class="experience-saved"><div class="section-title"><div><h3>تجاربي المحفوظة</h3><p>يمكنك فتحها وتعديلها وإعادة استخدامها.</p></div></div>'+
       (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
       '</section>';
@@ -43,6 +44,7 @@
     let body="";
     if(item.mode==="board") body=renderBoard(item);
     else if(item.mode==="interactive") body=renderInteractive(item);
+    else if(item.mode==="assessment") body=renderAssessment(item);
     else body=renderSummary(item);
     return header+tools+'<div id="experience-result" class="experience-result">'+body+'</div>';
   }
@@ -84,6 +86,15 @@
       '</article>';
   }
 
+
+  function renderAssessment(item){
+    const d=item.data||{}, questions=arr(d.questions);
+    return '<section class="assessment-result"><div class="interactive-hero"><span>مركز التقويم الذكي</span><h2>'+safe(d.title||item.title)+'</h2><p>أجب عن الأسئلة ثم راجع التفسير التعليمي. يمكنك قلب بطاقات المراجعة.</p></div>'+
+      '<div class="assessment-tools"><span class="pill blue">'+questions.length+' أسئلة</span><span class="pill green">'+arr(d.flashcards).length+' بطاقات</span></div>'+
+      '<section class="quiz-area">'+questions.map((q,i)=>renderQuestion(q,i)).join("")+'</section>'+
+      (arr(d.flashcards).length?'<section class="flashcards-area"><h3>بطاقات المراجعة</h3><div class="flashcards-grid">'+arr(d.flashcards).map((f,i)=>'<button class="flashcard" onclick="this.classList.toggle(\'flipped\')"><span class="flashcard-front"><small>اقلب البطاقة · '+(i+1)+'</small><b>'+safe(f.front)+'</b></span><span class="flashcard-back"><small>الإجابة</small><b>'+safe(f.back)+'</b></span></button>').join("")+'</div></section>':"")+'</section>';
+  }
+
   function renderSummary(item){
     const d=item.data||{};
     return '<section class="summary-sheet"><div class="summary-heading"><span>خلاصة الدرس</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+
@@ -109,12 +120,14 @@
     let succeeded=false,failureMessage="تعذّر إكمال التجربة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.";
     const controller=new AbortController();const requestTimer=setTimeout(()=>controller.abort(),90000);
     try{
-      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
+      const requestKind=mode==="assessment"?"revision":"experience";
+      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:requestKind,outputType:requestKind,mode,lessonTitle:title,title,subject,level,content,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
       const raw=await response.text();let payload={};
       try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
       const data=payload.result||payload;
-      if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
+      if(mode==="assessment"&&(!Array.isArray(data.questions)||!data.questions.length))throw new Error("لم تُنشأ أسئلة صالحة؛ أعد المحاولة");
+      if(mode!=="assessment"&&(!Array.isArray(data.sections)||!data.sections.length))throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
       const item={id:id(),title:data.title||title,subject,level,source:content,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;
       if(page==="experience"||page==="experience-result"){
