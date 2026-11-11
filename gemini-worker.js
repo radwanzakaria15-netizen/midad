@@ -91,9 +91,10 @@ export default {
         prompt: "consent",
         state
       }).toString();
-      return Response.redirect(authUrl.toString(), 302, {
-        headers: { "Set-Cookie": "midad_oauth_state=" + state + "; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=600" }
-      });
+      return new Response(null, { status: 302, headers: {
+        "Location": authUrl.toString(),
+        "Set-Cookie": "midad_oauth_state=" + state + "; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=600"
+      } });
     }
 
     if (path === "/oauth/google/callback" && request.method === "GET") {
@@ -124,9 +125,11 @@ export default {
       await env.MIDAD_GOOGLE_SESSIONS.put("google:refresh_token", tokenData.refresh_token);
       const ticket = randomToken(24);
       await env.MIDAD_GOOGLE_SESSIONS.put("oauth_ticket:" + ticket, "1", { expirationTtl: 180 });
-      return Response.redirect(APP_URL + "?google_ticket=" + ticket, 302, {
-        headers: { "Set-Cookie": "midad_oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=0", "Cache-Control": "no-store" }
-      });
+      return new Response(null, { status: 302, headers: {
+        "Location": APP_URL + "?google_ticket=" + ticket,
+        "Set-Cookie": "midad_oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=0",
+        "Cache-Control": "no-store"
+      } });
     }
 
     if (path === "/oauth/exchange" && request.method === "POST") {
