@@ -43,7 +43,7 @@ window.generateTaskFromSource=async function(e){
  if(!db?.aiEndpoint){toast("لم يُضبط رابط الذكاء الاصطناعي في إعدادات مِداد.");return}
  if(button){button.disabled=true;button.textContent="يجري إنشاء المهمة..."}
  try{
-  const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"task",taskCategory,category,content,sourceUrl,sourceType:type})});
+  const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"task",taskCategory:category,category,content,sourceUrl,sourceType:type})});
   const payload=await response.json();if(!response.ok)throw Error(payload.error||"تعذر إنشاء المهمة.");
   const result=payload.result||payload,details=[result.instructions||"",...(Array.isArray(result.sections)?result.sections.map(x=>(x.heading||"")+(x.content?"\n"+x.content:"")):[]),...(Array.isArray(result.questions)?result.questions.map((q,i)=>(i+1)+". "+(q.question||q.q||"")+(q.answer?"\nالإجابة النموذجية: "+q.answer:"")):[])].filter(Boolean).join("\n\n");
   const item={id:taskId(),kind:"task",category,title:result.title||category,details,notes:"المصدر: "+(type==="video"?"رابط YouTube وتفريغ الفيديو":type==="file"?"ملف نصي":"نص")+(sourceUrl?"\n"+sourceUrl:""),sourceType:type,sourceUrl,generatedData:result,created:new Date().toISOString()};
