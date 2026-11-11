@@ -6,11 +6,15 @@
   let experienceSceneStep = 0;
   let matchState = { left: null, right: null, matched: [] };
 
-  const modeNames = {board:"الشرح التفاعلي المتحرّك",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",assessment:"التقويم والأنشطة التفاعلية"};
+  const modeNames = {board:"الشرح بالسبورة",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",slides:"الملخص الإبداعي — شرائح",video:"ملخص فيديو",audio:"الملخص الصوتي",chart:"المخطط البياني",assessment:"التقويم والمراجعة"};
   const modeDescriptions = {
     board:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
     interactive:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
-    summary:"ملخص بصري منظم بألوان وإطارات وخرائط ذهنية ورسوم توضيحية."
+    summary:"ملخص بصري منظم بألوان وإطارات وخرائط ذهنية ورسوم توضيحية.",
+    slides:"حوّل أفكار الدرس إلى مجموعة شرائح تعليمية مرتبة، مختصرة، وجاهزة للعرض.",
+    video:"أنشئ سيناريو ملخص فيديو بمشاهد متتابعة ونصوص موجزة وحركة تعليمية.",
+    audio:"أنشئ نص ملخص صوتي واضحاً ومتسلسلاً يمكن الاستماع إليه.",
+    chart:"استخرج المفاهيم والعلاقات وحوّلها إلى مخطط بياني أو مفاهيمي."
   };
   const safe = v => esc(v == null ? "" : String(v));
   const arr = v => Array.isArray(v) ? v : [];
@@ -27,9 +31,10 @@
       '<div class="form-field full"><label for="expSource">محتوى الدرس أو تفريغ الفيديو</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو محتوى الملف أو تفريغ الفيديو هنا..."></textarea><small class="muted">سيعتمد التوليد على المصدر الذي توفره ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
-      '<button class="experience-mode summary-mode" onclick="generateExperience(\'summary\')"><span class="experience-icon">▧</span><b>الملخّص الإبداعي</b><small>'+modeDescriptions.summary+'</small><span class="mode-action">إنشاء الملخص ←</span></button>'+
-      '<button class="experience-mode interactive-mode" onclick="generateExperience(\'interactive\')"><span class="experience-icon">◌</span><b>الشرح التفاعلي المتحرّك</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء المشهد ←</span></button>'+
-      '<button class="experience-mode assessment-mode" onclick="generateExperience(\'assessment\')"><span class="experience-icon">✓</span><b>التقويم والأنشطة التفاعلية</b><small>اختبارات وامتحانات واختيار متعدد وصحيح أو خطأ وبطاقات وألعاب مطابقة.</small><span class="mode-action">إنشاء الأسئلة والألعاب ←</span></button>'+
+      '<button class="experience-mode summary-mode" onclick="generateExperience(\'slides\')"><span class="experience-icon">▤</span><b>الملخص الإبداعي</b><small>'+modeDescriptions.slides+'</small><span class="mode-action">إنشاء الشرائح ←</span></button>'+
+      '<button class="experience-mode interactive-mode" onclick="generateExperience(\'video\')"><span class="experience-icon">▷</span><b>الشرح التفاعلي المتحرك</b><small>'+modeDescriptions.video+'</small><span class="mode-action">إنشاء سيناريو الفيديو ←</span></button>'+
+      '<button class="experience-mode" onclick="generateExperience(\'audio\')"><span class="experience-icon">♫</span><b>الملخص الصوتي</b><small>'+modeDescriptions.audio+'</small><span class="mode-action">إنشاء النص الصوتي ←</span></button>'+
+      '<button class="experience-mode" onclick="generateExperience(\'chart\')"><span class="experience-icon">⌁</span><b>المخطط البياني</b><small>'+modeDescriptions.chart+'</small><span class="mode-action">إنشاء المخطط ←</span></button>'+
       '</div>'+
       '<section class="experience-saved"><div class="section-title"><div><h3>تجاربي المحفوظة</h3><p>يمكنك فتحها وتعديلها وإعادة استخدامها.</p></div></div>'+
       (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
@@ -46,8 +51,10 @@
     const tools='<div class="experience-toolbar"><button class="btn secondary" onclick="editExperience(\''+item.id+'\')">تعديل المحتوى</button><button class="btn light" onclick="printExperience()">طباعة</button><button class="btn primary" onclick="saveExperienceNow()">حفظ التعديلات</button></div>';
     let body="";
     if(item.mode==="board") body=renderBoard(item);
-    else if(item.mode==="interactive") body=renderInteractive(item);
+    else if(item.mode==="interactive"||item.mode==="video") body=renderInteractive(item);
     else if(item.mode==="assessment") body=renderAssessment(item);
+    else if(item.mode==="audio") body=renderAudioSummary(item);
+    else if(item.mode==="chart") body=renderChartSummary(item);
     else body=renderSummary(item);
     return header+tools+'<div id="experience-result" class="experience-result">'+body+'</div>';
   }
@@ -127,6 +134,22 @@
     const rightOrder=pairs.map((_,i)=>i).reverse();
     window.__midadMatchedPairs=matchState.matched.slice();
     return '<section class="matching-game"><div class="matching-head"><div><span>لعبة تفاعلية</span><h3>صل كل عنصر بما يناسبه</h3><p>اختر بطاقة من العمود الأول ثم البطاقة المطابقة من العمود الثاني.</p></div><b>'+matchState.matched.length+' / '+pairs.length+'</b></div><div class="matching-board"><svg class="matching-lines" aria-hidden="true"></svg><div class="matching-columns"><div>'+pairs.map((p,i)=>'<button data-match-side="left" data-match-index="'+i+'" class="match-card '+(matchState.matched.includes(i)?"matched":matchState.left===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'left\','+i+')">'+safe(p.left)+'</button>').join("")+'</div><div>'+rightOrder.map(i=>'<button data-match-side="right" data-match-index="'+i+'" class="match-card '+(matchState.matched.includes(i)?"matched":matchState.right===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'right\','+i+')">'+safe(pairs[i].right)+'</button>').join("")+'</div></div></div><p class="match-feedback">'+(matchState.matched.length===pairs.length?"أحسنت! أكملت المطابقة بنجاح.":matchState.left!==null&&matchState.right!==null&&matchState.left!==matchState.right?"ليست مطابقة، حاول مجدداً.":"اختر زوجاً صحيحاً للمتابعة.")+'</p></section>';
+  }
+
+  function renderAudioSummary(item){
+    const d=item.data||{};
+    const narration=[d.intro,...arr(d.sections).map(s=>(s.heading||"")+". "+(s.body||"")), ...arr(d.keyTerms).map(k=>(k.term||"")+". "+(k.definition||""))].filter(Boolean).join("\n\n");
+    return '<section class="summary-sheet"><div class="summary-heading"><span>ملخص صوتي</span><h2>'+safe(d.title||item.title)+'</h2><p>نص تعليمي مُعدّ للاستماع. يمكن تشغيله بصوت الجهاز.</p></div><article class="summary-point"><p>'+safe(narration)+'</p><button class="btn primary" onclick="speakExperienceSummary(this)">استمع إلى الملخص</button><button class="btn light" onclick="window.speechSynthesis&&window.speechSynthesis.cancel()">إيقاف الصوت</button></article></section>';
+  }
+  window.speakExperienceSummary=function(button){
+    const text=button.closest(".summary-sheet")?.querySelector(".summary-point p")?.textContent||"";
+    if(!text||!window.speechSynthesis){toast("ميزة القراءة الصوتية غير متاحة في هذا المتصفح");return}
+    window.speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(text);utterance.lang="ar-SA";utterance.rate=.9;window.speechSynthesis.speak(utterance);
+  };
+  function renderChartSummary(item){
+    const d=item.data||{};
+    return '<section class="summary-sheet"><div class="summary-heading"><span>المخطط البياني</span><h2>'+safe(d.title||item.title)+'</h2><p>'+safe(d.intro||"")+'</p></div>'+renderVisual(d.visual)+'<div class="summary-grid">'+arr(d.sections).map((s,i)=>'<article class="summary-point"><span>'+(i+1)+'</span><h3>'+safe(s.heading)+'</h3><p>'+safe(s.body)+'</p></article>').join("")+'</div></section>';
   }
 
   function renderSummary(item){
