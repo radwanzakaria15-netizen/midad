@@ -29,7 +29,7 @@
     return '<section class="card" id="midadNotebookPanel" style="margin:16px 0;border-color:#d9e5d9;background:#fbfdfb">'+
       '<div class="section-title"><div><h3>دفتر NotebookLM</h3><p>اربط حساب Google لإرسال مصادر الدرس إلى دفاترك.</p></div><span class="pill '+(connected?'green':'blue')+'">'+(connected?'الحساب مرتبط':'غير مرتبط')+'</span></div>'+
       (connected?
-        '<div class="form-grid"><div class="form-field full"><label for="midadNotebookSelect">اختر الدفتر</label><select id="midadNotebookSelect"><option value="">اضغط «عرض الدفاتر» أولاً</option></select></div><div class="form-field full"><label for="midadNotebookName">اسم دفتر جديد (اختياري)</label><input id="midadNotebookName" maxlength="180" placeholder="مِداد - '+safe(document.getElementById("expTitle")?.value||"دفتر الدرس")+'"></div></div>'+
+        '<div class="form-grid"><div class="form-field full"><label for="midadNotebookSelect">اختر الدفتر</label><select id="midadNotebookSelect"><option value="">اضغط «عرض الدفاتر» أولاً</option></select></div><div class="form-field full"><label for="midadNotebookName">اسم دفتر جديد (اختياري)</label><input id="midadNotebookName" maxlength="180" placeholder="مِداد - '+safe("دفتر الدرس")+'"></div></div>'+
         '<div class="toolbar" style="margin-top:12px"><button class="btn light small" onclick="midadLoadNotebooks()">عرض الدفاتر</button><button class="btn secondary small" onclick="midadCreateNotebook()">إنشاء دفتر</button><button class="btn primary small" onclick="midadSendNotebookSource()">إرسال الدرس إلى الدفتر</button><button class="btn light small" onclick="midadDisconnectNotebook()">فصل الجلسة</button></div>'+
         '<p class="muted" id="midadNotebookStatus" aria-live="polite">اختر دفتراً ثم أرسل نص الدرس أو رابطه.</p>'
         :'<p class="muted" style="line-height:1.8">يُستخدم حساب Google الذي توافق على ربطه. بعد الربط يمكنك اختيار دفتر أو إنشاء دفتر جديد وإرسال محتوى الدرس إليه.</p><button class="btn primary" onclick="midadConnectNotebook()">ربط حساب Google</button>')+
@@ -66,7 +66,7 @@
   window.midadCreateNotebook=async function(){
     const status=document.getElementById("midadNotebookStatus");
     const input=document.getElementById("midadNotebookName");
-    const title=document.getElementById("expTitle")?.value.trim()||"الدرس";
+    const title="الدرس";
     const displayName=input?.value.trim()||("مِداد - "+title);
     if(status)status.textContent="جارٍ إنشاء الدفتر...";
     try{
@@ -83,8 +83,9 @@
     const status=document.getElementById("midadNotebookStatus");
     const notebookName=document.getElementById("midadNotebookSelect")?.value||"";
     const title=document.getElementById("expTitle")?.value.trim()||"مصدر من مِداد";
-    const content=document.getElementById("expSource")?.value.trim()||"";
-    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
+    const type=document.getElementById("expSourceType")?.value||"text";
+    const content=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)?.trim()||"";
+    const sourceUrl=type==="video"?document.getElementById("expUrl")?.value.trim()||"":"";
     if(!notebookName){if(status)status.textContent="اختر دفتراً أو أنشئ دفترًا جديدًا أولاً.";return}
     if(!content&&!sourceUrl){if(status)status.textContent="أضف نص الدرس أو رابط المصدر أولاً.";return}
     try{
@@ -123,16 +124,14 @@
   }
 
   function featurePage(){
-    return pageHead("استوديو التعلم الذكي","حوّل مصادر دروسك إلى محتوى تعليمي إبداعي",
-      "أدخل عنوان الدرس أو ارفع محتواه أو أضف رابط مصدر، ثم اختر ما تريد إنشاءه.")+
+    return pageHead("استوديو التعلم الذكي","حوّل مصادرك إلى محتوى تعليمي إبداعي","اختر نوع المصدر أولاً، ثم أضف محتواه واختر التجربة المطلوبة.")+
       notebookPanel()+
       '<section class="card experience-input"><div class="form-grid">'+
-      '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
-      '<div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" placeholder="العلوم"></div>'+
-      '<div class="form-field"><label for="expLevel">الطور والمستوى</label><input id="expLevel" placeholder="السنة الرابعة ابتدائي"></div>'+
-      '<div class="form-field full"><label for="expUrl">رابط فيديو أو مصدر تعليمي (اختياري)</label><input id="expUrl" type="url" placeholder="https://..."><small class="muted">أرفق نص الفيديو أو تفريغه أيضاً؛ لا يمكن استخراج كلام كل فيديو تلقائياً.</small></div>'+
-      '<div class="form-field full"><label for="expFile">رفع ملف الدرس النصي</label><input id="expFile" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown"><small class="muted">يدعم حالياً TXT وMD وCSV وJSON. لملفات PDF وWord الصق النص في الحقل أدناه.</small></div>'+
-      '<div class="form-field full"><label for="expSource">محتوى الدرس أو تفريغ الفيديو</label><textarea id="expSource" rows="6" maxlength="18000" placeholder="الصق نص الدرس أو محتوى الملف أو تفريغ الفيديو هنا..."></textarea><small class="muted">سيعتمد التوليد على المصدر الذي توفره ويحافظ على أفكاره الأساسية.</small></div></div></section>'+
+      '<div class="form-field full"><label for="expSourceType">المصدر</label><select id="expSourceType" onchange="midadExperienceSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
+      '<div class="form-field full" id="expTextSource"><label for="expSource">نص الدرس</label><textarea id="expSource" rows="7" maxlength="18000" placeholder="الصق نص الدرس هنا..."></textarea></div>'+
+      '<div class="form-field full" id="expVideoSource" style="display:none"><label for="expUrl">رابط YouTube</label><input id="expUrl" type="url" placeholder="https://www.youtube.com/..."><label for="expVideoTranscript" style="margin-top:10px">تفريغ الكلام أو نص الفيديو</label><textarea id="expVideoTranscript" rows="6" maxlength="18000" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يتيح استخراج الكلام تلقائياً."></textarea></div>'+
+      '<div class="form-field full" id="expFileSource" style="display:none"><label for="expFile">اختر ملفاً نصياً</label><input id="expFile" type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown" onchange="midadReadExperienceFile(this)"><small class="muted">القراءة المباشرة متاحة لملفات TXT وMD وCSV وJSON. حوّل PDF أو Word إلى نص قبل رفعه.</small><textarea id="expFileText" rows="6" maxlength="18000" placeholder="سيظهر النص المستخرج من الملف هنا..." style="margin-top:10px"></textarea></div>'+
+      '<p class="muted full" id="expSourceHint">سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.</p></div></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
       '<button class="experience-mode summary-mode" onclick="generateExperience(\'slides\')"><span class="experience-icon">▤</span><b>الملخص الإبداعي</b><small>'+modeDescriptions.slides+'</small><span class="mode-action">إنشاء الشرائح ←</span></button>'+
@@ -141,9 +140,18 @@
       '<button class="experience-mode" onclick="generateExperience(\'chart\')"><span class="experience-icon">⌁</span><b>المخطط البياني</b><small>'+modeDescriptions.chart+'</small><span class="mode-action">إنشاء المخطط ←</span></button>'+
       '</div>'+
       '<section class="experience-saved"><div class="section-title"><div><h3>تجاربي المحفوظة</h3><p>يمكنك فتحها وتعديلها وإعادة استخدامها.</p></div></div>'+
-      (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
-      '</section>';
+      (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+'</section>';
   }
+  window.midadExperienceSourceTypeChanged=function(){
+    const type=document.getElementById("expSourceType")?.value||"text";
+    ["expTextSource","expVideoSource","expFileSource"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none"});
+    const target=document.getElementById(type==="video"?"expVideoSource":type==="file"?"expFileSource":"expTextSource");if(target)target.style.display="";
+    const hint=document.getElementById("expSourceHint");if(hint)hint.textContent=type==="video"?"يلزم رابط YouTube مع تفريغ نصي؛ لا نستخرج صوت الفيديو تلقائياً حالياً.":type==="file"?"تُقرأ الملفات النصية المدعومة قبل إرسالها إلى الذكاء الاصطناعي.":"سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.";
+  };
+  window.midadReadExperienceFile=async function(input){
+    const file=input?.files?.[0],out=document.getElementById("expFileText");if(!file||!out)return;
+    try{if(file.size>2*1024*1024)throw new Error("حجم الملف يتجاوز 2 ميغابايت.");out.value=(await file.text()).slice(0,18000);toast("تم استخراج النص من الملف.");}catch(e){out.value="";toast(e.message||"تعذرت قراءة الملف.");}
+  };
 
   function resultPage(){
     const item=db.experiences.find(x=>x.id===currentExperienceId);
@@ -268,41 +276,29 @@
   }
 
   window.generateExperience=async function(mode){
-    const title=document.getElementById("expTitle")?.value.trim()||"";
-    const subject=document.getElementById("expSubject")?.value.trim()||"";
-    const level=document.getElementById("expLevel")?.value.trim()||"";
-    const content=document.getElementById("expSource")?.value.trim()||"";
-    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
-    if(!title){toast("اكتب عنوان الدرس أولاً");return}
+    const type=document.getElementById("expSourceType")?.value||"text";
+    const content=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)||"";
+    const sourceUrl=type==="video"?(document.getElementById("expUrl")?.value.trim()||""):"";
+    const title="المصدر التعليمي",subject="",level="";
+    if(content.trim().length<80){toast(type==="video"?"أدخل تفريغ الفيديو بما لا يقل عن 80 حرفاً.":"أدخل نصاً لا يقل عن 80 حرفاً.");return}
+    if(type==="video"&&!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)){toast("أدخل رابط YouTube صحيحاً يبدأ بـ HTTPS.");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
-    const taskId="experience-"+id();
-    const originPage=page;
-    const cards=[...document.querySelectorAll(".experience-mode")];
+    const taskId="experience-"+id(),cards=[...document.querySelectorAll(".experience-mode")];
     cards.forEach(b=>{b.disabled=true;b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ الإنشاء...</span>"});
     if(window.midadTaskStart)window.midadTaskStart(taskId,"جارٍ إنشاء التجربة التعليمية في الخلفية");
     let succeeded=false,failureMessage="تعذّر إكمال التجربة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.";
-    const controller=new AbortController();const requestTimer=setTimeout(()=>controller.abort(),90000);
+    const controller=new AbortController(),requestTimer=setTimeout(()=>controller.abort(),90000);
     try{
-      const requestKind=mode==="assessment"?"revision":"experience";
-      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:requestKind,outputType:requestKind,mode,lessonTitle:title,title,subject,level,content,sourceUrl,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
-      const raw=await response.text();let payload={};
-      try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
+      const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content,sourceUrl,sourceType:type,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
+      const raw=await response.text();let payload={};try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
-      const data=payload.result||payload;
-      if(mode==="assessment"&&(!Array.isArray(data.questions)||!data.questions.length))throw new Error("لم تُنشأ أسئلة صالحة؛ أعد المحاولة");
-      if(mode!=="assessment"&&(!Array.isArray(data.sections)||!data.sections.length))throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
-      const item={id:id(),title:data.title||title,subject,level,source:content,sourceUrl,mode,data,created:new Date().toISOString()};
+      const data=payload.result||payload;if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
+      const item={id:id(),title:data.title||"تجربة تعليمية",source:content,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;experienceSceneStep=0;matchState={left:null,right:null,matched:[]};
-      if(page==="experience"||page==="experience-result"){
-        currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
-      }
+      if(page==="experience"||page==="experience-result"){currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})}
       toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
     }catch(e){failureMessage=e.name==="AbortError"?"انتهت مهلة إنشاء التجربة بعد 90 ثانية. تحقق من نشر Worker ومفتاح Gemini ثم أعد المحاولة.":(e.message||failureMessage);toast(failureMessage)}
-    finally{
-      clearTimeout(requestTimer);
-      cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});
-      if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage);
-    }
+    finally{clearTimeout(requestTimer);cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage)}
   };
 
   window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
@@ -319,7 +315,7 @@
     render();
   };
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
-  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";if(document.getElementById("expUrl"))document.getElementById("expUrl").value=x.sourceUrl||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
+  window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{document.getElementById("expTitle").value=x.title||"";document.getElementById("expSubject").value=x.subject||"";document.getElementById("expLevel").value=x.level||"";document.getElementById("expSource").value=x.source||"";if(document.getElementById("expSourceType")){document.getElementById("expSourceType").value=x.sourceType||"text";midadExperienceSourceTypeChanged()}if(document.getElementById("expUrl"))document.getElementById("expUrl").value=x.sourceUrl||"";if(document.getElementById("expFileText"))document.getElementById("expFileText").value=x.source||"";if(document.getElementById("expVideoTranscript"))document.getElementById("expVideoTranscript").value=x.source||"";toast("أصبحت بيانات التجربة جاهزة لإعادة الاستخدام")},0)};
   window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
   window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;save();closeModal();render();toast("تم حفظ التعديلات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
   window.saveExperienceNow=function(){save();toast("تم حفظ التجربة في مساحة مِداد على هذا الجهاز")};
