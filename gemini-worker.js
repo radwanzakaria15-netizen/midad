@@ -36,8 +36,8 @@ function cookieValue(request, name) {
 function htmlPage(message) {
   return new Response("<!doctype html><html lang=\"ar\" dir=\"rtl\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>مِداد</title><body style=\"font-family:Arial,sans-serif;background:#f4f7f3;padding:32px;color:#26352d\"><main style=\"max-width:520px;margin:10vh auto;background:white;padding:28px;border-radius:18px;text-align:center\"><h2>مِداد</h2><p>" + message + "</p></main></body></html>", { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
-async function getGoogleAccessToken(env) {
-  const refreshToken = await env.MIDAD_GOOGLE_SESSIONS.get("google:refresh_token");
+async function getGoogleAccessToken(env, sessionToken) {
+  const refreshToken = await env.MIDAD_GOOGLE_SESSIONS.get("google:refresh_token:" + sessionToken);
   if (!refreshToken) throw new Error("لم يتم ربط حساب Google بعد.");
   const body = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -50,8 +50,8 @@ async function getGoogleAccessToken(env) {
   if (!response.ok || !data.access_token) throw new Error(data.error_description || data.error || "تعذر تحديث صلاحية Google.");
   return data.access_token;
 }
-async function notebookRequest(env, path, options = {}) {
-  const accessToken = await getGoogleAccessToken(env);
+async function notebookRequest(env, path, options = {}, sessionToken) {
+  const accessToken = await getGoogleAccessToken(env, sessionToken);
   if (!env.GOOGLE_CLOUD_PROJECT_ID) throw new Error("أضف معرّف مشروع Google Cloud في Cloudflare باسم GOOGLE_CLOUD_PROJECT_ID.");
   const response = await fetch(NOTEBOOK_API + path, {
     ...options,
@@ -64,8 +64,8 @@ async function notebookRequest(env, path, options = {}) {
 async function requireMidadSession(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token || !await env.MIDAD_GOOGLE_SESSIONS.get("session:" + token)) return false;
-  return true;
+  if (!token || !await env.MIDAD_GOOGLE_SESSIONS.get("session:" + token) || !await env.MIDAD_GOOGLE_SESSIONS.get("google:refresh_token:" + token)) return "";
+  return token;
 }
 
 export default {
@@ -123,9 +123,8 @@ export default {
       if (!tokenResponse.ok || !tokenData.refresh_token) {
         return htmlPage("لم يكتمل حفظ صلاحية Google. تأكد من إعدادات OAuth ثم أعد المحاولة من مِداد.");
       }
-      await env.MIDAD_GOOGLE_SESSIONS.put("google:refresh_token", tokenData.refresh_token);
       const ticket = randomToken(24);
-      await env.MIDAD_GOOGLE_SESSIONS.put("oauth_ticket:" + ticket, "1", { expirationTtl: 180 });
+      await env.MIDAD_GOOGLE_SESSIONS.put("oauth_ticket:" + ticket, tokenData.refresh_token, { expirationTtl: 180 });
       return new Response(null, { status: 302, headers: {
         "Location": APP_URL + "?google_ticket=" + ticket,
         "Set-Cookie": "midad_oauth_state=; HttpOnly; Secure; SameSite=Lax; Path=/oauth/google; Max-Age=0",
@@ -138,23 +137,26 @@ export default {
       let body;
       try { body = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
       const ticket = clean(body.ticket, 120);
-      if (!ticket || !await env.MIDAD_GOOGLE_SESSIONS.get("oauth_ticket:" + ticket)) return json({ error: "انتهت صلاحية رابط الربط. أعد الربط من مِداد." }, 401, origin);
+      const refreshToken = ticket ? await env.MIDAD_GOOGLE_SESSIONS.get("oauth_ticket:" + ticket) : null;
+      if (!refreshToken) return json({ error: "انتهت صلاحية رابط الربط. أعد الربط من مِداد." }, 401, origin);
       await env.MIDAD_GOOGLE_SESSIONS.delete("oauth_ticket:" + ticket);
       const session = randomToken(32);
       await env.MIDAD_GOOGLE_SESSIONS.put("session:" + session, "linked", { expirationTtl: 21600 });
+      await env.MIDAD_GOOGLE_SESSIONS.put("google:refresh_token:" + session, refreshToken, { expirationTtl: 21600 });
       return json({ ok: true, sessionToken: session }, 200, origin);
     }
 
     if (path.startsWith("/notebook/")) {
-      if (!env.MIDAD_GOOGLE_SESSIONS || !await requireMidadSession(request, env)) return json({ error: "اربط حساب Google من مِداد أولاً." }, 401, origin);
+      const sessionToken = await requireMidadSession(request, env);
+      if (!env.MIDAD_GOOGLE_SESSIONS || !sessionToken) return json({ error: "اربط حساب Google من مِداد أولاً." }, 401, origin);
       try {
         if (path === "/notebook/list" && request.method === "GET") {
-          return json(await notebookRequest(env, "/notebooks"), 200, origin);
+          return json(await notebookRequest(env, "/notebooks", {}, sessionToken), 200, origin);
         }
         if (path === "/notebook/create" && request.method === "POST") {
           const body = await request.json();
           const displayName = clean(body.displayName || "مِداد - دفتر الدرس", 180);
-          return json(await notebookRequest(env, "/notebooks", { method: "POST", body: JSON.stringify({ display_name: displayName }) }), 200, origin);
+          return json(await notebookRequest(env, "/notebooks", { method: "POST", body: JSON.stringify({ display_name: displayName }) }, sessionToken), 200, origin);
         }
         if (path === "/notebook/source" && request.method === "POST") {
           const body = await request.json();
@@ -172,13 +174,13 @@ export default {
           } else {
             return json({ error: "أرسل رابطاً عاماً أو نصاً للمصدر." }, 400, origin);
           }
-          return json(await notebookRequest(env, "/" + notebookName + "/sources", { method: "POST", body: JSON.stringify(source) }), 200, origin);
+          return json(await notebookRequest(env, "/" + notebookName + "/sources", { method: "POST", body: JSON.stringify(source) }, sessionToken), 200, origin);
         }
         if (path === "/notebook/source-status" && request.method === "POST") {
           const body = await request.json();
           const sourceName = clean(body.sourceName, 400);
           if (!/^notebooks\/[A-Za-z0-9_-]+\/sources\/[A-Za-z0-9_-]+$/.test(sourceName)) return json({ error: "معرّف المصدر غير صالح." }, 400, origin);
-          return json(await notebookRequest(env, "/" + sourceName), 200, origin);
+          return json(await notebookRequest(env, "/" + sourceName, {}, sessionToken), 200, origin);
         }
         return json({ error: "مسار Notebook غير معروف." }, 404, origin);
       } catch (error) {
