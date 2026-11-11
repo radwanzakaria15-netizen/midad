@@ -455,6 +455,86 @@ th,td{padding:13px 14px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
+
+/* MIDAD — Sage Studio visual refresh */
+:root{
+ --bg:#edf2ec;--paper:#fbfdf9;--white:#fff;--cream:#f5f8f3;
+ --latte:#dce8dc;--sand:#a8bea9;--cocoa:#456b55;--deep:#203f32;
+ --ink:#26372e;--muted:#7c8c80;--line:#dfe8df;
+ --green:#64866c;--blue:#718d99;--rose:#b47c73;
+ --shadow:0 16px 38px rgba(35,65,47,.08);
+ --shadow-sm:0 6px 20px rgba(35,65,47,.055);
+ --shadow-in:inset 0 1px 3px rgba(35,65,47,.06);
+}
+body{background:#edf2ec;color:#26372e}
+.topbar{background:rgba(251,253,249,.94);border-color:#dfe8df;box-shadow:0 3px 16px rgba(35,65,47,.035)}
+.brand-mark{background:#294b39;border-radius:15px}
+.brand-name,.page-head h1,.section-title h3,.side-heading b,.quick b,.item-card h3{color:#294b39}
+.brand-tag,.page-head p,.side-heading p,.stat small,.quick small{color:#819084}
+.search{background:#f2f6f0;border-color:#e2ebe1}
+.icon-btn{background:#f1f6f0;border-color:#e0e9df}
+.avatar{background:#dce8dc}
+.sidebar{background:#fbfdf9;color:#53675a;border-color:#dfe8df;box-shadow:0 8px 27px rgba(35,65,47,.045)}
+.side-heading,.side-bottom{border-color:#e5ece4}
+.side-heading p,.nav-label{color:#91a094}
+.nav button{color:#63766a}
+.nav button:hover{background:#f0f5ef;color:#294b39}
+.nav button.active{background:#e6efe5;color:#294b39;box-shadow:inset 3px 0 #64866c}
+.nav .ni{color:#66836d}
+.eyebrow{color:#66836d}
+.btn{border-radius:12px}
+.primary{background:#315640;color:#fff}
+.primary:hover{background:#244632}
+.secondary{background:#e4eee3;color:#315640}
+.light{background:#fff;border-color:#dfe8df;color:#4c6b55}
+.danger{background:#f8eae7;color:#985f55}
+.card,.item-card,.stat{background:#fbfdf9;border-color:#e1e9e0;box-shadow:var(--shadow-sm)}
+.card{border-radius:19px}
+.hero{background:linear-gradient(115deg,#294b39 0%,#3d6650 60%,#64836b 100%);border:0;border-radius:24px;box-shadow:0 15px 34px rgba(35,65,47,.15)}
+.hero-kicker,.revision-hero .eyebrow{color:#c8dfc8}
+.hero h2,.revision-hero h2{color:#fbfdf9}
+.hero p,.revision-hero p{color:#dce9dc}
+.hero .btn.primary{background:#f7fbf5;color:#294b39}
+.hero .btn.secondary{background:#ffffff18;border:1px solid #ffffff38;color:#fff}
+.hero:after{border-color:#ffffff24;box-shadow:0 0 0 28px #ffffff09,0 0 0 62px #ffffff06,0 0 0 98px #ffffff04}
+.paper-stack span{background:#f9fcf7;border-color:#d8e6d8;box-shadow:0 10px 25px #172b1d35}
+.paper-stack span:nth-child(2){background:#dce9dc}
+.paper-stack span:nth-child(3){background:#8ba88d;color:#fff}
+.stat{border-radius:17px}
+.stat-icon,.mini-icon,.item-symbol,.quick .qico{background:#e8f0e6;color:#4f7458;box-shadow:none}
+.quick{background:#fbfdf9;border-color:#e1e9e0;border-radius:16px}
+.quick:hover{background:#f4f8f2;border-color:#c9dac9;box-shadow:var(--shadow-sm)}
+.empty{background:#f8fbf6;border-color:#cbd9ca}
+.field-search,.filter{background:#fbfdf9;border-color:#dfe8df}
+.field-search:focus,.filter:focus{border-color:#83a28a;box-shadow:0 0 0 3px #83a28a1b}
+.item-card{border-radius:17px}
+.item-card:hover{box-shadow:var(--shadow)}
+.pill{background:#eaf1e8;color:#4d6d54}
+.table-wrap{border-color:#dfe8df}
+th{background:#edf4eb;color:#45664d}
+.modal{background:#fbfdf9;border-color:#dfe8df}
+.modal-backdrop{background:#20372b80}
+.close{background:#eaf1e8}
+.form-field input,.form-field select,.form-field textarea{background:#fff;border-color:#dfe8df}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:#83a28a;box-shadow:0 0 0 3px #83a28a20}
+.board-wrap,.board-side{border-radius:16px}
+.revision-hero{background:linear-gradient(115deg,#294b39,#64836b);border:0}
+.revision-panel{background:#fbfdf9;border-color:#e1e9e0;border-radius:18px}
+.revision-panel h3{color:#294b39}
+.revision-panel textarea,.revision-panel input,.revision-panel select{background:#fff;border-color:#dfe8df}
+.revision-question{background:#fbfdf9;border-color:#e1e9e0}
+.revision-option{background:#f3f7f1;border-color:#dfe8df}
+.revision-option.chosen{background:#e4eee2;border-color:#91b096}
+.revision-flash{background:linear-gradient(145deg,#fbfdf9,#e8f0e6)}
+.revision-stat{background:#edf4eb}
+.toast{border-radius:13px}
+@media(max-width:760px){
+ .topbar{background:rgba(251,253,249,.97)}
+ .mobile-nav{background:rgba(251,253,249,.98);border-color:#dfe8df;box-shadow:0 -5px 20px rgba(35,65,47,.07)}
+ .mobile-nav button.active{color:#315640}
+ .hero{border-radius:19px}
+}
+
 </style><h1>'+esc(l.title)+'</h1><p>'+esc(l.subject)+' — '+esc(l.level)+'</p><h3>الأهداف</h3><p>'+esc(l.objectives)+'</p><h3>التمهيد</h3><p>'+esc(l.intro)+'</p><h3>بناء التعلمات</h3><p>'+esc(l.content)+'</p><h3>التطبيق والتقويم</h3><p>'+esc(l.practice)+'</p>'+(l.drawing?'<h3>الملخص البصري</h3><img src="'+l.drawing+'">':'')+'</html>');w.document.close();w.print()}
 async function generateTeachingResource(kind){
  const title=document.getElementById('aiLessonTitle')?.value.trim();
