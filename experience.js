@@ -14,7 +14,7 @@
   const arr = v => Array.isArray(v) ? v : [];
 
   function featurePage(){
-    return pageHead("صناعة المحتوى بالذكاء الاصطناعي","حوّل درسك إلى تجربة تعليمية ممتعة",
+    return pageHead("استوديو التعلم الذكي","حوّل مصادر دروسك إلى محتوى تعليمي إبداعي",
       "أدخل عنوان الدرس أو ارفع محتواه أو أضف رابط مصدر، ثم اختر ما تريد إنشاءه.")+
       '<section class="card experience-input"><div class="form-grid">'+
       '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
