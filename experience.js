@@ -29,7 +29,6 @@
       '<button class="experience-mode interactive-mode" onclick="generateExperience(\'interactive\')"><span class="experience-icon">◌</span><b>الشرح التفاعلي المتحرّك</b><small>'+modeDescriptions.interactive+'</small><span class="mode-action">إنشاء المشهد ←</span></button>'+
       '<button class="experience-mode assessment-mode" onclick="generateExperience(\'assessment\')"><span class="experience-icon">✓</span><b>التقويم والأنشطة التفاعلية</b><small>اختبارات وامتحانات واختيار متعدد وصحيح أو خطأ وبطاقات وألعاب مطابقة.</small><span class="mode-action">إنشاء الأسئلة والألعاب ←</span></button>'+
       '</div>'+
-/div>'+
       '<section class="experience-saved"><div class="section-title"><div><h3>تجاربي المحفوظة</h3><p>يمكنك فتحها وتعديلها وإعادة استخدامها.</p></div></div>'+
       (db.experiences.length?'<div class="cards">'+db.experiences.slice().reverse().map(x=>'<article class="item-card"><div class="item-top"><span class="pill blue">'+safe(modeNames[x.mode]||"تجربة تعليمية")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(x.subject||"")+' · '+safe(x.level||"")+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح</button><button class="btn secondary small" onclick="reuseExperience(\''+safe(x.id)+'\')">إعادة الاستخدام</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لا توجد تجارب محفوظة بعد</strong><span>أنشئ أول تجربة تعليمية لتظهر هنا.</span></div>')+
       '</section>';
