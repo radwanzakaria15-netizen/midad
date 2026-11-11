@@ -101,8 +101,12 @@
     const content=document.getElementById("expSource")?.value.trim()||"";
     if(!title){toast("اكتب عنوان الدرس أولاً");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
-    const cards=document.querySelectorAll(".experience-mode");
-    cards.forEach(b=>{b.disabled=true;b.classList.add("loading");b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ إنشاء المحتوى...</span>"});
+    const taskId="experience-"+id();
+    const originPage=page;
+    const cards=[...document.querySelectorAll(".experience-mode")];
+    cards.forEach(b=>{b.disabled=true;b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ الإنشاء...</span>"});
+    if(window.midadTaskStart)window.midadTaskStart(taskId,"جارٍ إنشاء التجربة التعليمية في الخلفية");
+    let succeeded=false;
     try{
       const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content})});
       const payload=await response.json();
@@ -110,9 +114,16 @@
       const data=payload.result||payload;
       if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
       const item={id:id(),title:data.title||title,subject,level,source:content,mode,data,created:new Date().toISOString()};
-      db.experiences.push(item);save();currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});toast("تم إنشاء التجربة وحفظها");
+      db.experiences.push(item);save();succeeded=true;
+      if(page==="experience"||page==="experience-result"){
+        currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
+      }
+      toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
     }catch(e){toast(e.message||"حدث خطأ أثناء التوليد")}
-    finally{cards.forEach(b=>{b.disabled=false;b.classList.remove("loading");if(b.dataset.previousText)b.innerHTML=b.dataset.previousText})}
+    finally{
+      cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});
+      if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":"تعذّر إكمال التجربة");
+    }
   };
 
   window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
