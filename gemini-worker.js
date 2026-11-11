@@ -197,7 +197,7 @@ export default {
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
     const rawKind = clean(input.kind || input.outputType || input.type, 40).toLowerCase();
     const kind = ["experience","assessment","activity","revision","task"].includes(rawKind) ? rawKind : ["board","interactive","summary"].includes(rawKind) ? "experience" : "";
-    const lessonTitle = clean(input.lessonTitle || input.title || input.topic, 180);
+    const lessonTitle = clean(input.lessonTitle || input.title || input.topic || "المصدر التعليمي", 180);
     const subject = clean(input.subject, 100);
     const level = clean(input.level, 100);
     const difficulty = clean(input.difficulty || "سهل", 30);
@@ -212,6 +212,7 @@ export default {
     if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
+    if (kind === "task" && content.length < 80) return json({ error: "أرسل نصاً واضحاً لا يقل عن 80 حرفاً لإنشاء المهمة." }, 400, origin);
 
     let format, task;
     if (kind === "experience") {
