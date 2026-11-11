@@ -204,7 +204,8 @@ export default {
     const sourceUrl = clean(input.sourceUrl, 1000);
     const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
     const include = input.include && typeof input.include === "object" ? input.include : {};
-    const mode = ["board", "interactive", "summary"].includes(input.mode) ? input.mode : ["board", "interactive", "summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
+    const mode = ["board","interactive","summary","slides","video","audio","chart"].includes(input.mode) ? input.mode : ["board","interactive","summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
+    const generationMode = ({slides:"summary",video:"interactive",audio:"summary",chart:"summary"})[mode] || mode;
     if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
@@ -216,7 +217,7 @@ export default {
         board: "أنشئ شرح سبورة من 4 إلى 7 مراحل متسلسلة. في كل مرحلة عنوان وفكرة مشروحة ومثال تطبيقي، وأضف مخططاً صغيراً عند الحاجة. أعد سؤال تحقق واحداً أو اثنين. اكتب مادة الشرح الفعلية لا وصفاً لما يجب عرضه.",
         interactive: "أنشئ شرحاً تفاعلياً من 4 إلى 6 مراحل، مع 3 أسئلة تحقق. أنشئ scene عاماً لأي موضوع: 4 إلى 8 nodes تمثل الأشياء أو المفاهيم المهمة، لكل عنصر id وlabel وإحداثيات x وy بين 8 و92، وروابط edges باستخدام from وto. أضف steps مرتبة، ولكل مرحلة title وdescription يشرح ما يحدث. لا تستخدم رسماً مخصصاً لدورة الماء إلا إذا كان الموضوع دورة الماء. اجعل الرسم مفهوماً بصرياً وليس مجرد كلمات متفرقة.",
         summary: "أنشئ ملخصاً بصرياً إبداعياً من 4 إلى 7 أفكار أساسية، وأنشئ visual عاماً فيه 4 إلى 8 nodes موزعة حول الفكرة المركزية وروابط edges توضح العلاقات بينها. أضف 4 إلى 8 كلمات مفتاحية، وخريطة أفكار وأمثلة قصيرة. اجعل النصوص مختصرة جداً حتى يظهر الإنفوغراف واضحاً."
-      }[mode];
+      }[generationMode];
     } else if (kind === "revision") {
       format = '{"title":"عنوان المراجعة","questions":[{"type":"mcq","topic":"مفهوم محدد","question":"سؤال واضح","options":["أ","ب","ج","د"],"correctIndex":0,"explanation":"تفسير تعليمي موجز"}],"flashcards":[{"front":"سؤال البطاقة","back":"الإجابة الدقيقة","topic":"المفهوم"}],"matchPairs":[{"left":"مصطلح أو عنصر","right":"تعريفه أو ما يناسبه"}],"topics":[{"name":"اسم المفهوم","questionCount":2}]}';
       task = "أنشئ " + questionCount + " سؤالاً اعتماداً حصراً على نص الدرس. أنواع الأسئلة المطلوبة: " + [include.mcq ? "اختيار من متعدد" : "", include.tf ? "صح أو خطأ" : ""].filter(Boolean).join(" و ") + ". أنشئ بطاقات مراجعة: " + (include.flashcards ? "نعم، من 4 إلى 8 بطاقات" : "لا") + ". وأنشئ أيضاً 4 إلى 6 أزواج matchPairs للعبة مطابقة: left مصطلح أو سؤال قصير، وright تعريفه أو الإجابة المطابقة له. وزّع الأسئلة على المفاهيم الفعلية الواردة في الدرس، واجعل لكل سؤال topic محدداً، وخيارات غير ملتبسة، ومؤشراً صحيحاً يبدأ من الصفر، وتفسيراً يشرح سبب صحة الإجابة. أسئلة الصح والخطأ يجب أن تستخدم type=tf وخيارين هما صح وخطأ. لا تجعل كل الإجابات الصحيحة في الموضع نفسه. لا تضف معلومة غير موجودة في المصدر، ولا تنشئ أسئلة من جملة مبتورة أو غير مفهومة. إذا كان النص غير كافٍ لعدد الأسئلة المطلوب، أعد العدد الذي يمكن دعمه فقط.";
@@ -237,7 +238,7 @@ export default {
       content ? "المصدر الذي يجب تحليله والالتزام به:\n" + content : "لم يرفق الأستاذ نص الدرس. استخدم المعرفة الدراسية العامة الموثوقة، وتجنب الادعاءات الدقيقة غير المؤكدة.",
       sourceUrl ? "رابط المصدر الذي أرفقه الأستاذ (لا تدّع أنك شاهدت الفيديو أو استخرجت تفريغه ما لم يكن نصه مرفقاً): " + sourceUrl : "",
       content ? "تعليمات إلزامية: استخرج الأفكار الأساسية من المصدر، لا تحذف فكرة جوهرية، لا تضف معلومة تناقضه، ولا تختلق حقائق. إذا كان المصدر لا يكفي لإثبات معلومة فلا تقدمها كحقيقة." : "",
-      "النمط المطلوب: " + (mode === "board" ? "الشرح بالسبورة" : mode === "interactive" ? "الشرح التفاعلي" : mode === "summary" ? "الملخص الممتع" : kind),
+      "النمط المطلوب: " + (mode === "slides" ? "ملخص إبداعي على هيئة شرائح عرض متتابعة" : mode === "video" ? "سيناريو ملخص فيديو بمشاهد متتابعة" : mode === "audio" ? "نص ملخص صوتي مترابط صالح للقراءة بصوت عربي" : mode === "chart" ? "مخطط بياني أو مفاهيمي واضح" : generationMode === "board" ? "الشرح بالسبورة" : generationMode === "interactive" ? "الشرح التفاعلي" : "الملخص الممتع"),
       task,
       "أعد JSON صالحاً فقط، دون Markdown أو مقدمة أو نص خارجه، ووفق البنية التالية حرفياً:",
       format
