@@ -18,10 +18,114 @@
   };
   const safe = v => esc(v == null ? "" : String(v));
   const arr = v => Array.isArray(v) ? v : [];
+  const notebookSessionKey = "midad_notebook_session";
+  const notebookChoiceKey = "midad_notebook_choice";
+  const notebookBase = () => String(db.aiEndpoint || "").replace(/\/+$/, "");
+  const notebookToken = () => { try { return sessionStorage.getItem(notebookSessionKey) || ""; } catch (_) { return ""; } };
+  const notebookHeaders = () => ({ "Content-Type": "application/json", "Authorization": "Bearer " + notebookToken() });
+  function notebookPanel(){
+    const connected = !!notebookToken();
+    const chosen = (() => { try { return sessionStorage.getItem(notebookChoiceKey) || ""; } catch (_) { return ""; } })();
+    return '<section class="card" id="midadNotebookPanel" style="margin:16px 0;border-color:#d9e5d9;background:#fbfdfb">'+
+      '<div class="section-title"><div><h3>دفتر NotebookLM</h3><p>اربط حساب Google لإرسال مصادر الدرس إلى دفاترك.</p></div><span class="pill '+(connected?'green':'blue')+'">'+(connected?'الحساب مرتبط':'غير مرتبط')+'</span></div>'+
+      (connected?
+        '<div class="form-grid"><div class="form-field full"><label for="midadNotebookSelect">اختر الدفتر</label><select id="midadNotebookSelect"><option value="">اضغط «عرض الدفاتر» أولاً</option></select></div><div class="form-field full"><label for="midadNotebookName">اسم دفتر جديد (اختياري)</label><input id="midadNotebookName" maxlength="180" placeholder="مِداد - '+safe(document.getElementById("expTitle")?.value||"دفتر الدرس")+'"></div></div>'+
+        '<div class="toolbar" style="margin-top:12px"><button class="btn light small" onclick="midadLoadNotebooks()">عرض الدفاتر</button><button class="btn secondary small" onclick="midadCreateNotebook()">إنشاء دفتر</button><button class="btn primary small" onclick="midadSendNotebookSource()">إرسال الدرس إلى الدفتر</button><button class="btn light small" onclick="midadDisconnectNotebook()">فصل الجلسة</button></div>'+
+        '<p class="muted" id="midadNotebookStatus" aria-live="polite">اختر دفتراً ثم أرسل نص الدرس أو رابطه.</p>'
+        :'<p class="muted" style="line-height:1.8">يُستخدم حساب Google الذي توافق على ربطه. بعد الربط يمكنك اختيار دفتر أو إنشاء دفتر جديد وإرسال محتوى الدرس إليه.</p><button class="btn primary" onclick="midadConnectNotebook()">ربط حساب Google</button>')+
+      '</section>';
+  }
+  async function notebookApi(path, options={}){
+    const response=await fetch(notebookBase()+path,{...options,headers:{...notebookHeaders(),...(options.headers||{})}});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||("تعذر تنفيذ طلب NotebookLM ("+response.status+")."));
+    return data;
+  }
+  window.midadConnectNotebook=function(){
+    if(!notebookBase()){toast("رابط الخادم غير مضبوط.");return}
+    location.href=notebookBase()+"/oauth/google/start";
+  };
+  window.midadDisconnectNotebook=function(){
+    try{sessionStorage.removeItem(notebookSessionKey);sessionStorage.removeItem(notebookChoiceKey)}catch(_){}
+    render();toast("تم إنهاء جلسة الربط في هذا المتصفح.");
+  };
+  window.midadLoadNotebooks=async function(){
+    const status=document.getElementById("midadNotebookStatus");
+    if(status)status.textContent="جارٍ تحميل الدفاتر...";
+    try{
+      const data=await notebookApi("/notebook/list");
+      const items=arr(data.notebooks||data.items);
+      const select=document.getElementById("midadNotebookSelect");
+      if(!select) return;
+      select.innerHTML='<option value="">اختر دفتراً</option>'+items.map(n=>'<option value="'+safe(n.name)+'">'+safe(n.display_name||n.displayName||n.name)+'</option>').join("");
+      let saved="";try{saved=sessionStorage.getItem(notebookChoiceKey)||""}catch(_){}
+      if(saved&&items.some(n=>n.name===saved))select.value=saved;
+      if(status)status.textContent=items.length?"تم تحميل "+items.length+" دفتر. اختر الدفتر المطلوب.":"لا توجد دفاتر بعد؛ أنشئ دفترًا جديدًا.";
+    }catch(e){if(status)status.textContent=e.message;else toast(e.message)}
+  };
+  window.midadCreateNotebook=async function(){
+    const status=document.getElementById("midadNotebookStatus");
+    const input=document.getElementById("midadNotebookName");
+    const title=document.getElementById("expTitle")?.value.trim()||"الدرس";
+    const displayName=input?.value.trim()||("مِداد - "+title);
+    if(status)status.textContent="جارٍ إنشاء الدفتر...";
+    try{
+      const data=await notebookApi("/notebook/create",{method:"POST",body:JSON.stringify({displayName})});
+      const created=data.name||data.notebook?.name;
+      if(created){try{sessionStorage.setItem(notebookChoiceKey,created)}catch(_){}}
+      await window.midadLoadNotebooks();
+      const select=document.getElementById("midadNotebookSelect");
+      if(select&&created)select.value=created;
+      if(status)status.textContent="تم إنشاء الدفتر. يمكنك الآن إرسال مصدر الدرس.";
+    }catch(e){if(status)status.textContent=e.message;else toast(e.message)}
+  };
+  window.midadSendNotebookSource=async function(){
+    const status=document.getElementById("midadNotebookStatus");
+    const notebookName=document.getElementById("midadNotebookSelect")?.value||"";
+    const title=document.getElementById("expTitle")?.value.trim()||"مصدر من مِداد";
+    const content=document.getElementById("expSource")?.value.trim()||"";
+    const sourceUrl=document.getElementById("expUrl")?.value.trim()||"";
+    if(!notebookName){if(status)status.textContent="اختر دفتراً أو أنشئ دفترًا جديدًا أولاً.";return}
+    if(!content&&!sourceUrl){if(status)status.textContent="أضف نص الدرس أو رابط المصدر أولاً.";return}
+    try{
+      try{sessionStorage.setItem(notebookChoiceKey,notebookName)}catch(_){}
+      let sent=0;
+      if(content){
+        if(status)status.textContent="جارٍ إرسال نص الدرس إلى NotebookLM...";
+        await notebookApi("/notebook/source",{method:"POST",body:JSON.stringify({notebookName,displayName:title+" - نص الدرس",text:content,mimeType:"text/plain"})});
+        sent++;
+      }
+      if(sourceUrl){
+        if(status)status.textContent="جارٍ إرسال رابط المصدر...";
+        await notebookApi("/notebook/source",{method:"POST",body:JSON.stringify({notebookName,displayName:title+" - رابط المصدر",url:sourceUrl})});
+        sent++;
+      }
+      if(status)status.textContent="تم إرسال "+sent+" مصدر. قد يحتاج NotebookLM بعض الوقت لمعالجته داخل الدفتر.";
+      toast("تم إرسال المصدر إلى دفتر NotebookLM.");
+    }catch(e){if(status)status.textContent=e.message;else toast(e.message)}
+  };
+  async function handleNotebookOAuthReturn(){
+    const params=new URLSearchParams(location.search);
+    const ticket=params.get("google_ticket");
+    if(!ticket)return;
+    try{
+      const response=await fetch(notebookBase()+"/oauth/exchange",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ticket})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||!data.sessionToken)throw new Error(data.error||"تعذر إكمال ربط حساب Google.");
+      try{sessionStorage.setItem(notebookSessionKey,data.sessionToken)}catch(_){}
+      history.replaceState({},document.title,location.pathname+location.hash);
+      toast("تم ربط حساب Google بنجاح.");
+      if(page==="experience")render();
+    }catch(e){
+      history.replaceState({},document.title,location.pathname+location.hash);
+      toast(e.message||"تعذر إكمال الربط.");
+    }
+  }
 
   function featurePage(){
     return pageHead("استوديو التعلم الذكي","حوّل مصادر دروسك إلى محتوى تعليمي إبداعي",
       "أدخل عنوان الدرس أو ارفع محتواه أو أضف رابط مصدر، ثم اختر ما تريد إنشاءه.")+
+      notebookPanel()+
       '<section class="card experience-input"><div class="form-grid">'+
       '<div class="form-field full"><label for="expTitle">عنوان الدرس أو الموضوع</label><input id="expTitle" placeholder="مثال: دورة الماء في الطبيعة" maxlength="180"></div>'+
       '<div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" placeholder="العلوم"></div>'+
@@ -259,5 +363,6 @@
     }
   });
 
+  handleNotebookOAuthReturn();
   render();
 })();
