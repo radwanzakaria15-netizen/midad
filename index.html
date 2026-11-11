@@ -385,8 +385,9 @@ async function generateTeachingResource(kind){
  buttons.forEach(b=>{b.disabled=true;b.dataset.oldText=b.textContent;b.textContent='جارٍ التوليد...'});
  if(window.midadTaskStart)window.midadTaskStart(taskId,kind==='activity'?'جارٍ توليد النشاط التعليمي في الخلفية':'جارٍ إعداد التقويم في الخلفية');
  let succeeded=false,failureMessage='تعذّر إكمال المهمة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.';
+ const controller=new AbortController();const requestTimer=setTimeout(()=>controller.abort(),90000);
  try{
-  const response=await fetch(db.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,lessonTitle:title,subject,level,difficulty,activityType:type})});
+  const response=await fetch(db.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind,outputType:kind,lessonTitle:title,title,subject,level,difficulty,activityType:type})});
   const raw=await response.text();let payload={};
   try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error('استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.')}
   if(!response.ok)throw new Error(payload.error||('فشل الطلب برمز '+response.status));
@@ -401,8 +402,9 @@ async function generateTeachingResource(kind){
    save();if(page==='assessments')render();toast('اكتمل التقويم القصير وحُفظ، ويمكنك متابعة عملك');
   }
   succeeded=true;
- }catch(err){failureMessage=err.message||failureMessage;toast(failureMessage)}
+ }catch(err){failureMessage=err.name==='AbortError'?'انتهت مهلة توليد النشاط بعد 90 ثانية. تحقق من نشر Worker ومفتاح Gemini ثم أعد المحاولة.':(err.message||failureMessage);toast(failureMessage)}
  finally{
+  clearTimeout(requestTimer);
   buttons.forEach(b=>{b.disabled=false;b.textContent=b.dataset.oldText||b.textContent});
   if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?'اكتملت المهمة وحُفظت نتيجتها':failureMessage);
  }
