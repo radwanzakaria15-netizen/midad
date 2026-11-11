@@ -43,12 +43,12 @@ const title=$("revTitle")?.value.trim(),source=$("revSource")?.value.trim()||"",
 if(!title||source.length<80){toast("أدخل عنوان الدرس ونصاً لا يقل عن 80 حرفاً.");return}if(!mcq&&!tf&&!cards){toast("اختر نوعاً واحداً على الأقل.");return}
 const button=document.querySelector("#main button[onclick='revisionGenerate()']"),notice=$("revNotice");if(button){button.disabled=true;button.textContent="جارٍ إعداد المراجعة..."}if(notice)notice.textContent="يجري تحليل الدرس ومحاولة إنشاء الأسئلة...";
 try{
-let data,endpoint=window.db?.aiEndpoint||"";
+let data,endpoint=db?.aiEndpoint||"";
 if(!endpoint)throw Error("لم يُضبط رابط خدمة الذكاء الاصطناعي في إعدادات مِداد.");
 const res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"revision",lessonTitle:title,subject,level,content:source,questionCount:count,include:{mcq,tf,flashcards:cards},responseFormat:{questions:[{type:"mcq|tf",topic:"",question:"",options:[""],correctIndex:0,explanation:""}],flashcards:[{front:"",back:"",topic:""}]}})});
 const payload=await res.json();if(!res.ok)throw Error(payload.error||"خدمة الذكاء الاصطناعي لا تدعم إنشاء المراجعة بعد.");
 data=normalize(payload.result||payload);
-active={id:uid(),title,subject,level,source,data,created:new Date().toISOString()};answers={};flashIndex=0;flashSide=false;window.page="revision-result";render();
+active={id:uid(),title,subject,level,source,data,created:new Date().toISOString()};answers={};flashIndex=0;flashSide=false;page="revision-result";render();
 }catch(e){if(notice)notice.textContent="تعذر التوليد الذكي: "+e.message;toast(e.message||"تعذر إنشاء المراجعة")}
 finally{if(button){button.disabled=false;button.textContent="إنشاء المراجعة ←"}}
 };
@@ -67,12 +67,12 @@ window.revisionAnswer=(i,j)=>{if(answers[i]!==undefined)return;answers[i]=j;rend
 window.revisionFlip=()=>{flashSide=!flashSide;render()};
 window.revisionNextCard=()=>{flashIndex=(flashIndex+1)%active.data.flashcards.length;flashSide=false;render()};
 window.revisionPrevCard=()=>{flashIndex=(flashIndex-1+active.data.flashcards.length)%active.data.flashcards.length;flashSide=false;render()};
-window.revisionBack=()=>{window.page="revision";render()};
+window.revisionBack=()=>{page="revision";render()};
 window.revisionSaveAttempt=function(){if(!active)return;const qs=active.data.questions,correct=qs.filter((q,i)=>answers[i]===q.correctIndex).length,h=history();h.push({id:active.id,title:active.title,subject:active.subject,created:active.created,score:correct,total:qs.length,percent:Math.round(correct/qs.length*100),weak:qs.filter((q,i)=>answers[i]!==q.correctIndex).map(q=>q.topic)});try{localStorage.setItem("midad_revision_history",JSON.stringify(h.slice(-100)))}catch(_){}toast("حُفظت نتيجة المراجعة على هذا الجهاز.");revisionShowHistory()};
 window.revisionShowHistory=function(){const h=history().reverse(),body=h.length?h.map(x=>'<div class="revision-topic"><div><b>'+esc(x.title)+'</b><br><small class="muted">'+new Date(x.created).toLocaleDateString("ar-DZ")+' · '+esc(x.subject||"")+'</small></div><span class="revision-tag '+(x.percent>=70?"good":"")+'">'+x.percent+'% ('+x.score+'/'+x.total+')</span></div>').join(""):'<div class="empty"><strong>لا توجد محاولات محفوظة</strong><span>أكمل اختباراً واحفظ نتيجته لتظهر هنا.</span></div>';openModal("سجل المراجعة","نتائج محفوظة محلياً على هذا الجهاز.",body+'<div class="modal-actions"><button class="btn light" onclick="closeModal()">إغلاق</button></div>',true)};
 const oldRender=window.render,oldNavigate=window.navigate;
-window.render=function(){if(window.page==="revision"||window.page==="revision-result"){document.getElementById("main").innerHTML=window.page==="revision"?page():resultPage();document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page==="revision"));if($("teacherName"))$("teacherName").textContent=window.db?.teacher||"الأستاذ";if($("avatar"))$("avatar").textContent=(window.db?.teacher||"أ").trim().charAt(0)}else oldRender()};
-window.navigate=function(p){if(p==="revision"){window.page="revision";render();window.scrollTo({top:0,behavior:"smooth"})}else oldNavigate(p)};
+window.render=function(){if(page==="revision"||page==="revision-result"){document.getElementById("main").innerHTML=page==="revision"?page():resultPage();document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page==="revision"));if($("teacherName"))$("teacherName").textContent=db?.teacher||"الأستاذ";if($("avatar"))$("avatar").textContent=(db?.teacher||"أ").trim().charAt(0)}else oldRender()};
+window.navigate=function(p){if(p==="revision"){page="revision";render();window.scrollTo({top:0,behavior:"smooth"})}else oldNavigate(p)};
 function addNav(root,mobile){if(!root||root.querySelector('[data-page="revision"]'))return;const b=document.createElement("button");b.dataset.page="revision";b.innerHTML=mobile?'<span>▤</span>مراجعة':'<span class="ni">▤</span>مساعد المراجعة';b.onclick=()=>navigate("revision");if(mobile){const a=root.querySelector('[data-page="activities"]');root.insertBefore(b,a||null)}else{const a=root.querySelector('[data-page="assessments"]');(a||root.lastElementChild)?.insertAdjacentElement("afterend",b)}}
 addNav(document.querySelector(".sidebar .nav:nth-of-type(3)"),false);addNav(document.querySelector(".mobile-nav"),true);
 })();
