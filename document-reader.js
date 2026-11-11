@@ -27,7 +27,6 @@
       if(!pdfjs)throw new Error("تعذرت تهيئة قارئ PDF.");
       pdfjs.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
-      if(pdf.numPages>120)throw new Error("الملف يتجاوز الحد المسموح: 120 صفحة.");
       const pages=[];
       for(let p=1;p<=pdf.numPages;p++){
         const page=await pdf.getPage(p),content=await page.getTextContent();
