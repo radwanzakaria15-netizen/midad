@@ -18,13 +18,14 @@ window.openTask=function(category,edit){
  const old=edit?(db.activities||[]).find(x=>x.id===edit):null;
  const kind=category||old?.category||"واجب منزلي",a=old||{};
  if(!old){
-  openModal("إنشاء "+kind,"اختر نوع المهمة ثم مصدرها ليُنشئ الذكاء الاصطناعي المهمة.",'<form onsubmit="generateTaskFromSource(event)"><div class="form-grid">'+
+  openModal("إنشاء "+kind,"اختر نوع المهمة ثم مصدرها ليُنشئ الذكاء الاصطناعي المهمة.",'<form id="taskCreateForm"><div class="form-grid">'+
   '<div class="form-field full"><label>نوع المهمة</label><select name="category" id="taskCategory">'+taskKinds.map(k=>'<option '+(k===kind?'selected':'')+'>'+k+'</option>').join("")+'</select></div>'+
   '<div class="form-field full"><label>المصدر</label><select name="sourceType" id="taskSourceType" onchange="midadTaskSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
   '<div class="form-field full" id="taskTextSource"><label>نص الدرس</label><textarea id="taskSourceText" rows="7" placeholder="الصق نص الدرس هنا..."></textarea></div>'+
   '<div class="form-field full" id="taskVideoSource" style="display:none"><label>رابط YouTube</label><input id="taskSourceUrl" type="url" placeholder="https://www.youtube.com/..."><label style="margin-top:10px">تفريغ الفيديو أو نصه</label><textarea id="taskVideoTranscript" rows="6" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يستخرج الكلام تلقائياً."></textarea></div>'+
   '<div class="form-field full" id="taskFileSource" style="display:none"><label>رفع ملف نصي</label><input id="taskSourceFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="midadReadTaskFile(this)"><small class="muted">يدعم ملفات PDF وWord بصيغة DOCX، ويُستخرج النص منها تلقائياً.</small><textarea id="taskFileText" rows="6" placeholder="سيظهر النص المستخرج هنا..." style="margin-top:10px"></textarea></div>'+
   '<p class="muted full" id="taskSourceHint">أدخل نص المصدر ليبني الذكاء الاصطناعي المهمة عليه.</p></div><div class="modal-actions"><button type="submit" class="btn primary" id="taskGenerateButton">إنشاء المهمة بالذكاء الاصطناعي</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>');
+  const form=$("taskCreateForm");if(form)form.addEventListener("submit",window.generateTaskFromSource);
   return;
  }
  openModal("تعديل المهمة","يمكنك تعديل تفاصيل المهمة المحفوظة.",'<form onsubmit="saveTask(event,\''+(edit||'')+'\')"><div class="form-grid">'+
