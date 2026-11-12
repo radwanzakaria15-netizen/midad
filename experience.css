@@ -90,3 +90,5 @@
 .slide-deck-controls>span{color:#849187;font-size:11px;text-align:center}
 @media(max-width:560px){.lesson-slide{min-height:300px;padding:22px 17px}.lesson-slide-cover{min-height:320px}.slide-deck-controls>span{display:none}.slide-deck-controls{justify-content:space-between}}
 @media print{.slide-deck{border:0;background:#fff;padding:0}.slide-deck-top,.slide-deck-progress,.slide-deck-controls{display:none}.lesson-slide{box-shadow:none;min-height:90vh;page-break-after:always;border:0}}
+
+.lesson-slide-generated-image{display:block;width:min(100%,680px);max-height:330px;object-fit:contain;margin:22px auto 8px;border-radius:18px;background:#f1f5f0}.lesson-slide-image-pending{margin:18px auto;padding:20px;border:1px dashed #cbd8cc;border-radius:14px;color:#748477;text-align:center;font-size:14px}
