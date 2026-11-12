@@ -124,9 +124,9 @@
   }
 
   function featurePage(){
-    return pageHead("استوديو التعلم الذكي","حوّل مصادرك إلى محتوى تعليمي إبداعي","اختر نوع المصدر أولاً، ثم أضف محتواه واختر التجربة المطلوبة.")+
+    return pageHead("استوديو مِداد","محرك إنتاج تعليمي متكامل","أدخل بيانات الدرس ومصدره، وسيتولى مِداد إنشاء المحتوى والصور والملفات تلقائياً.")+
       '<section class="card experience-input"><div class="form-grid">'+
-      '<div class="form-field full"><label for="expSourceType">المصدر</label><select id="expSourceType" onchange="midadExperienceSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
+      '<div class="form-field"><label for="expLessonTitle">عنوان الدرس</label><input id="expLessonTitle" maxlength="180" placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label for="expSubject">المادة</label><input id="expSubject" maxlength="100" placeholder="مثال: العلوم"></div><div class="form-field"><label for="expLevel">المستوى الدراسي</label><input id="expLevel" maxlength="100" placeholder="مثال: السنة الخامسة ابتدائي"></div><div class="form-field full"><label for="expSourceType">المصدر</label><select id="expSourceType" onchange="midadExperienceSourceTypeChanged()"><option value="text">نص</option><option value="video">فيديو</option><option value="file">ملف</option></select></div>'+
       '<div class="form-field full" id="expTextSource"><label for="expSource">نص الدرس</label><textarea id="expSource" rows="7" maxlength="18000" placeholder="الصق نص الدرس هنا..."></textarea></div>'+
       '<div class="form-field full" id="expVideoSource" style="display:none"><label for="expUrl">رابط YouTube</label><input id="expUrl" type="url" placeholder="https://www.youtube.com/..."><label for="expVideoTranscript" style="margin-top:10px">تفريغ الكلام أو نص الفيديو</label><textarea id="expVideoTranscript" rows="6" maxlength="18000" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يتيح استخراج الكلام تلقائياً."></textarea></div>'+
       '<div class="form-field full" id="expFileSource" style="display:none"><label for="expFile">اختر ملفاً نصياً</label><input id="expFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="midadReadExperienceFile(this)"><small class="muted">يدعم ملفات PDF وWord بصيغة DOCX، ويُستخرج النص منها تلقائياً.</small><textarea id="expFileText" rows="6" maxlength="18000" placeholder="سيظهر النص المستخرج من الملف هنا..." style="margin-top:10px"></textarea></div>'+
@@ -426,7 +426,7 @@
     const type=document.getElementById("expSourceType")?.value||"text";
     const content=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)||"";
     const sourceUrl=type==="video"?(document.getElementById("expUrl")?.value.trim()||""):"";
-    const title="المصدر التعليمي",subject="",level="";
+    const title=(document.getElementById("expLessonTitle")?.value||"").trim()||"درس تعليمي",subject=(document.getElementById("expSubject")?.value||"").trim(),level=(document.getElementById("expLevel")?.value||"").trim();
     if(content.trim().length<80){toast(type==="video"?"أدخل تفريغ الفيديو بما لا يقل عن 80 حرفاً.":"أدخل نصاً لا يقل عن 80 حرفاً.");return}
     if(type==="video"&&!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)){toast("أدخل رابط YouTube صحيحاً يبدأ بـ HTTPS.");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
