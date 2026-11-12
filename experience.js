@@ -384,7 +384,7 @@
   }
 
   function lessonResultPage(item){
-    const header=pageHead("درس تعليمي","'+""+'",safe(item.level||""),'<button class="btn light" onclick="navigate(\'experience\')">العودة إلى إنشاء درس</button>');
+    const header=pageHead("درس تعليمي",safe(item.title),safe(item.level||""),'<button class="btn light" onclick="navigate(\'experience\')">العودة إلى إنشاء درس</button>');
     const sections=arr(item.data?.sections);
     return header+
       '<section class="lesson-result-banner"><span>مِداد · درس تعليمي</span><h2>'+safe(item.title)+'</h2><p>'+safe(item.level)+'</p></section>'+
