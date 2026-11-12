@@ -46,6 +46,8 @@
     .midad-auth-input-wrap input{min-width:0;width:100%;height:100%;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;color:var(--auth-text);font:600 13px Cairo,Tajawal,sans-serif;direction:rtl}
     .midad-auth-input-wrap input[dir=ltr]{direction:ltr;text-align:left}
     .midad-auth-input-wrap input::placeholder{color:#929aa5;font-weight:500}
+    .midad-auth-input-wrap input:-webkit-autofill,.midad-auth-input-wrap input:-webkit-autofill:hover,.midad-auth-input-wrap input:-webkit-autofill:focus,.midad-auth-input-wrap input:-webkit-autofill:active{-webkit-box-shadow:0 0 0 1000px #fbfdfb inset!important;box-shadow:0 0 0 1000px #fbfdfb inset!important;-webkit-text-fill-color:var(--auth-text)!important;caret-color:var(--auth-text);transition:background-color 99999s ease-out 0s}
+    .midad-auth-input-wrap input:autofill{background:#fbfdfb!important;color:var(--auth-text)!important}
     .midad-auth-eye{width:31px;height:31px;flex:none;border:0;border-radius:10px;background:var(--auth-bg);color:var(--auth-muted);box-shadow:4px 4px 8px #bfc4cc,-4px -4px 8px #fff;display:grid;place-items:center;padding:0}
     .midad-auth-eye svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
     .midad-auth-error{display:none;color:var(--auth-green);font-size:11px;margin:5px 5px 0;line-height:1.6}
@@ -221,6 +223,7 @@
       .midad-auth-card{background:#26342a}
       .midad-auth-card:before{color:#eef6ef}.midad-auth-card:after{color:#aab9ad}
       .midad-auth-input-wrap{background:#202c23;border-color:#3a4b3e}
+      .midad-auth-input-wrap input:-webkit-autofill,.midad-auth-input-wrap input:-webkit-autofill:hover,.midad-auth-input-wrap input:-webkit-autofill:focus,.midad-auth-input-wrap input:-webkit-autofill:active{-webkit-box-shadow:0 0 0 1000px #202c23 inset!important;box-shadow:0 0 0 1000px #202c23 inset!important;-webkit-text-fill-color:#eef6ef!important;caret-color:#eef6ef}
       .midad-auth-google{background:#29382d;border-color:#405445;color:#eef6ef}
       .midad-auth-tabs{background:#202c23;border-color:#3a4b3e}
     }
