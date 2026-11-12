@@ -151,7 +151,11 @@
         }
       }
     } catch (error) {
-      message(error.message || 'تعذّر إكمال العملية. تحقق من البيانات وحاول مجدداً.', 'error');
+      const raw = String(error.message || '');
+      if (/email_address_not_authorized|not authorized/i.test(raw)) message('خدمة البريد الافتراضية في Supabase لا ترسل إلى هذا العنوان. يلزم إعداد SMTP مخصص حتى تصل رسائل التأكيد.', 'error');
+      else if (/over_email_send_rate_limit|email rate limit|too many requests/i.test(raw)) message('تجاوز المشروع حد إرسال رسائل البريد مؤقتاً. انتظر قبل المحاولة مجدداً، ولا تكرر إنشاء الحساب.', 'error');
+      else if (/email not confirmed/i.test(raw)) { pendingConfirmationEmail = email; message('حسابك موجود لكنه ينتظر تأكيد البريد. اضغط إعادة إرسال رسالة التأكيد أدناه.', 'error'); }
+      else message(raw || 'تعذّر إكمال العملية. تحقق من البيانات وحاول مجدداً.', 'error');
     } finally {
       setBusy(false);
     }
