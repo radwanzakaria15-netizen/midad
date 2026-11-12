@@ -50,3 +50,24 @@ body.student-mode .mobile-nav{display:none!important}
 /* Touch-friendly drag and drop while customizing */
 body.midad-customizing .quick,body.midad-customizing .mobile-nav button{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 body.midad-customizing .quick:active,body.midad-customizing .mobile-nav button:active{cursor:grabbing}
+
+/* Inline customization mode: edit directly on the page */
+body.midad-customizing .quick,body.midad-customizing .mobile-nav button{position:relative;outline:1px dashed #8ca995;outline-offset:2px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+body.midad-customizing .quick:active,body.midad-customizing .mobile-nav button:active{cursor:grabbing}
+.midad-remove-item{position:absolute;top:5px;left:5px;z-index:8;width:27px;height:27px;border:0;border-radius:50%;background:#b94c49;color:#fff;font:900 20px/1 Arial,sans-serif;display:none;place-items:center;box-shadow:0 2px 7px #0002;padding:0}
+body.midad-customizing .midad-remove-item{display:grid}
+body.midad-customizing .quick{padding-top:36px}
+body.midad-customizing .mobile-nav button{padding-top:23px}
+.midad-add-shelf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;padding:12px 13px;border:1px dashed #a9bcae;border-radius:14px;background:#f1f6f1}
+.midad-add-shelf[hidden]{display:none!important}
+.midad-add-label{width:100%;font-size:11px;font-weight:900;color:#54735c}
+.midad-add-option{border:1px solid #d7e3d8;border-radius:10px;background:#fff;color:#315b3d;padding:8px 11px;font:800 12px Tajawal,Arial,sans-serif}
+.midad-add-option:active{background:#e7f0e8}
+#midad-edit-bar{position:fixed;z-index:90;bottom:18px;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 24px));display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid #d9e4da;border-radius:15px;background:#fff;box-shadow:0 10px 35px #233d2a24;color:#35533d;font:800 12px Tajawal,Arial,sans-serif}
+#midad-edit-bar[hidden]{display:none!important}
+#midad-edit-bar button{border:0;border-radius:9px;padding:9px 12px;font:800 11px Tajawal,Arial,sans-serif;white-space:nowrap}
+#midad-edit-bar .midad-edit-reset{background:#f1f4f1;color:#5c6d60}
+#midad-edit-bar .midad-edit-done{background:#2d7049;color:#fff}
+#midad-nav-add-shelf{position:fixed;z-index:85;bottom:82px;left:12px;right:12px;max-height:35vh;overflow:auto;box-shadow:0 8px 25px #0002}
+body.student-mode #midad-edit-bar,body.student-mode .midad-add-shelf{display:none!important}
+@media(max-width:760px){#midad-edit-bar{bottom:10px}#midad-edit-bar>span{font-size:10px}.midad-add-shelf{gap:6px;padding:10px}.midad-add-option{font-size:11px;padding:7px 9px}}
