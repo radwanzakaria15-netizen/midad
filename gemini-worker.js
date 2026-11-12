@@ -281,8 +281,8 @@ Example: ${example}`;
     const sourceUrl = clean(input.sourceUrl, 1000);
     const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
     const include = input.include && typeof input.include === "object" ? input.include : {};
-    const mode = ["board","interactive","summary","slides","video","audio","chart"].includes(input.mode) ? input.mode : ["board","interactive","summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
-    const generationMode = ({slides:"summary",video:"interactive",audio:"summary",chart:"summary"})[mode] || mode;
+    const mode = ["board","interactive","summary","slides","video","audio","chart","lessonpdf"].includes(input.mode) ? input.mode : ["board","interactive","summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
+    const generationMode = ({slides:"summary",video:"interactive",audio:"summary",chart:"summary",lessonpdf:"summary"})[mode] || mode;
     if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
@@ -296,7 +296,7 @@ Example: ${example}`;
       task = {
         board: "أنشئ شرح سبورة من 4 إلى 7 مراحل متسلسلة. في كل مرحلة عنوان وفكرة مشروحة ومثال تطبيقي، وأضف مخططاً صغيراً عند الحاجة. أعد سؤال تحقق واحداً أو اثنين. اكتب مادة الشرح الفعلية لا وصفاً لما يجب عرضه.",
         interactive: "أنشئ شرحاً تفاعلياً من 4 إلى 6 مراحل، مع 3 أسئلة تحقق. أنشئ scene عاماً لأي موضوع: 4 إلى 8 nodes تمثل الأشياء أو المفاهيم المهمة، لكل عنصر id وlabel وإحداثيات x وy بين 8 و92، وروابط edges باستخدام from وto. أضف steps مرتبة، ولكل مرحلة title وdescription يشرح ما يحدث. لا تستخدم رسماً مخصصاً لدورة الماء إلا إذا كان الموضوع دورة الماء. اجعل الرسم مفهوماً بصرياً وليس مجرد كلمات متفرقة.",
-        summary: mode === "slides" ? "أنشئ عرضاً تعليمياً حقيقياً من 6 إلى 8 شرائح متتابعة. اجعل كل عنصر في sections شريحة مستقلة: heading عنوان قصير وجذاب، body نص موجز من جملتين أو ثلاث يشرح فكرة واحدة فقط، وexample مثال واضح عند ملاءمته. ابدأ بالأفكار الأساسية ثم التفاصيل ثم خلاصة. لا تكتب درساً متصلاً ولا تكرر الفكرة نفسها، واجعل النص مناسباً للعرض على شاشة." : "أنشئ ملخصاً بصرياً إبداعياً من 4 إلى 7 أفكار أساسية، وأنشئ visual عاماً فيه 4 إلى 8 nodes موزعة حول الفكرة المركزية وروابط edges توضح العلاقات بينها. أضف 4 إلى 8 كلمات مفتاحية، وخريطة أفكار وأمثلة قصيرة. اجعل النصوص مختصرة جداً حتى يظهر الإنفوغراف واضحاً."
+        summary: mode === "lessonpdf" ? "اكتب درساً تعليمياً كاملاً ومتكاملاً، وليس ملخصاً. أنشئ تمهيداً جذاباً، من 6 إلى 8 محاور مرتبة ومتدرجة، في كل محور شرحاً وافياً ودقيقاً بلغة عربية سليمة تناسب المستوى المحدد، ومثالاً تطبيقياً أو توضيحياً عند الحاجة. ابدأ من المفاهيم الأساسية ثم انتقل إلى التفصيل، وراعِ التسلسل المنطقي وعدم التكرار. أضف أهداف تعلم واضحة (3 إلى 5 أهداف)، وخلاصة نهائية مركزة، ومصطلحات أساسية إن كانت مناسبة. اجعل كل محور مستقلاً وقابلاً لأن يُعرض في صفحة PDF جميلة. لا تذكر أنك نموذج ذكاء اصطناعي ولا تكتب تعليمات للمصمم." : mode === "slides" ? "أنشئ عرضاً تعليمياً حقيقياً من 6 إلى 8 شرائح متتابعة. اجعل كل عنصر في sections شريحة مستقلة: heading عنوان قصير وجذاب، body نص موجز من جملتين أو ثلاث يشرح فكرة واحدة فقط، وexample مثال واضح عند ملاءمته. ابدأ بالأفكار الأساسية ثم التفاصيل ثم خلاصة. لا تكتب درساً متصلاً ولا تكرر الفكرة نفسها، واجعل النص مناسباً للعرض على شاشة." : "أنشئ ملخصاً بصرياً إبداعياً من 4 إلى 7 أفكار أساسية، وأنشئ visual عاماً فيه 4 إلى 8 nodes موزعة حول الفكرة المركزية وروابط edges توضح العلاقات بينها. أضف 4 إلى 8 كلمات مفتاحية، وخريطة أفكار وأمثلة قصيرة. اجعل النصوص مختصرة جداً حتى يظهر الإنفوغراف واضحاً."
       }[generationMode];
     } else if (kind === "revision") {
       format = '{"title":"عنوان المراجعة","questions":[{"type":"mcq","topic":"مفهوم محدد","question":"سؤال واضح","options":["أ","ب","ج","د"],"correctIndex":0,"explanation":"تفسير تعليمي موجز"}],"flashcards":[{"front":"سؤال البطاقة","back":"الإجابة الدقيقة","topic":"المفهوم"}],"matchPairs":[{"left":"مصطلح أو عنصر","right":"تعريفه أو ما يناسبه"}],"fillBlanks":[{"sentence":"جملة فيها فراغ ____","answer":"الكلمة الناقصة","explanation":"تفسير موجز"}],"topics":[{"name":"اسم المفهوم","questionCount":2}]}';
@@ -328,7 +328,7 @@ Example: ${example}`;
       content ? "المصدر الذي يجب تحليله والالتزام به:\n" + content : "لم يرفق الأستاذ نص الدرس. استخدم المعرفة الدراسية العامة الموثوقة، وتجنب الادعاءات الدقيقة غير المؤكدة.",
       sourceUrl ? "رابط المصدر الذي أرفقه الأستاذ (لا تدّع أنك شاهدت الفيديو أو استخرجت تفريغه ما لم يكن نصه مرفقاً): " + sourceUrl : "",
       content ? "تعليمات إلزامية: استخرج الأفكار الأساسية من المصدر، لا تحذف فكرة جوهرية، لا تضف معلومة تناقضه، ولا تختلق حقائق. إذا كان المصدر لا يكفي لإثبات معلومة فلا تقدمها كحقيقة." : "",
-      "النمط المطلوب: " + (kind === "task" ? "تكليف تعليمي من نوع " + taskCategory : mode === "slides" ? "ملخص إبداعي على هيئة شرائح عرض متتابعة" : mode === "video" ? "سيناريو ملخص فيديو بمشاهد متتابعة" : mode === "audio" ? "نص ملخص صوتي مترابط صالح للقراءة بصوت عربي" : mode === "chart" ? "مخطط بياني أو مفاهيمي واضح" : generationMode === "board" ? "الشرح بالسبورة" : generationMode === "interactive" ? "الشرح التفاعلي" : "الملخص الممتع"),
+      "النمط المطلوب: " + (kind === "task" ? "تكليف تعليمي من نوع " + taskCategory : mode === "lessonpdf" ? "درس تعليمي متكامل بصياغة تربوية جاهزة للطباعة في PDF" : mode === "slides" ? "ملخص إبداعي على هيئة شرائح عرض متتابعة" : mode === "video" ? "سيناريو ملخص فيديو بمشاهد متتابعة" : mode === "audio" ? "نص ملخص صوتي مترابط صالح للقراءة بصوت عربي" : mode === "chart" ? "مخطط بياني أو مفاهيمي واضح" : generationMode === "board" ? "الشرح بالسبورة" : generationMode === "interactive" ? "الشرح التفاعلي" : "الملخص الممتع"),
       task,
       "أعد JSON صالحاً فقط، دون Markdown أو مقدمة أو نص خارجه، ووفق البنية التالية حرفياً:",
       format
@@ -338,19 +338,20 @@ Example: ${example}`;
       let text = "";
       text = await pollinationsChat(env, prompt, {
         temperature: 0.35,
-        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 3000
+        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : mode === "lessonpdf" ? 4800 : 3000
       });
       let parsed;
       try { parsed = JSON.parse(text); } catch { return json({ error: "تعذر قراءة صيغة النتيجة. أعد المحاولة." }, 502, origin); }
 
       if (kind === "experience") {
         if (!Array.isArray(parsed.sections) || !parsed.sections.length) return json({ error: "نتيجة الدرس غير مكتملة." }, 502, origin);
-        parsed.sections = parsed.sections.slice(0, 8).filter(s => s && clean(s.heading, 180) && clean(s.body, 1400)).map(s => ({
+        parsed.sections = parsed.sections.slice(0, mode === "lessonpdf" ? 8 : 8).filter(s => s && clean(s.heading, 180) && clean(s.body, 1400)).map(s => ({
           heading: clean(s.heading, 180), body: clean(s.body, 1400), example: clean(s.example, 700),
           visual: s.visual && typeof s.visual === "object" ? s.visual : {}
         }));
         parsed.title = clean(parsed.title || lessonTitle, 180);
-        parsed.intro = clean(parsed.intro, 700);
+        parsed.intro = clean(parsed.intro, 1000);
+        if (mode === "lessonpdf") { parsed.objectives = Array.isArray(parsed.objectives) ? parsed.objectives.slice(0,5).map(x=>clean(x,240)).filter(Boolean) : []; parsed.conclusion = clean(parsed.conclusion, 1200); }
         const cleanDiagram = v => {
           if (!v || typeof v !== "object") return { nodes: [], edges: [] };
           const nodes = Array.isArray(v.nodes) ? v.nodes.slice(0, 10).map((n,i) => ({ id: clean(n.id || String(i), 30), label: clean(n.label || n.title, 90), x: Math.max(8, Math.min(92, Number(n.x) || 50)), y: Math.max(12, Math.min(88, Number(n.y) || 50)) })).filter(n => n.label) : [];
