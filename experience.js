@@ -158,13 +158,35 @@
       '<button class="btn light" onclick="navigate(\'experience\')">العودة</button>');
     const tools='<div class="experience-toolbar"><button class="btn secondary" onclick="editExperience(\''+item.id+'\')">تعديل المحتوى</button><button class="btn light" onclick="printExperience()">طباعة</button><button class="btn primary" onclick="saveExperienceNow()">حفظ التعديلات</button></div>';
     let body="";
-    if(item.mode==="board") body=renderBoard(item);
+    if(item.mode==="slides") body=renderSlides(item);
+    else if(item.mode==="board") body=renderBoard(item);
     else if(item.mode==="interactive"||item.mode==="video") body=renderInteractive(item);
     else if(item.mode==="assessment") body=renderAssessment(item);
     else if(item.mode==="audio") body=renderAudioSummary(item);
     else if(item.mode==="chart") body=renderChartSummary(item);
     else body=renderSummary(item);
     return header+tools+'<div id="experience-result" class="experience-result">'+body+'</div>';
+  }
+
+  function renderSlides(item){
+    const d=item.data||{}, sections=arr(d.sections);
+    if(!sections.length)return '<div class="card">لم تُنشأ شرائح لهذا الدرس. أعد المحاولة.</div>';
+    const slides=[{heading:d.title||item.title,body:d.intro||"ملخص الدرس",cover:true},...sections];
+    experienceStep=Math.max(0,Math.min(experienceStep,slides.length-1));
+    const s=slides[experienceStep]||{};
+    const isCover=!!s.cover;
+    return '<section class="slide-deck">'+
+      '<div class="slide-deck-top"><span>مِداد · عرض تعليمي</span><span>الشريحة '+(experienceStep+1)+' من '+slides.length+'</span></div>'+
+      '<article class="lesson-slide '+(isCover?'lesson-slide-cover':'')+'">'+
+        '<div class="slide-kicker">'+(isCover?'ملخص الدرس':'الفكرة '+experienceStep)+'</div>'+
+        '<h2>'+safe(s.heading||"")+'</h2>'+
+        '<p>'+safe(s.body||"")+'</p>'+
+        (!isCover&&s.example?'<div class="slide-example"><b>مثال توضيحي</b><span>'+safe(s.example)+'</span></div>':'')+
+        (!isCover?renderVisual(s.visual):'')+
+      '</article>'+
+      '<div class="slide-deck-progress" aria-label="تقدم العرض">'+slides.map((x,i)=>'<button class="'+(i===experienceStep?'active':'')+'" onclick="goExperienceStep('+i+')" aria-label="الشريحة '+(i+1)+'">'+(i+1)+'</button>').join("")+'</div>'+
+      '<div class="slide-deck-controls"><button class="btn light" '+(experienceStep===0?'disabled':'')+' onclick="goExperienceStep('+(experienceStep-1)+')">السابق</button><span>تنقّل بين الشرائح لعرض الدرس</span><button class="btn primary" '+(experienceStep===slides.length-1?'disabled':'')+' onclick="goExperienceStep('+(experienceStep+1)+')">التالي</button></div>'+
+    '</section>';
   }
 
   function renderBoard(item){
