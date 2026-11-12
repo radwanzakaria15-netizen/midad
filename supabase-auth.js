@@ -81,8 +81,9 @@
   };
 
   function showWorkspace(user) {
+    const changedUser = !currentUser || currentUser.id !== user.id;
     currentUser = user;
-    if (typeof window.midadUseUserWorkspace === 'function') window.midadUseUserWorkspace(user);
+    if (changedUser && typeof window.midadUseUserWorkspace === 'function') window.midadUseUserWorkspace(user);
     gate.style.display = 'none';
     document.body.classList.add('midad-authenticated');
   }
@@ -127,6 +128,11 @@
     }
   });
 
+  window.midadCopyInvite = async () => {
+    const value = document.getElementById('midad-generated-invite')?.textContent || '';
+    try { await navigator.clipboard.writeText(value); toast('تم نسخ الرمز'); }
+    catch (error) { toast('يمكنك تحديد الرمز ونسخه يدوياً'); }
+  };
   window.midadCreateInvite = async () => {
     if (!currentUser) return;
     try {
