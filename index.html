@@ -204,6 +204,19 @@ main,#main{animation:none!important;filter:none!important}
 @media(max-width:650px){.lesson-maker-hero{gap:10px;padding:20px}.lesson-maker-mark{width:82px;height:105px}.lesson-maker-mark span{font-size:19px;margin-top:36px}.lesson-maker-mark i{width:50px;bottom:13px}.lesson-maker-steps{gap:7px}.lesson-maker-steps>div{padding:10px 7px;gap:6px;font-size:10px}.lesson-result-banner{padding:22px}}
 </style>
 
+<style id="midad-activities-design">
+.task-kind-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:18px 0 26px}
+.task-kind-card{--task-accent:#66836d;position:relative;overflow:hidden;padding:22px;border:1px solid color-mix(in srgb,var(--task-accent) 22%,white);border-radius:20px;background:linear-gradient(145deg,#fff 55%,color-mix(in srgb,var(--task-accent) 9%,white));box-shadow:0 8px 22px #263b3010}
+.task-kind-top{display:flex;align-items:center;justify-content:space-between}.task-kind-symbol{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--task-accent) 13%,white);color:var(--task-accent);font-size:21px;font-weight:800}.task-kind-count{font-size:11px;color:#78867b;background:#fff;padding:6px 10px;border-radius:20px}
+.task-kind-card h3{font-size:20px;color:#304b39;margin:18px 0 7px}.task-kind-card p{min-height:42px;color:#738075;font-size:12px;line-height:1.8}.task-kind-button{background:var(--task-accent);color:white;border:0;width:100%;margin-top:8px}
+.task-saved-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.task-saved-card{overflow:hidden;border:1px solid #e3eae2;border-radius:17px;background:#fff}
+.task-saved-head{--task-accent:#66836d;display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:color-mix(in srgb,var(--task-accent) 12%,white);color:var(--task-accent);font-size:12px}.task-saved-head b{font-size:11px}.task-saved-body{padding:16px}.task-saved-body h3{font-size:16px;color:#304b39;margin:0 0 12px}.task-saved-body p{font-size:12px;color:#728075;margin:5px 0}
+.task-score-chip{display:inline-block;margin:9px 0;padding:6px 10px;border-radius:8px;background:#edf3ed;color:#52735a;font-size:11px;font-weight:800}
+.task-form-banner{--task-accent:#66836d;display:flex;align-items:center;justify-content:space-between;padding:15px 18px;margin-bottom:18px;border-radius:15px;background:color-mix(in srgb,var(--task-accent) 11%,white);border-right:5px solid var(--task-accent);color:var(--task-accent)}.task-form-banner span{display:block;font-size:11px;opacity:.8}.task-form-banner strong{display:block;font-size:19px;margin-top:4px}.task-form-banner i{font-style:normal;font-size:29px;opacity:.7}
+.task-download-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.task-file-heading{display:flex;gap:13px;align-items:center;padding:16px;border-radius:14px;margin-bottom:17px}.task-file-heading.questions{background:#edf4ee;color:#537d68}.task-file-heading.answers{background:#edf2f8;color:#5579a8;margin-top:25px}.task-file-heading.research{background:#f2eef7;color:#806aa0}.task-file-heading>span{display:grid;place-items:center;flex:none;width:39px;height:39px;border-radius:12px;background:#fff;font-weight:900}.task-file-heading small{font-size:11px;opacity:.8}.task-file-heading h3{font-size:16px;margin:4px 0}.task-file-heading p{font-size:11px;margin:0}
+.task-file-preview{max-height:58vh;overflow:auto}.task-file-preview h4{font-size:14px;color:#526b58}.task-question-list,.task-answer-list,.task-research-list{padding-right:25px;line-height:1.9}.task-question-list li,.task-answer-list li,.task-research-list li{padding:9px 0;border-bottom:1px solid #edf0ec;font-size:13px}.task-answer-list li p{margin:5px 0;color:#54685a;white-space:pre-wrap}.task-answer-list li span{font-size:11px;color:#5579a8;font-weight:800}.task-total-score{padding:12px;border-radius:10px;background:#edf4ed;color:#315b3e;font-weight:900;text-align:center}.task-research-list li{font-size:15px;color:#55486a}
+@media(max-width:650px){.task-kind-grid,.task-saved-grid{grid-template-columns:1fr}.task-kind-card{padding:18px}.task-kind-card p{min-height:0}.task-download-row{flex-direction:column}.task-download-row .btn{width:100%}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -439,11 +452,9 @@ ensureAlphabetLesson();
 render();
 </script>
 <script src="./document-reader.js?v=20261112-unlimited-pages"></script>
-<script src="./experience-3d.js"></script>
-<script src="./experience.js?v=lessonpdf-4"></script>
 <script src="./games.js"></script>
 <script src="./attendance.js"></script>
 <script src="./revision.js?v=20261112-pdfdocx"></script>
-<script src="./sections.js?v=task-submit-3"></script>
+<script src="./sections.js?v=activities-files-1"></script>
 <script src="./ui-effects.js"></script>
 </body></html>
