@@ -190,7 +190,7 @@
     Object.keys(experienceExportUrls).forEach(k=>{URL.revokeObjectURL(experienceExportUrls[k]);delete experienceExportUrls[k]});
     experienceExportOwnerId=item.id;
     Object.entries(blobs).forEach(([key,blob])=>{if(blob)experienceExportUrls[key]=URL.createObjectURL(blob)});
-    const host=document.getElementById("experience-export-links");
+    const host=document.getElementById("lesson-pdf-links")||document.getElementById("experience-export-links");
     if(host)host.innerHTML=experienceExportLinks();
     const preview=document.getElementById("experience-infographic-preview");
     if(preview)preview.innerHTML=experienceInfographicPreview(item);
