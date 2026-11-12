@@ -191,8 +191,6 @@ export default {
     if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
     if (request.method === "GET") return json({ ok: true, service: "Midad Gemini Worker", model: MODEL, keyConfigured: !!env.GEMINI_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
-    if (!env.GEMINI_API_KEY) return json({ error: "لم يُضبط مفتاح Gemini السري في إعدادات الخادم. أضفه في Cloudflare Worker Secrets باسم GEMINI_API_KEY." }, 503, origin);
-
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
     const rawKind = clean(input.kind || input.outputType || input.type, 40).toLowerCase();
@@ -213,6 +211,8 @@ export default {
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
     if (kind === "task" && content.length < 80) return json({ error: "أرسل نصاً واضحاً لا يقل عن 80 حرفاً لإنشاء المهمة." }, 400, origin);
+    if (kind === "experience" && !env.AI) return json({ error: "ربط Workers AI غير مكتمل. تحقق من وجود AI ضمن Bindings في Cloudflare." }, 503, origin);
+    if (kind !== "experience" && !env.GEMINI_API_KEY) return json({ error: "لم يُضبط مفتاح Gemini السري في إعدادات الخادم." }, 503, origin);
 
     let format, task;
     if (kind === "experience") {
@@ -259,22 +259,38 @@ export default {
     ].filter(Boolean).join("\n");
 
     try {
-      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "experience" ? 3000 : kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 1000 }
-        })
-      });
-      const result = await upstream.json();
-      if (!upstream.ok) {
-        const apiMessage = clean(result?.error?.message || "لم تُرجع Google تفاصيل إضافية.", 500);
-        const apiStatus = clean(result?.error?.status || upstream.statusText || "UNKNOWN", 80);
-        return json({ error: "رفضت خدمة Gemini الطلب (" + upstream.status + " - " + apiStatus + "): " + apiMessage }, 502, origin);
+      let text = "";
+      if (kind === "experience") {
+        const aiResult = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+          messages: [
+            { role: "system", content: "أنت مصمم تعلم متخصص في التعليم باللغة العربية. أجب بالعربية الفصحى السليمة، والتزم بالمصدر والمستوى. أخرج كائن JSON فقط دون Markdown أو نص خارجه." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.35,
+          max_tokens: 3000,
+          response_format: { type: "json_object" }
+        });
+        const raw = aiResult?.response || aiResult?.output || aiResult?.choices?.[0]?.message?.content || "";
+        text = typeof raw === "string" ? raw.trim() : JSON.stringify(raw);
+        if (!text) return json({ error: "لم يُرجع Workers AI محتوى. حاول مرة أخرى." }, 502, origin);
+      } else {
+        const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 1000 }
+          })
+        });
+        const result = await upstream.json();
+        if (!upstream.ok) {
+          const apiMessage = clean(result?.error?.message || "لم تُرجع Google تفاصيل إضافية.", 500);
+          const apiStatus = clean(result?.error?.status || upstream.statusText || "UNKNOWN", 80);
+          return json({ error: "رفضت خدمة Gemini الطلب (" + upstream.status + " - " + apiStatus + "): " + apiMessage }, 502, origin);
+        }
+        text = result?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim() || "";
+        if (!text) return json({ error: "لم يُرجع Gemini محتوى. حاول مرة أخرى." }, 502, origin);
       }
-      const text = result?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
-      if (!text) return json({ error: "لم يُرجع Gemini محتوى. حاول مرة أخرى." }, 502, origin);
       let parsed;
       try { parsed = JSON.parse(text); } catch { return json({ error: "تعذر قراءة صيغة النتيجة. أعد المحاولة." }, 502, origin); }
 
@@ -338,7 +354,8 @@ export default {
       return json({ result: parsed }, 200, origin);
     } catch (error) {
       const detail = clean(error && error.message ? error.message : "خطأ غير معروف", 300);
-      return json({ error: "تعذر الاتصال بخدمة Gemini: " + detail }, 502, origin);
+      const provider = kind === "experience" ? "Workers AI" : "Gemini";
+      return json({ error: "تعذر الاتصال بخدمة " + provider + ": " + detail }, 502, origin);
     }
   }
 };
