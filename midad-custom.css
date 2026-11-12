@@ -1,0 +1,45 @@
+
+.customize-trigger{width:36px;height:36px;border:1px solid var(--line);border-radius:11px;background:var(--white);color:var(--cocoa);display:grid;place-items:center}
+.customize-trigger svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.class-level-tools{display:flex;align-items:center;gap:7px}
+.class-note-icon{width:31px;height:31px;border:1px solid var(--line);border-radius:9px;background:var(--white);color:var(--cocoa);display:grid;place-items:center}
+.class-note-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.class-tools-under-year{margin-top:7px!important}
+.class-schedule-icon{width:auto!important;min-width:36px;padding:5px 9px!important;display:inline-flex!important;align-items:center;gap:6px;font:800 11px Tajawal,Arial,sans-serif}
+.class-schedule-icon span{white-space:nowrap}
+.quick .qico{display:grid;place-items:center}
+.quick .qico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.midad-customizing .quick,body.midad-customizing .mobile-nav button{position:relative;outline:1px dashed #b7a18d;outline-offset:2px;touch-action:pan-y}
+.midad-remove-item{position:absolute;top:6px;left:6px;z-index:5;width:25px;height:25px;border:0;border-radius:50%;background:#c83f3f;color:#fff;font:900 19px/1 Arial,sans-serif;display:none;box-shadow:0 2px 7px #0002}
+body.midad-customizing .midad-remove-item{display:grid;place-items:center}
+body.midad-customizing .quick{padding-top:35px}
+body.midad-customizing .mobile-nav button{padding-top:24px}
+.midad-custom-panel{display:grid;gap:12px}
+.midad-custom-panel p{font-size:12px;color:var(--muted);line-height:1.8;margin:0}
+.midad-custom-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.midad-custom-option{border:1px solid var(--line);border-radius:11px;background:var(--white);padding:10px;color:var(--deep);font-weight:800;text-align:right}
+.midad-custom-option:disabled{opacity:.4}
+body.midad-night .customize-trigger,body.midad-night .class-note-icon{background:var(--cream);color:var(--deep);border-color:var(--line)}
+body.midad-night .quick{background:var(--white);border-color:var(--line);color:var(--ink)}
+body.midad-night .quick b,body.midad-night .item-card h3,body.midad-night .section-title h3,body.midad-night .page-head h1,body.midad-night .student-home-tile strong{color:var(--deep)}
+body.midad-night .quick small,body.midad-night .page-head p,body.midad-night .section-title p{color:var(--muted)}
+body.midad-night .hero{background:linear-gradient(125deg,#263a2d,#304b38 65%,#405b45);border-color:#405b45}
+body.midad-night .hero h2{color:#edf5eb}body.midad-night .hero p{color:#c3d2c2}body.midad-night .hero-kicker{color:#c7ddc6}
+body.midad-night .sidebar{background:#202e25;color:#d9e6d7;border:1px solid var(--line)}
+body.midad-night .nav button{color:#c3d2c2}body.midad-night .nav button.active{background:#35483a;color:#edf4ec}
+body.midad-night .table-wrap{background:var(--white);border-color:var(--line)}
+body.midad-night th{background:#304437;color:#d9e6d7}body.midad-night td{color:#d3dfd1;border-color:var(--line)}
+body.midad-night .empty{background:#202e25;border-color:#536c58;color:var(--muted)}
+body.midad-night .empty strong{color:var(--deep)}
+body.midad-night .stat{background:var(--white);border-color:var(--line)}
+body.midad-night .stat-icon,.midad-night .mini-icon,.midad-night .item-symbol,.midad-night .quick .qico{background:#35483a;color:#d4e4d1}
+body.midad-night .modal{background:var(--paper);color:var(--ink)}
+body.midad-night .modal-head h2,body.midad-night .form-field label{color:var(--deep)}
+body.midad-night .form-field input,body.midad-night .form-field select,body.midad-night .form-field textarea{background:#202e25!important;color:#edf4ec!important;border-color:#536c58!important}
+body.midad-night .btn.secondary{background:#35483a;color:#e7f0e6}
+body.midad-night .btn.danger{background:#573431;color:#ffd9d4}
+body.midad-night .midad-custom-option{background:var(--white);color:var(--ink);border-color:var(--line)}
+body.midad-night .student-home-tile{background:linear-gradient(145deg,#26362c,#202e25);border-color:var(--line);color:var(--ink)}
+body.midad-night .student-tile-icon{background:#35483a!important;color:#d4e4d1!important}
+body.midad-night .student-home-tile small{color:var(--muted)}
+@media(max-width:760px){.customize-trigger{width:34px;height:34px}.midad-custom-options{grid-template-columns:1fr 1fr}}
