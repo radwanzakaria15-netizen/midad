@@ -1,5 +1,6 @@
 (function(){
 "use strict";
+const $=id=>document.getElementById(id);
 const escTask=v=>window.esc?window.esc(v==null?"":String(v)):String(v??"");
 const taskKinds=["واجب منزلي","اختبار","امتحان","بحث"];
 const taskId=()=>"task-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
