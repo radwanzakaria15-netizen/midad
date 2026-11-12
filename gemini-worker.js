@@ -392,12 +392,12 @@ Example: ${example}`;
           if (!parsed.questions.length) return json({ error: "لم يتم إنشاء أسئلة صالحة للمهمة." }, 502, origin);
           const weights = parsed.questions.map(q => q.points > 0 ? q.points : 1);
           const weightTotal = weights.reduce((a,b)=>a+b,0);
-          let assigned = 0;
-          parsed.questions = parsed.questions.map((q,i) => {
-            const points = i === parsed.questions.length-1 ? Math.round((maxScore-assigned)*2)/2 : Math.round((maxScore*weights[i]/weightTotal)*2)/2;
-            assigned += points;
-            return {...q,points};
-          });
+          const rawUnits = weights.map(weight => maxScore * 2 * weight / weightTotal);
+          const units = rawUnits.map(Math.floor);
+          let remaining = maxScore * 2 - units.reduce((a,b)=>a+b,0);
+          const priority = rawUnits.map((value,index)=>({index,fraction:value-Math.floor(value)})).sort((a,b)=>b.fraction-a.fraction);
+          for (let i=0; i<remaining; i++) units[priority[i % priority.length].index] += 1;
+          parsed.questions = parsed.questions.map((q,i) => ({...q,points:units[i]/2}));
           parsed.maxScore = maxScore;
         }
       } else if (kind === "revision") {
