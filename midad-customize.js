@@ -28,6 +28,7 @@ window.midadRestoreItem=(type,id)=>{const d=data();if(type==="quick"){savePatch(
 window.midadResetLayout=()=>{localStorage.removeItem(storageKey());closeModal();apply()};
 window.midadToggleCustomize=()=>{editing=true;apply();toast("اسحب العناصر لترتيبها، واضغط علامة − لإخفاء أي عنصر. يمكنك استعادته من نافذة التخصيص.");openPanel()};
 window.midadFinishCustomize=()=>{persistOrder();editing=false;apply();closeModal()};
-function hideTeacherRevision(){if(document.body.classList.contains("student-mode"))return;document.querySelectorAll("button").forEach(b=>{const label=(b.innerText||b.textContent||"").trim();if((b.dataset.page==="revision"||b.dataset.nav==="revision"||/^المراجعة?$/.test(label))&&!b.closest(".student-home-grid"))b.hidden=true;});}\nfunction watch(){addNavCatalog();hideTeacherRevision();apply();const target=$("#main");if(target)new MutationObserver(()=>{hideTeacherRevision();if(editing)apply()}).observe(target,{childList:true,subtree:false});}
+function hideTeacherRevision(){if(document.body.classList.contains("student-mode"))return;document.querySelectorAll("button").forEach(b=>{const label=(b.innerText||b.textContent||"").trim();if((b.dataset.page==="revision"||b.dataset.nav==="revision"||/^المراجعة?$/.test(label))&&!b.closest(".student-home-grid"))b.hidden=true;});}
+function watch(){addNavCatalog();hideTeacherRevision();apply();const target=$("#main");if(target)new MutationObserver(()=>{hideTeacherRevision();if(editing)apply()}).observe(target,{childList:true,subtree:false});}
 document.addEventListener("DOMContentLoaded",watch);setTimeout(watch,0);
 })();
