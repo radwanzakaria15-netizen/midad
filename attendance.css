@@ -9,3 +9,7 @@
 .attendance-note-values span{display:block;padding:10px 18px;border:1px solid var(--line);border-radius:11px;background:#fff;font-weight:800;color:var(--muted)}
 .attendance-note-values input:checked+span{background:#e7f0f2;border-color:#9bbac5;color:#365f70}
 @media(max-width:650px){.attendance-student-name{width:100%;align-items:center}.attendance-note-action{margin-inline-start:auto}}
+
+.attendance-note-action{min-width:66px;font-variant-numeric:tabular-nums}
+.attendance-note-action.note-positive{background:#e6f3e8;border-color:#b5d9bb;color:#28743b}
+.attendance-note-action.note-negative{background:#fae9e8;border-color:#e9b9b5;color:#b0443d}
