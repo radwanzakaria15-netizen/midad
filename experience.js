@@ -189,21 +189,25 @@
     const slides=experienceSlides(item);
     const old=experienceImageData[item.id]||[];
     if(old.length===slides.length&&old.every(Boolean))return old;
-    const images=new Array(slides.length);let next=0,done=0;
+    const images=new Array(slides.length);let next=0,done=0,failed=0;
     async function oneWorker(){
       while(next<slides.length){
         const index=next++;const s=slides[index];
         const prompt=[item.subject||"موضوع تعليمي",item.level||"",s.heading,s.body,s.example].filter(Boolean).join(" — ");
-        const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
-        const payload=await response.json().catch(()=>({}));
-        if(!response.ok||!payload.image)throw new Error(payload.error||"تعذر توليد الصورة التوضيحية للشريحة "+(index+1));
-        images[index]=payload.image;done++;if(setStatus)setStatus("تم توليد الصور التوضيحية "+done+" من "+slides.length+"...");
+        try{
+          const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+          const payload=await response.json().catch(()=>({}));
+          if(!response.ok||!payload.image)throw new Error(payload.error||"تعذر توليد الصورة");
+          images[index]=payload.image;done++;
+        }catch(error){failed++;console.warn("Midad slide image failed",index,error);}
+        if(setStatus)setStatus("تم توليد "+done+" من "+slides.length+" صورة توضيحية"+(failed?"، تعذر "+failed:"")+"...");
       }
     }
     await Promise.all(Array.from({length:Math.min(2,slides.length)},oneWorker));
-    experienceImageData[item.id]=images;return images;
+    experienceImageData[item.id]=images;
+    if(currentExperienceId===item.id&&page==="experience-result")render();
+    return images;
   }
-
   async function generateExperienceFiles(item){
     const status=document.getElementById("experience-export-status");
     const links=document.getElementById("experience-export-links");
@@ -260,7 +264,8 @@
       Object.entries(blobs).forEach(([key,blob])=>{if(experienceExportUrls[key])URL.revokeObjectURL(experienceExportUrls[key]);experienceExportUrls[key]=URL.createObjectURL(blob)});
       const linkHost=document.getElementById("experience-export-links");
       if(linkHost)linkHost.innerHTML=experienceExportLinks();
-      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP.");
+      const failedImages=images.filter(x=>!x).length;
+      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض."));
       item.exportReady=true;
     }catch(error){
       console.error("Midad export error",error);
