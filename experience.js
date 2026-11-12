@@ -658,17 +658,17 @@
   window.navigate=function(p){if(p==="experience"){page=p;render();window.scrollTo({top:0,behavior:"smooth"})}else baseNavigate(p)};
   const originalHome=window.homePage;
   if(typeof originalHome==="function"){
-    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>حوّل درسك إلى تجربة تعليمية ممتعة</h3><p>سبورة تعليمية، شرح تفاعلي، أو ملخص ممتع.</p></div><button class="btn primary" onclick="navigate(\'experience\')">ابدأ الآن ←</button></section><section class="stats">')};
+    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>أنشئ درساً تعليمياً بصيغة PDF</h3><p>درس متكامل ومنسق انطلاقاً من اسم الدرس والمستوى الدراسي.</p></div><button class="btn primary" onclick="navigate(\'experience\')">ابدأ الآن ←</button></section><section class="stats">')};
   }
   document.querySelectorAll(".nav button").forEach(b=>{});
   const nav=[...document.querySelectorAll(".nav")].find(n=>n.querySelector('[data-page="lessons"]'));
   if(nav&&!nav.querySelector('[data-page="experience"]')){
-    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML='<span class="ni">✦</span>حوّل درسك';item.onclick=()=>navigate("experience");
+    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML='<span class="ni">▤</span>إنتاج الدروس';item.onclick=()=>navigate("experience");
     const first=nav.querySelector('[data-page="lessons"]');if(first)first.insertAdjacentElement("afterend",item);else nav.appendChild(item);
   }
   const mobile=document.querySelector(".mobile-nav");
   if(mobile&&!mobile.querySelector('[data-page="experience"]')){
-    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>✦</span>تجربة";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
+    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>▤</span>دروس PDF";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
   }
 
 
