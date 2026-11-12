@@ -12,7 +12,8 @@ const catalog=[
  {id:"attendance",label:"الحضور",page:"attendance",icon:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="m8 12 2.5 2.5L16 9"/></svg>'},
  {id:"schedule",label:"التوقيت والبرنامج",page:"schedule",icon:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4m8-4v4M3 9h18M8 13h3m2 0h3"/></svg>'}
 ];
-const quickCatalog=[{id:"classes",label:"الأقسام",desc:"إدارة الأقسام التعليمية",page:"classes"},{id:"students",label:"التلاميذ",desc:"قائمة التلاميذ",page:"students"},{id:"activities",label:"الأنشطة",desc:"أنشطة وألعاب تعليمية",page:"activities"},{id:"library",label:"مكتبة الموارد",desc:"المراجع والملفات",page:"library"},{id:"reports",label:"التقارير",desc:"متابعة الأداء",page:"reports"}];\nlet editing=false,dragged=null,pressTimer=null;
+const quickCatalog=[{id:"classes",label:"الأقسام",desc:"إدارة الأقسام التعليمية",page:"classes"},{id:"students",label:"التلاميذ",desc:"قائمة التلاميذ",page:"students"},{id:"activities",label:"الأنشطة",desc:"أنشطة وألعاب تعليمية",page:"activities"},{id:"library",label:"مكتبة الموارد",desc:"المراجع والملفات",page:"library"},{id:"reports",label:"التقارير",desc:"متابعة الأداء",page:"reports"}];
+let editing=false,dragged=null,pressTimer=null;
 function read(){try{return JSON.parse(localStorage.getItem(storageKey())||"{}")}catch(_){return {}}}
 function write(v){localStorage.setItem(storageKey(),JSON.stringify(v))}
 function data(){let v=read();return {hiddenQuick:v.hiddenQuick||quickCatalog.map(x=>x.id),quickOrder:v.quickOrder||[],hiddenNav:v.hiddenNav||[],navOrder:v.navOrder||[]}}
