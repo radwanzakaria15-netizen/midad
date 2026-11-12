@@ -12,21 +12,27 @@
     .app,.mobile-nav{display:none!important}
     body.midad-authenticated .app{display:block!important}
     body.midad-authenticated .mobile-nav{display:flex!important}
-    #midad-auth-gate{min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(145deg,#f5eee4,#eee3d6);font-family:Tajawal,Arial,sans-serif;color:#30231d}
-    .midad-auth-card{width:min(440px,100%);background:#fffaf2;border:1px solid #eaded1;border-radius:25px;padding:26px;box-shadow:0 18px 50px #49302216}
-    .midad-auth-brand{text-align:center;margin-bottom:22px}
-    .midad-auth-mark{width:58px;height:58px;border-radius:19px;background:#563829;color:#fff8ef;display:grid;place-items:center;margin:0 auto 12px;font-size:28px;font-weight:900}
-    .midad-auth-brand h1{margin:0;color:#563829;font-size:29px}
-    .midad-auth-brand p{margin:5px 0 0;color:#8e786a;font-size:13px}
-    .midad-auth-tabs{display:flex;gap:7px;background:#f2e8dc;border-radius:13px;padding:5px;margin:18px 0}
-    .midad-auth-tabs button{flex:1;border:0;border-radius:10px;padding:10px;background:transparent;color:#79513d;font-weight:800}
-    .midad-auth-tabs button.active{background:#fffaf2;box-shadow:0 2px 8px #56382912;color:#563829}
-    .midad-auth-field{display:block;margin:12px 0}
-    .midad-auth-field span{display:block;font-size:13px;font-weight:800;margin-bottom:6px;color:#563829}
-    .midad-auth-field input{width:100%;height:46px;border:1px solid #eaded1;border-radius:12px;background:#fffdf9;padding:0 13px;color:#30231d;outline:none}
-    .midad-auth-field input:focus{border-color:#9c765e;box-shadow:0 0 0 3px #b7795520}
-    .midad-auth-submit{width:100%;border:0;border-radius:13px;padding:13px;background:#563829;color:white;font-weight:900;margin-top:10px}
-    .midad-auth-submit:disabled{opacity:.55}
+    #midad-auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 12% 12%,#dce9d9 0,transparent 36%),radial-gradient(ellipse at 88% 90%,#e8e3d2 0,transparent 34%),#f3f5ef;font-family:Tajawal,Arial,sans-serif;color:#26372c;direction:rtl;position:relative;overflow:hidden}
+    #midad-auth-gate:before,#midad-auth-gate:after{content:'';position:absolute;border:1px solid #cbd9c8;border-radius:50%;pointer-events:none}
+    #midad-auth-gate:before{width:330px;height:330px;top:-190px;right:-120px}.midad-auth-gate:after{width:260px;height:260px;bottom:-170px;left:-90px}
+    .midad-auth-card{position:relative;z-index:1;width:min(460px,100%);background:rgba(255,255,252,.96);border:1px solid #dfe8dc;border-radius:28px;padding:32px;box-shadow:0 24px 70px #314b3517,0 3px 12px #314b3508}
+    .midad-auth-brand{text-align:center;margin-bottom:25px}
+    .midad-auth-mark{width:66px;height:66px;border-radius:22px;background:linear-gradient(145deg,#496c50,#314c38);color:#fff;display:grid;place-items:center;margin:0 auto 13px;box-shadow:0 9px 20px #314c3828}
+    .midad-auth-mark svg{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .midad-auth-brand h1{margin:0;color:#304b36;font-size:31px;font-weight:900;letter-spacing:-.5px}
+    .midad-auth-brand p{margin:7px 0 0;color:#829184;font-size:13px}
+    .midad-auth-tabs{display:flex;gap:6px;background:#edf2eb;border:1px solid #e3ebe1;border-radius:15px;padding:5px;margin:22px 0 24px}
+    .midad-auth-tabs button{flex:1;border:0;border-radius:11px;padding:12px 9px;background:transparent;color:#718174;font-family:inherit;font-size:14px;font-weight:800;transition:background .2s,color .2s,box-shadow .2s}
+    .midad-auth-tabs button.active{background:#fff;color:#35553b;box-shadow:0 2px 9px #304b3614}
+    .midad-auth-field{display:block;margin:15px 0}
+    .midad-auth-field span{display:block;font-size:13px;font-weight:800;margin-bottom:8px;color:#425b46}
+    .midad-auth-field input{box-sizing:border-box;width:100%;height:50px;border:1px solid #dce6d9;border-radius:13px;background:#fbfcf9;padding:0 14px;color:#26372c;outline:none;font-family:inherit;font-size:14px;transition:border-color .2s,box-shadow .2s}
+    .midad-auth-field input::placeholder{color:#a1ada0}
+    .midad-auth-field input:focus{border-color:#78977a;box-shadow:0 0 0 4px #78977a20;background:#fff}
+    .midad-auth-submit{width:100%;border:0;border-radius:14px;padding:15px;background:linear-gradient(110deg,#496c50,#314c38);color:white;font-family:inherit;font-size:15px;font-weight:900;margin-top:14px;box-shadow:0 8px 18px #314c3825;transition:transform .2s,filter .2s}
+    .midad-auth-submit:not(:disabled):active{transform:translateY(1px);filter:brightness(.96)}
+    .midad-auth-submit:disabled{opacity:.55;box-shadow:none}
+    @media(max-width:520px){#midad-auth-gate{padding:16px;min-height:100svh}.midad-auth-card{padding:25px 21px;border-radius:23px}.midad-auth-brand{margin-bottom:20px}.midad-auth-mark{width:60px;height:60px}.midad-auth-brand h1{font-size:28px}.midad-auth-tabs{margin:19px 0 21px}}
     .midad-auth-msg{font-size:13px;line-height:1.8;margin-top:13px;padding:10px 12px;border-radius:11px;display:none;white-space:pre-wrap}
     .midad-auth-msg.show{display:block}
     .midad-auth-msg.error{background:#f9e9e5;color:#8c3f35}
@@ -41,7 +47,7 @@
   gate.id = 'midad-auth-gate';
   gate.innerHTML = `
     <div class="midad-auth-card">
-      <div class="midad-auth-brand"><div class="midad-auth-mark">م</div><h1>مِداد</h1><p>مساحة الأستاذ التعليمية</p></div>
+      <div class="midad-auth-brand"><div class="midad-auth-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5c2.8-.9 5.4-.4 8 1.4v12c-2.6-1.8-5.2-2.3-8-1.4z"/><path d="M20 5.5c-2.8-.9-5.4-.4-8 1.4v12c2.6-1.8 5.2-2.3 8-1.4z"/><path d="m8 10 2 1m-2 2 2 1m6-4-2 1m2 1-2 1"/></svg></div><h1>مِداد</h1><p>مساحة الأستاذ التعليمية</p></div>
       <div class="midad-auth-tabs">
         <button type="button" id="midad-login-tab" class="active" onclick="midadAuthMode('login')">تسجيل الدخول</button>
         <button type="button" id="midad-signup-tab" onclick="midadAuthMode('signup')">إنشاء حساب</button>
