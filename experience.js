@@ -151,6 +151,7 @@
 
 
   const experienceExportUrls = {};
+  const experienceImageData = {};
   let experienceExportOwnerId = null;
   function loadExperienceLibrary(src, globalName){
     if(window[globalName])return Promise.resolve(window[globalName]);
@@ -183,6 +184,26 @@
     const labels={pptx:"تنزيل PowerPoint",pdf:"تنزيل PDF",png:"تنزيل صور PNG (ZIP)",docx:"تنزيل Word"};
     return Object.keys(labels).filter(k=>experienceExportUrls[k]).map(k=>'<a class="btn '+(k==="pptx"?"primary":"light")+' small" href="'+experienceExportUrls[k]+'" download="'+({pptx:"midad-lesson.pptx",pdf:"midad-lesson.pdf",png:"midad-slides-png.zip",docx:"midad-lesson.docx"}[k])+'">'+labels[k]+'</a>').join("");
   }
+  async function generateSlideImages(item,setStatus){
+    if(item.mode!=="slides")return [];
+    const slides=experienceSlides(item);
+    const old=experienceImageData[item.id]||[];
+    if(old.length===slides.length&&old.every(Boolean))return old;
+    const images=new Array(slides.length);let next=0,done=0;
+    async function oneWorker(){
+      while(next<slides.length){
+        const index=next++;const s=slides[index];
+        const prompt=[item.subject||"موضوع تعليمي",item.level||"",s.heading,s.body,s.example].filter(Boolean).join(" — ");
+        const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok||!payload.image)throw new Error(payload.error||"تعذر توليد الصورة التوضيحية للشريحة "+(index+1));
+        images[index]=payload.image;done++;if(setStatus)setStatus("تم توليد الصور التوضيحية "+done+" من "+slides.length+"...");
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(2,slides.length)},oneWorker));
+    experienceImageData[item.id]=images;return images;
+  }
+
   async function generateExperienceFiles(item){
     const status=document.getElementById("experience-export-status");
     const links=document.getElementById("experience-export-links");
@@ -190,6 +211,7 @@
     try{
       if(experienceExportOwnerId!==item.id){Object.keys(experienceExportUrls).forEach(k=>{URL.revokeObjectURL(experienceExportUrls[k]);delete experienceExportUrls[k]});experienceExportOwnerId=item.id;}
       setStatus("جارٍ إعداد ملفات العرض والوثيقة والصور...");
+      const images=await generateSlideImages(item,setStatus);
       const [PptxGenJS,html2canvas,jspdf,JSZip,docx]=await Promise.all([
         loadExperienceLibrary("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","pptxgen"),
         loadExperienceLibrary("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js","html2canvas"),
@@ -204,7 +226,9 @@
         const slide=pptx.addSlide();slide.background={color:i===0?"EAF1EA":"F8FAF7"};
         slide.addText(i===0?"مِداد | ملخص تعليمي":"مِداد | "+(i),{x:0.55,y:0.3,w:12.1,h:0.35,fontFace:"Arial",fontSize:13,color:"66806D",align:"right",margin:0,breakLine:false});
         slide.addText(s.heading,{x:0.75,y:1.0,w:11.8,h:1.0,fontFace:"Arial",fontSize:i===0?30:26,bold:true,color:"294B39",align:"right",valign:"mid",rtlMode:true,margin:0.08,fit:"shrink"});
-        slide.addText(s.body,{x:0.9,y:2.25,w:11.5,h:2.3,fontFace:"Arial",fontSize:19,color:"34463A",align:"right",valign:"top",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink"});
+        const hasImage=!!images[i];
+        slide.addText(s.body,{x:0.9,y:2.25,w:hasImage?5.8:11.5,h:2.3,fontFace:"Arial",fontSize:19,color:"34463A",align:"right",valign:"top",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink"});
+        if(hasImage)slide.addImage({data:images[i],x:7.1,y:2.0,w:5.0,h:3.8});
         if(s.example)slide.addText([{text:"مثال توضيحي: ",options:{bold:true,color:"55745D"}},{text:s.example,options:{color:"34463A"}}],{x:0.9,y:5.0,w:11.5,h:1.0,fontFace:"Arial",fontSize:16,align:"right",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink",fill:{color:"E8EFE8"},line:{color:"D5E1D5"}});
         slide.addText((i+1)+" / "+slides.length,{x:11.8,y:7.0,w:0.8,h:0.25,fontSize:10,color:"829487",align:"right",margin:0});
       });
@@ -411,8 +435,8 @@
       const data=payload.result||payload;if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
       const item={id:id(),title:data.title||"تجربة تعليمية",subject,level,source:content,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;experienceSceneStep=0;matchState={left:null,right:null,matched:[]};
-      if(page==="experience"||page==="experience-result"){currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})}
-      toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
+      if(page==="experience"||page==="experience-result"){currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});generateExperienceFiles(item)}
+      toast("اكتمل إنشاء التجربة وحُفظت، وبدأ تجهيز ملفاتها تلقائياً");
     }catch(e){failureMessage=e.name==="AbortError"?"انتهت مهلة إنشاء التجربة بعد 90 ثانية. تحقق من نشر Worker ومفتاح Gemini ثم أعد المحاولة.":(e.message||failureMessage);toast(failureMessage)}
     finally{clearTimeout(requestTimer);cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage)}
   };
