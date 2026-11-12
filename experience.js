@@ -193,9 +193,10 @@
     async function oneWorker(){
       while(next<slides.length){
         const index=next++;const s=slides[index];
-        const prompt=[item.subject||"موضوع تعليمي",item.level||"",s.heading,s.body,s.example].filter(Boolean).join(" — ");
         try{
-          const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+          const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+            subject:item.subject||"",level:item.level||"",title:s.heading,content:s.body,example:s.example||""
+          })});
           const payload=await response.json().catch(()=>({}));
           if(!response.ok||!payload.image)throw new Error(payload.error||"تعذر توليد الصورة");
           images[index]=payload.image;done++;
@@ -203,7 +204,7 @@
         if(setStatus)setStatus("تم توليد "+done+" من "+slides.length+" صورة توضيحية"+(failed?"، تعذر "+failed:"")+"...");
       }
     }
-    await Promise.all(Array.from({length:Math.min(2,slides.length)},oneWorker));
+    await Promise.all(Array.from({length:Math.min(3,slides.length)},oneWorker));
     experienceImageData[item.id]=images;
     if(currentExperienceId===item.id&&page==="experience-result")render();
     return images;
