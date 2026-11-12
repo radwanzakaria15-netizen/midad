@@ -19,7 +19,7 @@
       const result=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
       const text=(result.value||"").trim();
       if(!text)throw new Error("لم نعثر على نص داخل ملف Word.");
-      return text.slice(0,30000);
+      return text;
     }
     if(name.endsWith(".pdf")||file.type==="application/pdf"){
       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
@@ -34,7 +34,7 @@
       }
       const text=pages.join("\n\n").trim();
       if(!text)throw new Error("لم يُعثر على نص قابل للاستخراج. إذا كان PDF ممسوحاً ضوئياً، فحوّله إلى PDF قابل للبحث أو استخدم OCR.");
-      return text.slice(0,30000);
+      return text;
     }
     throw new Error("الصيغ المدعومة: PDF وWord بصيغة DOCX فقط.");
   };
