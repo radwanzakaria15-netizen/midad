@@ -18,6 +18,42 @@ function json(data, status, origin) {
 }
 function clean(value, max) { return String(value || "").trim().slice(0, max); }
 
+async function pollinationsChat(env, prompt, options = {}) {
+  if (!env.POLLINATIONS_API_KEY) throw new Error("مفتاح Pollinations غير مضبوط في إعدادات الخادم.");
+  const response = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + env.POLLINATIONS_API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-5.4-nano",
+      messages: [
+        { role: "system", content: "أنت مصمم تعلم متخصص في التعليم باللغة العربية. أجب بالعربية الفصحى السليمة، والتزم بالمصدر والمستوى. أخرج كائن JSON صالحاً فقط دون Markdown أو نص خارجه." },
+        { role: "user", content: prompt }
+      ],
+      temperature: options.temperature ?? 0.35,
+      max_tokens: options.max_tokens ?? 3000,
+      response_format: { type: "json_object" }
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(clean(data?.error?.message || data?.message || ("Pollinations HTTP " + response.status), 400));
+  }
+  const text = data?.choices?.[0]?.message?.content;
+  if (typeof text !== "string" || !text.trim()) throw new Error("لم تُرجع Pollinations محتوى نصياً.");
+  return text.trim();
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
 
 const NOTEBOOK_API = "https://notebook.googleapis.com/v1";
 const APP_URL = "https://radwanzakaria15-netizen.github.io/midad/";
@@ -191,22 +227,30 @@ export default {
     if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
     if (path === "/experience-image") {
       if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
-      if (!env.AI) return json({ error: "ربط Workers AI غير مكتمل." }, 503, origin);
+      if (!env.POLLINATIONS_API_KEY) return json({ error: "مفتاح Pollinations غير مضبوط في إعدادات الخادم." }, 503, origin);
       try {
         const body = await request.json();
         const topicPrompt = clean(body.prompt, 1400);
         if (!topicPrompt) return json({ error: "لم يصل وصف الصورة." }, 400, origin);
-        const imageResult = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-          prompt: "Create a clear, accurate, child-friendly educational illustration for a school lesson. Topic and scene: " + topicPrompt + ". Visual explanation, realistic educational textbook illustration, clean composition, suitable for school learners, no text, no letters, no labels, no watermark.",
-          steps: 4
+        const imagePrompt = "Create a clear, accurate, child-friendly educational illustration for a school lesson. Topic and scene: " + topicPrompt + ". Visual explanation, realistic educational textbook illustration, clean composition, suitable for school learners, no text, no letters, no labels, no watermark.";
+        const imageUrl = "https://gen.pollinations.ai/image/" + encodeURIComponent(imagePrompt) + "?model=black-forest-labs%2Fflux.1-schnell&width=1024&height=1024";
+        const imageResponse = await fetch(imageUrl, {
+          headers: { "Authorization": "Bearer " + env.POLLINATIONS_API_KEY }
         });
-        if (!imageResult || !imageResult.image) return json({ error: "لم يُرجع مولد الصور صورة صالحة." }, 502, origin);
-        return json({ image: "data:image/jpeg;base64," + imageResult.image }, 200, origin);
+        if (!imageResponse.ok) {
+          const detail = await imageResponse.text().catch(() => "");
+          throw new Error(clean(detail || ("Pollinations HTTP " + imageResponse.status), 240));
+        }
+        const contentType = imageResponse.headers.get("Content-Type") || "image/jpeg";
+        if (!contentType.startsWith("image/")) throw new Error("لم تُرجع خدمة الصور ملف صورة صالحاً.");
+        const imageBytes = new Uint8Array(await imageResponse.arrayBuffer());
+        if (!imageBytes.length) throw new Error("أعاد مولد الصور ملفاً فارغاً.");
+        return json({ image: "data:" + contentType + ";base64," + bytesToBase64(imageBytes) }, 200, origin);
       } catch (error) {
         return json({ error: "تعذر توليد الصورة: " + clean(error.message || "خطأ غير معروف", 240) }, 502, origin);
       }
     }
-    if (request.method === "GET") return json({ ok: true, service: "Midad Gemini Worker", model: MODEL, keyConfigured: !!env.GEMINI_API_KEY }, 200, origin);
+    if (request.method === "GET") return json({ ok: true, service: "Midad Pollinations Worker", model: "openai/gpt-5.4-nano", keyConfigured: !!env.POLLINATIONS_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
     let input;
     try { input = await request.json(); } catch { return json({ error: "بيانات الطلب غير صالحة." }, 400, origin); }
@@ -228,8 +272,8 @@ export default {
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
     if (kind === "task" && content.length < 80) return json({ error: "أرسل نصاً واضحاً لا يقل عن 80 حرفاً لإنشاء المهمة." }, 400, origin);
-    if (kind === "experience" && !env.AI) return json({ error: "ربط Workers AI غير مكتمل. تحقق من وجود AI ضمن Bindings في Cloudflare." }, 503, origin);
-    if (kind !== "experience" && !env.GEMINI_API_KEY) return json({ error: "لم يُضبط مفتاح Gemini السري في إعدادات الخادم." }, 503, origin);
+    if (kind === "experience" && !env.POLLINATIONS_API_KEY) return json({ error: "مفتاح Pollinations غير مضبوط في إعدادات الخادم." }, 503, origin);
+    if (!env.POLLINATIONS_API_KEY) return json({ error: "لم يُضبط مفتاح Pollinations السري في إعدادات الخادم." }, 503, origin);
 
     let format, task;
     if (kind === "experience") {
@@ -277,37 +321,10 @@ export default {
 
     try {
       let text = "";
-      if (kind === "experience") {
-        const aiResult = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-          messages: [
-            { role: "system", content: "أنت مصمم تعلم متخصص في التعليم باللغة العربية. أجب بالعربية الفصحى السليمة، والتزم بالمصدر والمستوى. أخرج كائن JSON فقط دون Markdown أو نص خارجه." },
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.35,
-          max_tokens: 3000,
-          response_format: { type: "json_object" }
-        });
-        const raw = aiResult?.response || aiResult?.output || aiResult?.choices?.[0]?.message?.content || "";
-        text = typeof raw === "string" ? raw.trim() : JSON.stringify(raw);
-        if (!text) return json({ error: "لم يُرجع Workers AI محتوى. حاول مرة أخرى." }, 502, origin);
-      } else {
-        const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 1000 }
-          })
-        });
-        const result = await upstream.json();
-        if (!upstream.ok) {
-          const apiMessage = clean(result?.error?.message || "لم تُرجع Google تفاصيل إضافية.", 500);
-          const apiStatus = clean(result?.error?.status || upstream.statusText || "UNKNOWN", 80);
-          return json({ error: "رفضت خدمة Gemini الطلب (" + upstream.status + " - " + apiStatus + "): " + apiMessage }, 502, origin);
-        }
-        text = result?.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim() || "";
-        if (!text) return json({ error: "لم يُرجع Gemini محتوى. حاول مرة أخرى." }, 502, origin);
-      }
+      text = await pollinationsChat(env, prompt, {
+        temperature: 0.35,
+        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : 3000
+      });
       let parsed;
       try { parsed = JSON.parse(text); } catch { return json({ error: "تعذر قراءة صيغة النتيجة. أعد المحاولة." }, 502, origin); }
 
@@ -371,7 +388,7 @@ export default {
       return json({ result: parsed }, 200, origin);
     } catch (error) {
       const detail = clean(error && error.message ? error.message : "خطأ غير معروف", 300);
-      const provider = kind === "experience" ? "Workers AI" : "Gemini";
+      const provider = "Pollinations";
       return json({ error: "تعذر الاتصال بخدمة " + provider + ": " + detail }, 502, origin);
     }
   }
