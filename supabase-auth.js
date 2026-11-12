@@ -183,13 +183,74 @@
       .midad-auth-card{padding:27px 22px 22px;border-radius:23px}
       .midad-auth-brand h1{font-size:28px}
     }
+
+    /* New split-screen sign-in experience */
+    #midad-auth-gate{padding:28px;background:#edf2ed;min-height:100svh;overflow:auto}
+    .midad-auth-layout{width:min(1050px,100%);min-height:min(690px,calc(100svh - 56px));display:grid;grid-template-columns:minmax(0,1fr) minmax(390px,460px);direction:rtl;border:1px solid #dfe8df;border-radius:30px;overflow:hidden;background:#fff;box-shadow:0 24px 70px rgba(34,67,45,.12)}
+    .midad-auth-intro{position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:48px 46px;background:linear-gradient(145deg,#244d38,#316b4b 65%,#477c59);color:#f5fbf5;overflow:hidden}
+    .midad-auth-intro:before,.midad-auth-intro:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.12);border-radius:50%;pointer-events:none}
+    .midad-auth-intro:before{width:440px;height:440px;left:-190px;bottom:-170px;box-shadow:0 0 0 32px rgba(255,255,255,.035),0 0 0 70px rgba(255,255,255,.025)}
+    .midad-auth-intro:after{width:210px;height:210px;right:-100px;top:-95px}
+    .midad-auth-intro-brand,.midad-auth-intro-copy,.midad-auth-art{position:relative;z-index:1}
+    .midad-auth-intro-brand{display:flex;align-items:center;gap:14px}
+    .midad-auth-intro-mark{width:55px;height:55px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2)}
+    .midad-auth-intro-mark svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .midad-auth-intro-brand strong{font-size:29px;font-weight:900;line-height:1.2}
+    .midad-auth-intro-brand small{display:block;margin-top:4px;color:#d7e8da;font-size:12px}
+    .midad-auth-intro-copy{max-width:470px;margin:55px 0 25px}
+    .midad-auth-intro-copy .eyebrow{font-size:12px;font-weight:800;color:#c5e2cb;letter-spacing:.5px}
+    .midad-auth-intro-copy h2{font-size:34px;line-height:1.5;margin:12px 0;color:#fff;font-weight:900}
+    .midad-auth-intro-copy p{font-size:15px;line-height:2;color:#dcebe0;margin:0;max-width:410px}
+    .midad-auth-art{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:410px}
+    .midad-auth-art span{min-height:72px;padding:14px;border-radius:15px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;gap:10px;color:#f3faf4;font-size:12px;font-weight:800}
+    .midad-auth-art svg{width:22px;height:22px;flex:none;stroke:#d2e9d7;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .midad-auth-card{width:auto;max-width:none;align-self:center;padding:46px 42px 38px;border:0;border-radius:0;background:#fff;box-shadow:none}
+    .midad-auth-brand{display:none}
+    .midad-auth-card:before{content:"مرحباً بعودتك";display:block;color:#263c30;font-size:26px;font-weight:900;margin-bottom:5px}
+    .midad-auth-card:after{content:"سجّل الدخول لمتابعة مساحتك التعليمية";display:block;color:#7c8a7f;font-size:12px;margin-bottom:23px}
+    .midad-auth-tabs{margin:0 0 22px;background:#f0f5f0;border:1px solid #e7eee7}
+    .midad-auth-input-wrap{background:#fbfdfb;border-color:#e2eae2}
+    .midad-auth-input-wrap:focus-within{border-color:#6eaa80;box-shadow:0 0 0 3px rgba(46,125,75,.11)}
+    .midad-auth-submit{background:#2d7049;border-radius:13px;box-shadow:0 7px 16px rgba(45,112,73,.18)}
+    .midad-auth-submit:hover{background:#245d3c}
+    .midad-auth-google{border-radius:13px;background:#fff;border:1px solid #e0e8e0}
+    .midad-auth-guest{margin-top:8px}
+    @media(prefers-color-scheme:dark){
+      #midad-auth-gate{background:#18231c}
+      .midad-auth-layout{background:#26342a;border-color:#35483a;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+      .midad-auth-card{background:#26342a}
+      .midad-auth-card:before{color:#eef6ef}.midad-auth-card:after{color:#aab9ad}
+      .midad-auth-input-wrap{background:#202c23;border-color:#3a4b3e}
+      .midad-auth-google{background:#29382d;border-color:#405445;color:#eef6ef}
+      .midad-auth-tabs{background:#202c23;border-color:#3a4b3e}
+    }
+    @media(max-width:760px){
+      #midad-auth-gate{padding:12px;place-items:start center}
+      .midad-auth-layout{width:min(480px,100%);min-height:0;grid-template-columns:1fr;border-radius:23px}
+      .midad-auth-intro{padding:22px 22px 20px;min-height:195px}
+      .midad-auth-intro-brand{gap:10px}
+      .midad-auth-intro-mark{width:45px;height:45px;border-radius:14px}
+      .midad-auth-intro-brand strong{font-size:24px}
+      .midad-auth-intro-copy{margin:22px 0 0}
+      .midad-auth-intro-copy h2{font-size:21px;margin:5px 0}
+      .midad-auth-intro-copy p{font-size:11px;line-height:1.7}
+      .midad-auth-art{display:none}
+      .midad-auth-card{padding:26px 23px 24px}
+      .midad-auth-card:before{font-size:23px}
+    }
+    @media(max-width:380px){.midad-auth-card{padding:23px 18px}.midad-auth-intro{padding:19px}}
   `;
   document.head.appendChild(css);
   const gate = document.createElement('section');
   gate.id = 'midad-auth-gate';
   gate.innerHTML = `
-    <div class="midad-auth-card">
-      <div class="midad-auth-brand"><div class="midad-auth-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5c2.8-.9 5.4-.4 8 1.4v12c-2.6-1.8-5.2-2.3-8-1.4z"/><path d="M20 5.5c-2.8-.9-5.4-.4-8 1.4v12c2.6-1.8 5.2-2.3 8-1.4z"/></svg></div><h1>مِداد</h1><p>مساحة الأستاذ التعليمية</p></div>
+    <div class="midad-auth-layout">
+      <aside class="midad-auth-intro">
+        <div class="midad-auth-intro-brand"><div class="midad-auth-intro-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5c2.8-.9 5.4-.4 8 1.4v12c-2.6-1.8-5.2-2.3-8-1.4z"/><path d="M20 5.5c-2.8-.9-5.4-.4-8 1.4v12c2.6-1.8 5.2-2.3 8-1.4z"/></svg></div><div><strong>مِداد</strong><small>مساحة الأستاذ التعليمية</small></div></div>
+        <div class="midad-auth-intro-copy"><span class="eyebrow">تعليم أكثر تنظيماً</span><h2>كل أدواتك التعليمية في مساحة واحدة.</h2><p>أنشئ دروسك، تابع تلاميذك، ونظّم عملك اليومي بسهولة ووضوح.</p></div>
+        <div class="midad-auth-art"><span><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>إعداد الدروس</span><span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M17 8h4m-2-2v4"/></svg>متابعة التلاميذ</span></div>
+      </aside>
+      <div class="midad-auth-card">
       <div class="midad-auth-tabs" id="midad-auth-tabs"><button type="button" id="midad-login-tab" class="active" onclick="midadAuthMode('login')">دخول</button><button type="button" id="midad-signup-tab" onclick="midadAuthMode('signup')">حساب جديد</button></div>
       <form id="midad-auth-form" novalidate>
         <label class="midad-auth-field" id="midad-name-wrap" hidden><span>الاسم الكامل</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><input id="midad-auth-name" autocomplete="name" maxlength="90" placeholder="اكتب اسمك الكامل"></div><small class="midad-auth-error" id="midad-name-error"></small></label>
@@ -205,6 +266,7 @@
       <button type="button" class="midad-auth-guest" id="midad-auth-resend" hidden onclick="midadResendConfirmation()">إعادة إرسال رسالة التأكيد</button>
       <div class="midad-auth-msg" id="midad-auth-msg" role="status" aria-live="polite"></div>
       <p class="midad-auth-note" id="midad-auth-note">بإنشاء حسابك، ستتمكن من حفظ عملك ومتابعة أقسامك.</p>
+      </div>
     </div>`;
   document.body.insertBefore(gate, document.body.firstChild);
 
