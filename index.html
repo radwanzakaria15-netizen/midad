@@ -481,6 +481,15 @@ window.midadUseUserWorkspace=async function(user){
   }
 };
 
+// مساحة زائر مستقلة ومحلية، لا تُزامَن مع حسابات Supabase.
+window.midadUseGuestWorkspace=function(){
+  if(window.midadCloudStop)window.midadCloudStop();
+  KEY='midad_workspace_guest_v1';
+  db=load();
+  if(!db.teacher||db.teacher==='الأستاذ')db.teacher='زائر مِداد';
+  render();
+};
+
 ensureAlphabetLesson();
 render();
 </script>
