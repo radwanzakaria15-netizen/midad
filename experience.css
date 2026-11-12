@@ -68,3 +68,25 @@
 
 .flashcard.flipped .flashcard-front{display:grid!important}
 .flashcard:not(.flipped) .flashcard-back{display:grid!important}
+
+
+/* Midad slide presentation */
+.slide-deck{max-width:980px;margin:18px auto;padding:clamp(12px,3vw,26px);border:1px solid #dce7df;border-radius:24px;background:#f4f7f3}
+.slide-deck-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 2px 14px;color:#668071;font-size:12px;font-weight:800}
+.lesson-slide{min-height:360px;padding:clamp(22px,5vw,54px);border:1px solid #dce7df;border-radius:22px;background:linear-gradient(145deg,#fff 0%,#f8fbf8 100%);box-shadow:0 14px 35px #294a3510;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.lesson-slide h2{margin:0;color:#294b39;font-size:clamp(23px,4vw,36px);line-height:1.5}
+.lesson-slide>p{margin:0;color:#536b5c;font-size:clamp(15px,2vw,19px);line-height:2;white-space:pre-line}
+.lesson-slide-cover{min-height:390px;text-align:center;align-items:center;background:radial-gradient(circle at 50% 0%,#e7f0e8 0,#fff 66%)}
+.lesson-slide-cover h2{max-width:760px;font-size:clamp(28px,5vw,46px)}
+.lesson-slide-cover>p{max-width:680px}
+.slide-kicker{color:#6b8b72;font-size:12px;font-weight:900;letter-spacing:.02em}
+.slide-example{display:grid;gap:6px;padding:13px 16px;border-right:4px solid #8eae91;border-radius:12px;background:#edf4ed;color:#3e5d48;line-height:1.8}
+.slide-example b{font-size:12px}
+.slide-deck .generated-visual{margin:2px 0 0;max-width:100%}
+.slide-deck-progress{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:17px 0}
+.slide-deck-progress button{width:31px;height:31px;border:1px solid #d4e1d5;border-radius:50%;background:#fff;color:#57745e;font:inherit;font-size:12px;cursor:pointer}
+.slide-deck-progress button.active{background:#557b5d;border-color:#557b5d;color:#fff}
+.slide-deck-controls{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.slide-deck-controls>span{color:#849187;font-size:11px;text-align:center}
+@media(max-width:560px){.lesson-slide{min-height:300px;padding:22px 17px}.lesson-slide-cover{min-height:320px}.slide-deck-controls>span{display:none}.slide-deck-controls{justify-content:space-between}}
+@media print{.slide-deck{border:0;background:#fff;padding:0}.slide-deck-top,.slide-deck-progress,.slide-deck-controls{display:none}.lesson-slide{box-shadow:none;min-height:90vh;page-break-after:always;border:0}}
