@@ -151,7 +151,7 @@
   window.midadSupabase = client;
   client.auth.onAuthStateChange((event, session) => {
     if (session?.user) showWorkspace(session.user);
-    else if (event === 'SIGNED_OUT') showGate();
+    else if (event === 'SIGNED_OUT') { if (window.midadCloudStop) window.midadCloudStop(); showGate(); }
   });
   client.auth.getSession().then(({ data, error }) => {
     if (error) message(error.message, 'error');
