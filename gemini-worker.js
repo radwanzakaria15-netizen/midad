@@ -230,10 +230,22 @@ export default {
       if (!env.POLLINATIONS_API_KEY) return json({ error: "مفتاح Pollinations غير مضبوط في إعدادات الخادم." }, 503, origin);
       try {
         const body = await request.json();
-        const topicPrompt = clean(body.prompt, 1400);
-        if (!topicPrompt) return json({ error: "لم يصل وصف الصورة." }, 400, origin);
-        const imagePrompt = "Create a clear, accurate, child-friendly educational illustration for a school lesson. Topic and scene: " + topicPrompt + ". Visual explanation, realistic educational textbook illustration, clean composition, suitable for school learners, no text, no letters, no labels, no watermark.";
-        const imageUrl = "https://gen.pollinations.ai/image/" + encodeURIComponent(imagePrompt) + "?model=black-forest-labs%2Fflux.1-schnell&width=1024&height=1024";
+        const slideTitle = clean(body.title || body.heading, 240);
+        const slideBody = clean(body.content || body.body, 1200);
+        const example = clean(body.example, 500);
+        const subject = clean(body.subject, 120);
+        const level = clean(body.level, 100);
+        if (!slideTitle || !slideBody) return json({ error: "أرسل عنوان الشريحة وشرحها لتوليد صورة مرتبطة بها." }, 400, origin);
+        // Convert the exact Arabic slide content into a concrete English visual brief.
+        const briefRaw = await pollinationsChat(env,
+          "Create ONE precise visual prompt in English for an educational illustration. The image must depict the exact concept described below, not a generic picture of the subject. Identify the main objects, their actions, and the setting from the lesson. Do not add unrelated objects or concepts. Do not depict any writing, letters, numbers, labels, captions, signs, logos, or watermarks. Suitable for a clean school textbook illustration. Return JSON only: {\\"visual_prompt\\":\\"...\\"}.\nSubject: " + subject + "\\nLearner level: " + level + "\\nSlide title: " + slideTitle + "\\nSlide explanation: " + slideBody + "\\nExample: " + example,
+          { temperature: 0.1, max_tokens: 220 }
+        );
+        let visualPrompt = "";
+        try { visualPrompt = JSON.parse(briefRaw).visual_prompt || ""; } catch {}
+        if (!visualPrompt) throw new Error("تعذر إعداد وصف بصري دقيق للشريحة.");
+        const imagePrompt = "Educational textbook illustration. Depict ONLY this exact scene: " + clean(visualPrompt, 900) + ". Faithful to the lesson, clear visual explanation, age-appropriate, uncluttered composition. Absolutely no text, no typography, no letters, no numbers, no labels, no watermark.";
+        const imageUrl = "https://gen.pollinations.ai/image/" + encodeURIComponent(imagePrompt) + "?model=black-forest-labs%2Fflux.1-schnell&width=768&height=512";
         const imageResponse = await fetch(imageUrl, {
           headers: { "Authorization": "Bearer " + env.POLLINATIONS_API_KEY }
         });
