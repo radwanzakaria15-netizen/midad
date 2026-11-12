@@ -13,6 +13,10 @@ const catalog=[
  {id:"schedule",label:"التوقيت والبرنامج",page:"schedule",icon:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4m8-4v4M3 9h18"/></svg>'}
 ];
 const quickCatalog=[
+ {id:"lessons",label:"الدروس",desc:"تحضير الدروس وتنظيمها",page:"lessons"},
+ {id:"assessments",label:"تقويم الطلاب",desc:"إعداد تقويم الطلاب",page:"assessments"},
+ {id:"schedule",label:"التوقيت والبرنامج",desc:"تنظيم توقيت القسم",page:"schedule"},
+ {id:"attendance",label:"تسجيل الحضور",desc:"متابعة حضور التلاميذ",page:"attendance"},
  {id:"classes",label:"الأقسام",desc:"إدارة الأقسام التعليمية",page:"classes"},
  {id:"students",label:"التلاميذ",desc:"قائمة التلاميذ",page:"students"},
  {id:"activities",label:"الأنشطة التعليمية",desc:"أنشطة وألعاب تعليمية",page:"activities"},
@@ -22,7 +26,7 @@ const quickCatalog=[
 let editing=false,drag=null,suppressClickUntil=0,eventsBound=false;
 function read(){try{return JSON.parse(localStorage.getItem(storageKey())||"{}")}catch(_){return {}}}
 function write(v){localStorage.setItem(storageKey(),JSON.stringify(v))}
-function data(){const v=read();return {hiddenQuick:v.hiddenQuick||quickCatalog.map(x=>x.id),quickOrder:v.quickOrder||[],hiddenNav:v.hiddenNav||["assessments","attendance","schedule"],navOrder:v.navOrder||[]}}
+function data(){const v=read();return {hiddenQuick:v.hiddenQuick||["classes","students","activities","library","reports"],quickOrder:v.quickOrder||[],hiddenNav:v.hiddenNav||["assessments","attendance","schedule"],navOrder:v.navOrder||[]}}
 function savePatch(p){write({...read(),...p})}
 function orderNodes(root,order,key){if(!root)return;const nodes=[...root.children].filter(n=>n.dataset[key]);const sorted=order.map(id=>nodes.find(n=>n.dataset[key]===id)).filter(Boolean);nodes.forEach(n=>{if(!sorted.includes(n))sorted.push(n)});sorted.forEach(n=>root.appendChild(n))}
 function persistOrder(){const q=$("#midadQuickGrid"),n=$(".mobile-nav");savePatch({quickOrder:q?[...q.children].filter(x=>x.dataset.customItem&&!x.hidden).map(x=>x.dataset.customItem):data().quickOrder,navOrder:n?[...n.children].filter(x=>x.dataset.customNav&&!x.hidden).map(x=>x.dataset.customNav):data().navOrder})}
