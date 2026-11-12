@@ -2,7 +2,12 @@
 (() => {
   const SUPABASE_URL = 'https://titltzjtsxmlqadpmezr.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2084oivvToJNqZvQwHTBiA_YXR3ouo7';
-  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const authStorage = {
+    getItem(key){return (localStorage.getItem('midad_auth_remember')==='false'?sessionStorage.getItem(key):localStorage.getItem(key)) || sessionStorage.getItem(key) || localStorage.getItem(key);},
+    setItem(key,value){if(localStorage.getItem('midad_auth_remember')==='false'){sessionStorage.setItem(key,value);localStorage.removeItem(key);}else{localStorage.setItem(key,value);sessionStorage.removeItem(key);}},
+    removeItem(key){localStorage.removeItem(key);sessionStorage.removeItem(key);}
+  };
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{storage:authStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   let mode = 'login';
   let busy = false;
   let currentUser = null;
@@ -155,6 +160,13 @@
     document.getElementById('midad-auth-resend').hidden=true;
     setBusy(false);
   };
+  document.getElementById('midad-remember').checked=localStorage.getItem('midad_auth_remember')!=='false';
+  document.getElementById('midad-remember').addEventListener('change',e=>{
+    const key='sb-titltzjtsxmlqadpmezr-auth-token';
+    const token=localStorage.getItem(key)||sessionStorage.getItem(key);
+    localStorage.setItem('midad_auth_remember',e.target.checked?'true':'false');
+    if(token){if(e.target.checked){localStorage.setItem(key,token);sessionStorage.removeItem(key);}else{sessionStorage.setItem(key,token);localStorage.removeItem(key);}}
+  });
   document.getElementById('midad-auth-eye').addEventListener('click',()=>{
     const input=document.getElementById('midad-auth-password');const visible=input.type==='password';input.type=visible?'text':'password';
     document.getElementById('midad-auth-eye').setAttribute('aria-label',visible?'إخفاء كلمة المرور':'إظهار كلمة المرور');
