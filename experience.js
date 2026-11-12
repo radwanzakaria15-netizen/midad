@@ -224,7 +224,7 @@
     const ready=experienceExportOwnerId===item.id&&Object.keys(experienceExportUrls).length>0;
     return '<section class="card" id="experience-export-panel" style="margin:16px 0;border:1px solid #d9e5d9;background:#fbfdfb">'+
       '<div class="section-title"><div><h3>ملفات الدرس الجاهزة</h3><p id="experience-export-status" aria-live="polite">'+(ready?'اكتمل تجهيز الملفات.':'جارٍ تجهيز ملفات الدرس تلقائياً بعد الإنشاء...')+'</p></div></div>'+
-      '<div id="experience-export-links" class="item-actions">'+(ready?experienceExportLinks():'<span class="muted">سيظهر هنا تنزيل PowerPoint وPDF وملفات PNG وWord.</span>')+'</div></section>';
+      '<div id="experience-export-links" class="item-actions">'+(ready?experienceExportLinks():'<span class="muted">ستظهر هنا صورة الملخص PNG وملفات PowerPoint وPDF وPNG وWord.</span>')+'</div></section>';
   }
   function experienceExportLinks(){
     const labels={infographic:"صورة الملخص PNG",pptx:"تنزيل PowerPoint",pdf:"تنزيل PDF",png:"تنزيل صور الشرائح (ZIP)",docx:"تنزيل Word"};
