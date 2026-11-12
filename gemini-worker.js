@@ -189,6 +189,23 @@ export default {
     }
 
     if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "مصدر الطلب غير مسموح." }, 403, origin);
+    if (path === "/experience-image") {
+      if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
+      if (!env.AI) return json({ error: "ربط Workers AI غير مكتمل." }, 503, origin);
+      try {
+        const body = await request.json();
+        const topicPrompt = clean(body.prompt, 1400);
+        if (!topicPrompt) return json({ error: "لم يصل وصف الصورة." }, 400, origin);
+        const imageResult = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+          prompt: "Create a clear, accurate, child-friendly educational illustration for a school lesson. Topic and scene: " + topicPrompt + ". Visual explanation, realistic educational textbook illustration, clean composition, suitable for school learners, no text, no letters, no labels, no watermark.",
+          steps: 4
+        });
+        if (!imageResult || !imageResult.image) return json({ error: "لم يُرجع مولد الصور صورة صالحة." }, 502, origin);
+        return json({ image: "data:image/jpeg;base64," + imageResult.image }, 200, origin);
+      } catch (error) {
+        return json({ error: "تعذر توليد الصورة: " + clean(error.message || "خطأ غير معروف", 240) }, 502, origin);
+      }
+    }
     if (request.method === "GET") return json({ ok: true, service: "Midad Gemini Worker", model: MODEL, keyConfigured: !!env.GEMINI_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
     let input;
