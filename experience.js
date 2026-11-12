@@ -417,7 +417,7 @@
     finally{clearTimeout(requestTimer);cards.forEach(b=>{b.disabled=false;if(b.dataset.previousText)b.innerHTML=b.dataset.previousText});if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"اكتملت التجربة وحُفظت":failureMessage)}
   };
 
-  window.openExperience=function(idValue){currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})};
+  window.openExperience=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(!item)return;currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});generateExperienceFiles(item)};
   window.goExperienceStep=function(i){experienceStep=i;render()};
   window.goExperienceSceneStep=function(i){experienceSceneStep=i;render()};
   window.selectMatchCard=function(side,index){
