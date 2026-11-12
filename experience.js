@@ -153,6 +153,50 @@
   const experienceExportUrls = {};
   const experienceImageData = {};
   let experienceExportOwnerId = null;
+  const artifactDbName = "midad-artifacts-v1";
+  function artifactSignature(item){
+    return JSON.stringify({title:item.title,subject:item.subject,level:item.level,mode:item.mode,data:item.data});
+  }
+  function openArtifactDb(){
+    if(!("indexedDB" in window))return Promise.resolve(null);
+    return new Promise(resolve=>{
+      try{
+        const request=indexedDB.open(artifactDbName,1);
+        request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains("exports"))db.createObjectStore("exports",{keyPath:"id"});};
+        request.onsuccess=()=>resolve(request.result);
+        request.onerror=()=>resolve(null);
+        request.onblocked=()=>resolve(null);
+      }catch(_){resolve(null)}
+    });
+  }
+  async function saveArtifactBlobs(item,blobs){
+    const db=await openArtifactDb();if(!db)return false;
+    return new Promise(resolve=>{
+      try{
+        const tx=db.transaction("exports","readwrite");
+        tx.objectStore("exports").put({id:item.id,signature:artifactSignature(item),files:blobs,savedAt:new Date().toISOString()});
+        tx.oncomplete=()=>{db.close();resolve(true)};
+        tx.onerror=tx.onabort=()=>{db.close();resolve(false)};
+      }catch(_){db.close();resolve(false)}
+    });
+  }
+  async function loadArtifactBlobs(item){
+    const db=await openArtifactDb();if(!db)return null;
+    return new Promise(resolve=>{
+      try{
+        const request=db.transaction("exports","readonly").objectStore("exports").get(item.id);
+        request.onsuccess=()=>{const row=request.result;db.close();resolve(row&&row.signature===artifactSignature(item)&&row.files?row.files:null)};
+        request.onerror=()=>{db.close();resolve(null)};
+      }catch(_){db.close();resolve(null)}
+    });
+  }
+  function attachArtifactBlobs(item,blobs){
+    Object.keys(experienceExportUrls).forEach(k=>{URL.revokeObjectURL(experienceExportUrls[k]);delete experienceExportUrls[k]});
+    experienceExportOwnerId=item.id;
+    Object.entries(blobs).forEach(([key,blob])=>{if(blob)experienceExportUrls[key]=URL.createObjectURL(blob)});
+    const host=document.getElementById("experience-export-links");
+    if(host)host.innerHTML=experienceExportLinks();
+  }
   function loadExperienceLibrary(src, globalName){
     if(window[globalName])return Promise.resolve(window[globalName]);
     if(window.__midadLibraryLoads?.[globalName])return window.__midadLibraryLoads[globalName];
@@ -210,6 +254,14 @@
     return images;
   }
   async function generateExperienceFiles(item){
+    const cached=await loadArtifactBlobs(item);
+    if(cached&&cached.pptx&&cached.pdf&&cached.png&&cached.docx){
+      attachArtifactBlobs(item,cached);
+      const cachedStatus=document.getElementById("experience-export-status");
+      if(cachedStatus)cachedStatus.textContent="تم استعادة الملفات المحفوظة على هذا الجهاز دون إعادة توليدها.";
+      item.exportReady=true;
+      return;
+    }
     const status=document.getElementById("experience-export-status");
     const links=document.getElementById("experience-export-links");
     const setStatus=t=>{const el=document.getElementById("experience-export-status");if(el)el.textContent=t};
@@ -262,11 +314,10 @@
       staging.remove();
       const pdfBlob=pdf.output("blob"),pngBlob=await zip.generateAsync({type:"blob"});
       const blobs={pptx:pptxBlob,pdf:pdfBlob,png:pngBlob,docx:docxBlob};
-      Object.entries(blobs).forEach(([key,blob])=>{if(experienceExportUrls[key])URL.revokeObjectURL(experienceExportUrls[key]);experienceExportUrls[key]=URL.createObjectURL(blob)});
-      const linkHost=document.getElementById("experience-export-links");
-      if(linkHost)linkHost.innerHTML=experienceExportLinks();
+      attachArtifactBlobs(item,blobs);
+      const persisted=await saveArtifactBlobs(item,blobs);
       const failedImages=images.filter(x=>!x).length;
-      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض."));
+      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض.")+(persisted?" حُفظت الملفات محلياً لاستعادتها عند فتح التجربة لاحقاً.":" تعذر حفظ نسخة محلية دائمة؛ ستظل الملفات متاحة في هذه الجلسة فقط."));
       item.exportReady=true;
     }catch(error){
       console.error("Midad export error",error);
