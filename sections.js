@@ -3,12 +3,21 @@
 const $=id=>document.getElementById(id);
 const escTask=v=>window.esc?window.esc(v==null?"":String(v)):String(v??"");
 const taskKinds=["واجب منزلي","اختبار","امتحان","بحث"];
+const taskIcon=k=>{
+ const paths={
+ "واجب منزلي":'<path d="M13 5H7a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-7"/><path d="M9 11h5M9 15h4"/><path d="m16 4 4 4-7 7-4 1 1-4z"/>',
+ "اختبار":'<path d="M7 3h9l5 5v13a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M16 3v6h5M8 13l2 2 3-3M15 14h3M8 19h10"/>',
+ "امتحان":'<path d="M7 3h9l5 5v13a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M16 3v6h5M8 13h9M8 17h9"/><path d="m11 8 1 1 2-2"/>',
+ "بحث":'<path d="M6 4h10l4 4v7"/><path d="M16 4v5h4M6 4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6"/><circle cx="18" cy="18" r="4"/><path d="m21 21 2 2"/>'
+ };
+ return '<svg viewBox="0 0 28 28" aria-hidden="true">'+(paths[k]||paths["واجب منزلي"])+'</svg>';
+};
 const taskId=()=>"task-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const accents={"واجب منزلي":"#537d68","اختبار":"#5579a8","امتحان":"#98734b","بحث":"#806aa0"};
 const numberFor=k=>(db.activities||[]).filter(x=>x.kind==="task"&&x.category===k).length+1;
 window.activitiesPage=function(){
  const tasks=(db.activities||[]).filter(x=>x.kind==="task"),games=(db.activities||[]).filter(x=>x.kind!=="task");
- const cards=taskKinds.map((k,i)=>'<article class="task-kind-card" style="--task-accent:'+accents[k]+'"><div class="task-kind-top"><span class="task-kind-symbol">'+["▤","▤","▤","▤"][i]+'</span><span class="task-kind-count">'+tasks.filter(t=>t.category===k).length+' محفوظ</span></div><h3>'+k+'</h3><p>'+["تمارين للتدريب مع ملف إجابات مستقل.","أسئلة قصيرة لقياس الفهم.","امتحان منظم مع سلم تنقيط وتصحيح.","استخرج عناوين بحوث مقترحة من الدرس أو الملف."][i]+'</p><button class="btn task-kind-button" onclick="openTask(\''+k+'\')">إنشاء '+k+' ←</button></article>').join("");
+ const cards=taskKinds.map((k,i)=>'<article class="task-kind-card" style="--task-accent:'+accents[k]+'"><div class="task-kind-top"><span class="task-kind-symbol">'+taskIcon(k)+'</span><span class="task-kind-count">'+tasks.filter(t=>t.category===k).length+' محفوظ</span></div><h3>'+k+'</h3><p>'+["تمارين للتدريب مع ملف إجابات مستقل.","أسئلة قصيرة لقياس الفهم.","امتحان منظم مع سلم تنقيط وتصحيح.","استخرج عناوين بحوث مقترحة من الدرس أو الملف."][i]+'</p><button class="btn task-kind-button" onclick="openTask(\''+k+'\')">إنشاء '+k+' ←</button></article>').join("");
  return pageHead("تنظيم التعلمات","الأنشطة والمهام التعليمية","أنشئ نشاطاً بالذكاء الاصطناعي أو ارفع ملفاً جاهزاً وحدد الفئة المستهدفة.",'<button class="btn light" onclick="openTaskUpload()">↑ رفع نشاط</button><button class="btn primary" onclick="openTask()">＋ إنشاء نشاط</button>')+
  '<section class="task-kind-grid">'+cards+'</section><div class="section-title" style="margin-top:25px"><div><h3>الأنشطة المحفوظة</h3><p>افتح النشاط لتنزيل ملف الأسئلة وملف الإجابات.</p></div><span class="pill">'+tasks.length+' نشاط</span></div>'+
  (tasks.length?'<div class="task-saved-grid">'+tasks.slice().reverse().map(t=>'<article class="task-saved-card"><div class="task-saved-head" style="--task-accent:'+(accents[t.category]||"#66836d")+'"><span>'+escTask(t.category)+'</span><b>'+(t.category==="بحث"?"عناوين مقترحة":"رقم "+(t.number||"—"))+'</b></div><div class="task-saved-body"><h3>'+escTask(t.title)+'</h3><p><b>المادة:</b> '+escTask(t.subject||"—")+'</p><p><b>المستوى:</b> '+escTask(t.level||"—")+'</p>'+(t.uploadedFile?'<span class="task-score-chip">ملف مرفق</span>':t.category!=="بحث"?'<span class="task-score-chip">التنقيط على '+escTask(t.maxScore||20)+'</span>':'')+(t.dueDate?'<p><b>التسليم:</b> '+escTask(t.dueDate)+'</p>':'')+'<div class="item-actions"><button class="btn primary small" onclick="viewTask(\''+t.id+'\')">عرض الملفات</button><button class="btn light small" onclick="deleteTask(\''+t.id+'\')">حذف</button></div></div></article>').join("")+'</div>':empty("لا توجد أنشطة محفوظة بعد","اختر نوع النشاط من البطاقات أعلاه."))+
