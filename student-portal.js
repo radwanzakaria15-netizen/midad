@@ -107,7 +107,7 @@ window.midadSaveSettings=function(){const p=midadPrefs();p.theme=document.getEle
 .midad-welcome-card{position:relative;z-index:1;width:min(540px,100%);padding:30px 26px;border:1px solid #dcebf02e;border-radius:32px;background:linear-gradient(145deg,#ffffff1c,#ffffff0a);box-shadow:0 28px 90px #07192366;backdrop-filter:blur(18px);color:#f5fbfd}
 .midad-welcome-symbol{width:84px;height:84px;margin:0 auto 16px;position:relative;display:grid;grid-template-columns:1fr 1fr;gap:6px;transform:rotate(-8deg)}
 .midad-welcome-symbol i{display:block;border-radius:12px 12px 4px 12px;background:linear-gradient(145deg,#d9eef0,#7db0bb);box-shadow:0 8px 18px #07192340;animation:midadTileForm .8s cubic-bezier(.18,.8,.25,1) both}
-.midad-welcome-symbol i:nth-child(1){animation-delay:.05s}.midad-welcome-symbol i:nth-child(2){animation-delay:.18s}.midad-welcome-symbol i:nth-child(3){animation-delay:.31s}.midad-welcome-symbol i:nth-child(4){animation-delay:.44s}
+.midad-welcome-symbol i:nth-child(1){--x:-35px;--y:-35px;animation-delay:.05s}.midad-welcome-symbol i:nth-child(2){--x:35px;--y:-35px;animation-delay:.18s}.midad-welcome-symbol i:nth-child(3){--x:-35px;--y:35px;animation-delay:.31s}.midad-welcome-symbol i:nth-child(4){--x:35px;--y:35px;animation-delay:.44s}
 @keyframes midadTileForm{from{opacity:0;transform:translate(var(--x,0),var(--y,0)) rotate(35deg) scale(.25);border-radius:50%}to{opacity:1;transform:none;border-radius:12px 12px 4px 12px}}
 @keyframes midadOrbit{to{transform:rotate(360deg) scale(1.04)}}
 .midad-logo-word{color:#f6fbfc;font-size:clamp(50px,12vw,78px);letter-spacing:3px;text-shadow:0 8px 24px #0a202c88}
