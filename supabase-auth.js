@@ -6,12 +6,15 @@
   let mode = 'login';
   let busy = false;
   let currentUser = null;
+  let pendingConfirmationEmail = '';
 
   const css = document.createElement('style');
   css.textContent = `
     .app,.mobile-nav{display:none!important}
     body.midad-authenticated .app{display:block!important}
     body.midad-authenticated .mobile-nav{display:flex!important}
+    body.student-mode .mobile-nav{display:none!important}
+    .mobile-nav [hidden]{display:none!important}
     .midad-auth-guest{width:100%;margin-top:12px;min-height:48px;border:1px solid #cbd9c8;border-radius:14px;background:#f7faf5;color:#36533c;font:700 15px Tajawal,Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}
     .midad-auth-guest:hover{background:#edf4e9;border-color:#a9c2a5}
     body.midad-guest [onclick="midadCreateInvite()"],body.midad-guest [onclick="midadSignOut()"]{display:none!important}
@@ -63,6 +66,7 @@
         <button class="midad-auth-submit" id="midad-auth-submit" type="submit">دخول إلى مِداد</button>
       </form>
       <button type="button" class="midad-auth-guest" onclick="midadGuestMode()">الدخول مؤقتًا دون حساب</button>
+      <button type="button" class="midad-auth-guest" id="midad-auth-resend" hidden onclick="midadResendConfirmation()">إعادة إرسال رسالة التأكيد</button>
       <div class="midad-auth-msg" id="midad-auth-msg" role="status"></div>
       <p class="midad-auth-note">إنشاء حساب الأستاذ الجديد يتطلب رمز دعوة صالحاً بعد إنشاء الحساب الأول.</p>
     </div>`;
@@ -72,6 +76,8 @@
     const el = document.getElementById('midad-auth-msg');
     el.textContent = text;
     el.className = 'midad-auth-msg show ' + type;
+    const resend = document.getElementById('midad-auth-resend');
+    if (resend) resend.hidden = !pendingConfirmationEmail;
   }
   function setBusy(value) {
     busy = value;
@@ -87,6 +93,8 @@
     document.getElementById('midad-invite-wrap').hidden = mode !== 'signup';
     document.getElementById('midad-auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
     document.getElementById('midad-auth-msg').className = 'midad-auth-msg';
+    pendingConfirmationEmail = '';
+    document.getElementById('midad-auth-resend').hidden = true;
     setBusy(false);
   };
 
@@ -138,15 +146,36 @@
           showWorkspace(data.user);
           message('تم إنشاء الحساب وتسجيل الدخول بنجاح.');
         } else {
-          message('تم إرسال رسالة تأكيد إلى بريدك الإلكتروني. أكّد البريد ثم ارجع إلى مِداد وسجّل الدخول.', 'ok');
+          pendingConfirmationEmail = email;
+          message('تم إنشاء الحساب. افتح رسالة تأكيد البريد واضغط رابط التأكيد (لا يلزم إدخال رمز). إذا لم تصلك الرسالة، استخدم زر إعادة الإرسال أدناه.', 'ok');
         }
       }
     } catch (error) {
-      message(error.message || 'تعذّر إكمال العملية. تحقق من البيانات وحاول مجدداً.', 'error');
+      const raw = String(error.message || '');
+      if (/email_address_not_authorized|not authorized/i.test(raw)) message('خدمة البريد الافتراضية في Supabase لا ترسل إلى هذا العنوان. يلزم إعداد SMTP مخصص حتى تصل رسائل التأكيد.', 'error');
+      else if (/over_email_send_rate_limit|email rate limit|too many requests/i.test(raw)) message('تجاوز المشروع حد إرسال رسائل البريد مؤقتاً. انتظر قبل المحاولة مجدداً، ولا تكرر إنشاء الحساب.', 'error');
+      else if (/email not confirmed/i.test(raw)) { pendingConfirmationEmail = email; message('حسابك موجود لكنه ينتظر تأكيد البريد. اضغط إعادة إرسال رسالة التأكيد أدناه.', 'error'); }
+      else message(raw || 'تعذّر إكمال العملية. تحقق من البيانات وحاول مجدداً.', 'error');
     } finally {
       setBusy(false);
     }
   });
+
+
+  window.midadResendConfirmation = async () => {
+    if (busy || !pendingConfirmationEmail) return;
+    setBusy(true);
+    try {
+      const { error } = await client.auth.resend({ type: 'signup', email: pendingConfirmationEmail });
+      if (error) throw error;
+      message('طلبنا إعادة إرسال رسالة التأكيد. افحص الوارد والرسائل غير المرغوب فيها، ولا تكرر الطلب بسرعة.', 'ok');
+    } catch (error) {
+      const raw = String(error.message || '');
+      if (/rate|too many|frequency/i.test(raw)) message('وصلت إلى حد إعادة الإرسال مؤقتاً. انتظر قبل المحاولة مجدداً.', 'error');
+      else if (/not authorized|email address/i.test(raw)) message('Supabase لا يسمح بإرسال البريد إلى هذا العنوان عبر خادم البريد الافتراضي. يلزم إعداد SMTP مخصص للمشروع.', 'error');
+      else message(raw || 'تعذرت إعادة إرسال رسالة التأكيد.', 'error');
+    } finally { setBusy(false); }
+  };
 
   window.midadCopyInvite = async () => {
     const value = document.getElementById('midad-generated-invite')?.textContent || '';
