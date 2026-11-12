@@ -46,3 +46,7 @@ body.midad-night .student-home-tile small{color:var(--muted)}
 
 .mobile-nav [hidden]{display:none!important}
 body.student-mode .mobile-nav{display:none!important}
+
+/* Touch-friendly drag and drop while customizing */
+body.midad-customizing .quick,body.midad-customizing .mobile-nav button{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+body.midad-customizing .quick:active,body.midad-customizing .mobile-nav button:active{cursor:grabbing}
