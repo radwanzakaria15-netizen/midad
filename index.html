@@ -466,7 +466,7 @@ window.midadUseUserWorkspace=function(user){
   }
   KEY=scopedKey;
   db=load();
-  if(user.user_metadata&&user.user_metadata.full_name&&!db.teacher)db.teacher=user.user_metadata.full_name;
+  if(user.user_metadata&&user.user_metadata.full_name&&(!db.teacher||db.teacher==='الأستاذ'))db.teacher=user.user_metadata.full_name;
   render();
 };
 
