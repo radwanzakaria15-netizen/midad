@@ -71,3 +71,9 @@ body.midad-customizing .mobile-nav button{padding-top:23px}
 #midad-nav-add-shelf{position:fixed;z-index:85;bottom:82px;left:12px;right:12px;max-height:35vh;overflow:auto;box-shadow:0 8px 25px #0002}
 body.student-mode #midad-edit-bar,body.student-mode .midad-add-shelf{display:none!important}
 @media(max-width:760px){#midad-edit-bar{bottom:10px}#midad-edit-bar>span{font-size:10px}.midad-add-shelf{gap:6px;padding:10px}.midad-add-option{font-size:11px;padding:7px 9px}}
+
+/* Mobile customization controls stay clear of the bottom navigation */
+#midad-edit-bar{z-index:45;bottom:18px}
+#midad-nav-add-shelf{z-index:42;bottom:86px;max-height:24vh;left:10px;right:10px}
+@media(max-width:760px){#midad-edit-bar{bottom:calc(76px + env(safe-area-inset-bottom));width:calc(100% - 18px);justify-content:center;flex-wrap:wrap}#midad-edit-bar>span{flex:1 1 100%;text-align:center}#midad-nav-add-shelf{bottom:calc(138px + env(safe-area-inset-bottom));max-height:22vh}body.midad-customizing .mobile-nav button{padding-top:0!important}body.midad-customizing .quick{padding-top:36px}.midad-remove-item{pointer-events:auto;touch-action:manipulation}}
+.schedule-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:15px;margin-top:14px}.schedule-file-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}.schedule-publish-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:15px;padding:11px 13px;border-radius:12px;background:#f1f6f1;color:#385c40;font-size:12px}.schedule-publish-row label{display:flex;align-items:center;gap:8px;font-weight:800}.schedule-publish-row input{width:17px;height:17px;accent-color:#39764b}@media(max-width:760px){.schedule-grid{grid-template-columns:1fr}}
