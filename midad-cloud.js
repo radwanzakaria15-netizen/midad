@@ -7,7 +7,12 @@
 
   const clone = value => JSON.parse(JSON.stringify(value || {}));
   const mergeWorkspace = (remote, local) => {
-    const merged = { ...remote, ...local };
+    // Cloud values are the baseline on a second device; only meaningful local
+    // profile values override them, never blank/default local defaults.
+    const merged = { ...local, ...remote };
+    if (local?.teacher && local.teacher !== 'الأستاذ') merged.teacher = local.teacher;
+    if (local?.school) merged.school = local.school;
+    if (local?.year && local.year !== '2026 / 2027') merged.year = local.year;
     const arrayKeys = ['classes','students','lessons','activities','assessments','attendance','resources','experiences'];
     for (const key of arrayKeys) {
       const cloudRows = Array.isArray(remote?.[key]) ? remote[key] : [];
