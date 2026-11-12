@@ -264,8 +264,9 @@ main,#main{animation:none!important;filter:none!important}
 </div>
 <div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()"><section class="modal" id="modal"></section></div>
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const KEY='midad_workspace_v3';
+let KEY='midad_workspace_v3';
 const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'https://hidden-boat-c81b.radwanzakaria15.workers.dev/',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[]};
 let db=load(),page='home',board=null,boardCtx=null,boardDrawing=false,boardTool='pen',boardColor='#563829',boardSize=4,boardHistory=[];
 function load(){try{const saved=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));if(!saved.aiEndpoint)saved.aiEndpoint=defaults.aiEndpoint;return saved}catch(e){return {...defaults}}}
@@ -451,7 +452,24 @@ function saveSettings(e){e.preventDefault();let v=Object.fromEntries(new FormDat
 function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='midad-backup-'+dateNow()+'.json';a.click();URL.revokeObjectURL(a.href);toast('تم تجهيز النسخة الاحتياطية')}
 function importData(e){let file=e.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=()=>{try{let v=JSON.parse(reader.result);if(!v||typeof v!=='object'||!Array.isArray(v.classes)||!Array.isArray(v.students))throw new Error();db=Object.assign({},defaults,v);save();render();toast('تم استيراد البيانات بنجاح')}catch(err){toast('الملف غير صالح أو ليس نسخة مِداد')}};reader.readAsText(file)}
 function confirmReset(){if(!confirm('سيتم حذف جميع بيانات مِداد من هذا المتصفح. هل أنشأت نسخة احتياطية؟'))return;if(!confirm('تأكيد أخير: حذف جميع الأقسام والتلاميذ والدروس؟'))return;db={...defaults};save();render();toast('تمت إعادة تهيئة المساحة')}
-window.midadOpenMore=function(){openModal("الإعدادات والمزيد","إدارة إعدادات المنصة والوصول إلى الأدوات الإضافية.",'<div class="list"><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'settings\')">إعدادات المنصة والبيانات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'reports\')">التقارير والمتابعة</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'library\')">مكتبة الموارد</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();midadOpenSettings()">المظهر والتنبيهات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();enterStudentMode()">معاينة واجهة الطالب</button></div>')};
+window.midadOpenMore=function(){openModal("الإعدادات والحساب","إدارة إعدادات المنصة وحساب الأستاذ.",'<div class="list"><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'settings\')">إعدادات المنصة والبيانات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'reports\')">التقارير والمتابعة</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'library\')">مكتبة الموارد</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();midadOpenSettings()">المظهر والتنبيهات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="midadCreateInvite()">إنشاء رمز دعوة لأستاذ</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="midadSignOut()">تسجيل الخروج</button></div>')};
+
+window.midadUseUserWorkspace=function(user){
+  const legacyKey='midad_workspace_v3';
+  const scopedKey=legacyKey+'_'+user.id;
+  let scoped=localStorage.getItem(scopedKey);
+  if(!scoped){
+    const legacy=localStorage.getItem(legacyKey);
+    if(legacy && confirm('وجدنا بيانات مِداد قديمة على هذا الجهاز. هل هذه بياناتك أنت وتريد نقل نسخة منها إلى مساحة حسابك؟ إذا كان الجهاز مشتركاً مع أستاذ آخر فاختر «إلغاء».')){
+      try{JSON.parse(legacy);localStorage.setItem(scopedKey,legacy);scoped=legacy;}catch(e){}
+    }
+  }
+  KEY=scopedKey;
+  db=load();
+  if(user.user_metadata&&user.user_metadata.full_name&&!db.teacher)db.teacher=user.user_metadata.full_name;
+  render();
+};
+
 ensureAlphabetLesson();
 render();
 </script>
@@ -462,4 +480,5 @@ render();
 <script src="./sections.js?v=task-svg-icons-20261112"></script>
 <script src="./ui-effects.js"></script>
 <script src="./student-portal.js?v=student-note-signs-20261112"></script>
+<script src="./supabase-auth.js?v=20261112-auth-1"></script>
 </body></html>
