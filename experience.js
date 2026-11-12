@@ -245,7 +245,7 @@
       const zip=new JSZip(),pdf=new jspdf.jsPDF({orientation:"landscape",unit:"px",format:[1280,720],compress:true});
       for(let i=0;i<slides.length;i++){
         const s=slides[i];
-        staging.innerHTML='<div dir="rtl" style="box-sizing:border-box;width:1280px;height:720px;padding:76px 90px;background:'+(i===0?'#eaf1ea':'#f8faf7')+';color:#294b39;display:flex;flex-direction:column;justify-content:center;font-family:Arial,sans-serif"><div style="font-size:22px;color:#66806d;margin-bottom:46px">مِداد · عرض تعليمي</div><div style="font-size:'+(i===0?54:46)+'px;font-weight:700;line-height:1.35;margin-bottom:32px">'+safe(s.heading)+'</div><div style="font-size:30px;line-height:1.8;color:#34463a;white-space:pre-wrap">'+safe(s.body)+'</div>'+(s.example?'<div style="margin-top:34px;padding:22px 28px;border-radius:18px;background:#e8efe8;font-size:25px;line-height:1.6"><b>مثال توضيحي: </b>'+safe(s.example)+'</div>':'')+'<div style="position:absolute;bottom:38px;left:90px;color:#829487;font-size:18px">'+(i+1)+' / '+slides.length+'</div></div>';
+        staging.innerHTML='<div dir="rtl" style="box-sizing:border-box;width:1280px;height:720px;padding:54px 76px;background:'+(i===0?'#eaf1ea':'#f8faf7')+';color:#294b39;display:flex;flex-direction:column;justify-content:center;font-family:Arial,sans-serif"><div style="font-size:22px;color:#66806d;margin-bottom:28px">مِداد · عرض تعليمي</div><div style="font-size:'+(i===0?50:44)+'px;font-weight:700;line-height:1.3;margin-bottom:24px">'+safe(s.heading)+'</div><div style="display:flex;gap:32px;align-items:center;flex:1"><div style="width:52%;font-size:27px;line-height:1.7;color:#34463a;white-space:pre-wrap">'+safe(s.body)+(s.example?'<div style="margin-top:20px;padding:18px;border-radius:16px;background:#e8efe8;font-size:22px"><b>مثال توضيحي: </b>'+safe(s.example)+'</div>':'')+'</div>'+(images[i]?'<img src="'+images[i]+'" style="width:44%;height:390px;object-fit:contain;border-radius:18px">':'')+'</div><div style="position:absolute;bottom:28px;left:76px;color:#829487;font-size:18px">'+(i+1)+' / '+slides.length+'</div></div>';
         const canvas=await html2canvas(staging.firstElementChild,{scale:1,backgroundColor:null,useCORS:true});
         const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
         if(!blob)throw new Error("تعذر إنشاء إحدى صور الشرائح.");
@@ -303,6 +303,7 @@
         '<div class="slide-kicker">'+(isCover?'ملخص الدرس':'الفكرة '+experienceStep)+'</div>'+
         '<h2>'+safe(s.heading||"")+'</h2>'+
         '<p>'+safe(s.body||"")+'</p>'+
+        (experienceImageData[item.id]?.[experienceStep]?'<img class="lesson-slide-generated-image" alt="صورة توضيحية مولدة عن '+safe(s.heading||item.title)+'" src="'+experienceImageData[item.id][experienceStep]+'">' : '<div class="lesson-slide-image-pending">سيتم إنشاء صورة توضيحية لهذه الشريحة تلقائياً</div>')+
         (!isCover&&s.example?'<div class="slide-example"><b>مثال توضيحي</b><span>'+safe(s.example)+'</span></div>':'')+
         (!isCover?renderVisual(s.visual):'')+
       '</article>'+
