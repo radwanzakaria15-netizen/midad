@@ -270,7 +270,7 @@ let KEY='midad_workspace_v3';
 const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'https://hidden-boat-c81b.radwanzakaria15.workers.dev/',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[]};
 let db=load(),page='home',board=null,boardCtx=null,boardDrawing=false,boardTool='pen',boardColor='#563829',boardSize=4,boardHistory=[];
 function load(){try{const saved=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));if(!saved.aiEndpoint)saved.aiEndpoint=defaults.aiEndpoint;return saved}catch(e){return {...defaults}}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db));return true}catch(e){toast('مساحة التخزين في المتصفح ممتلئة. احذف بعض الملفات أو نزّل نسخة احتياطية.');return false}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));if(window.midadCloudQueueSave)window.midadCloudQueueSave(db);return true}catch(e){toast('مساحة التخزين في المتصفح ممتلئة. احذف بعض الملفات أو نزّل نسخة احتياطية.');return false}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function toast(s){let t=document.getElementById('toast');t.textContent=s;t.classList.add('show');clearTimeout(window._toast);window._toast=setTimeout(()=>t.classList.remove('show'),2600)}
 function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -454,7 +454,7 @@ function importData(e){let file=e.target.files[0];if(!file)return;let reader=new
 function confirmReset(){if(!confirm('سيتم حذف جميع بيانات مِداد من هذا المتصفح. هل أنشأت نسخة احتياطية؟'))return;if(!confirm('تأكيد أخير: حذف جميع الأقسام والتلاميذ والدروس؟'))return;db={...defaults};save();render();toast('تمت إعادة تهيئة المساحة')}
 window.midadOpenMore=function(){openModal("الإعدادات والحساب","إدارة إعدادات المنصة وحساب الأستاذ.",'<div class="list"><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'settings\')">إعدادات المنصة والبيانات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'reports\')">التقارير والمتابعة</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'library\')">مكتبة الموارد</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();midadOpenSettings()">المظهر والتنبيهات</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="midadCreateInvite()">إنشاء رمز دعوة لأستاذ</button><button class="btn light" style="width:100%;justify-content:flex-start" onclick="midadSignOut()">تسجيل الخروج</button></div>')};
 
-window.midadUseUserWorkspace=function(user){
+window.midadUseUserWorkspace=async function(user){
   const legacyKey='midad_workspace_v3';
   const scopedKey=legacyKey+'_'+user.id;
   let scoped=localStorage.getItem(scopedKey);
@@ -468,6 +468,16 @@ window.midadUseUserWorkspace=function(user){
   db=load();
   if(user.user_metadata&&user.user_metadata.full_name&&(!db.teacher||db.teacher==='الأستاذ'))db.teacher=user.user_metadata.full_name;
   render();
+  try{
+    if(window.midadCloudLoadWorkspace){
+      db=await window.midadCloudLoadWorkspace(user,db);
+      localStorage.setItem(KEY,JSON.stringify(db));
+      render();
+    }
+  }catch(error){
+    console.error('Midad initial cloud load:',error);
+    toast(error.message||'تعذر تحميل النسخة السحابية. بيانات هذا الجهاز لم تُحذف.');
+  }
 };
 
 ensureAlphabetLesson();
@@ -480,5 +490,6 @@ render();
 <script src="./sections.js?v=task-svg-icons-20261112"></script>
 <script src="./ui-effects.js"></script>
 <script src="./student-portal.js?v=student-note-signs-20261112"></script>
-<script src="./supabase-auth.js?v=20261112-auth-1"></script>
+<script src="./midad-cloud.js?v=20261112-sync-1"></script>
+<script src="./supabase-auth.js?v=20261112-auth-2"></script>
 </body></html>
