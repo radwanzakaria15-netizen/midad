@@ -149,6 +149,102 @@
   };
   window.midadReadExperienceFile=async function(input){const file=input?.files?.[0],out=document.getElementById("expFileText");if(!file||!out)return;out.value="جارٍ استخراج النص من الملف...";try{out.value=await window.midadExtractDocumentText(file);toast("تم استخراج النص من الملف بنجاح.");}catch(e){out.value="";toast(e.message||"تعذرت قراءة الملف.");}};
 
+
+  const experienceExportUrls = {};
+  function loadExperienceLibrary(src, globalName){
+    if(window[globalName])return Promise.resolve(window[globalName]);
+    if(window.__midadLibraryLoads?.[globalName])return window.__midadLibraryLoads[globalName];
+    window.__midadLibraryLoads=window.__midadLibraryLoads||{};
+    window.__midadLibraryLoads[globalName]=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");script.src=src;script.async=true;
+      script.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error("لم تُحمّل مكتبة إنشاء الملفات."));
+      script.onerror=()=>reject(new Error("تعذر تحميل مكتبة إنشاء الملفات. تحقق من الاتصال بالإنترنت."));
+      document.head.appendChild(script);
+    });
+    return window.__midadLibraryLoads[globalName];
+  }
+  function experienceSlides(item){
+    const d=item.data||{}, sections=arr(d.sections);
+    return [{heading:d.title||item.title,body:d.intro||"ملخص الدرس",cover:true},...sections].map((x,i)=>({
+      heading:String(x.heading|| (i===0?item.title:"فكرة "+i)),
+      body:String(x.body||""),
+      example:String(x.example||""),
+      cover:!!x.cover
+    }));
+  }
+  function experienceExportPanel(item){
+    const ready=Object.keys(experienceExportUrls).length>0;
+    return '<section class="card" id="experience-export-panel" style="margin:16px 0;border:1px solid #d9e5d9;background:#fbfdfb">'+
+      '<div class="section-title"><div><h3>ملفات الدرس الجاهزة</h3><p id="experience-export-status" aria-live="polite">'+(ready?'اكتمل تجهيز الملفات.':'جارٍ تجهيز ملفات الدرس تلقائياً بعد الإنشاء...')+'</p></div></div>'+
+      '<div id="experience-export-links" class="item-actions">'+(ready?experienceExportLinks():'<span class="muted">سيظهر هنا تنزيل PowerPoint وPDF وملفات PNG وWord.</span>')+'</div></section>';
+  }
+  function experienceExportLinks(){
+    const labels={pptx:"تنزيل PowerPoint",pdf:"تنزيل PDF",png:"تنزيل صور PNG (ZIP)",docx:"تنزيل Word"};
+    return Object.keys(labels).filter(k=>experienceExportUrls[k]).map(k=>'<a class="btn '+(k==="pptx"?"primary":"light")+' small" href="'+experienceExportUrls[k]+'" download="'+({pptx:"midad-lesson.pptx",pdf:"midad-lesson.pdf",png:"midad-slides-png.zip",docx:"midad-lesson.docx"}[k])+'">'+labels[k]+'</a>').join("");
+  }
+  async function generateExperienceFiles(item){
+    const status=document.getElementById("experience-export-status");
+    const links=document.getElementById("experience-export-links");
+    const setStatus=t=>{const el=document.getElementById("experience-export-status");if(el)el.textContent=t};
+    try{
+      setStatus("جارٍ إعداد ملفات العرض والوثيقة والصور...");
+      const [PptxGenJS,html2canvas,jspdf,JSZip,docx]=await Promise.all([
+        loadExperienceLibrary("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","pptxgen"),
+        loadExperienceLibrary("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js","html2canvas"),
+        loadExperienceLibrary("https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js","jspdf"),
+        loadExperienceLibrary("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js","JSZip"),
+        loadExperienceLibrary("https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js","docx")
+      ]);
+      const slides=experienceSlides(item);
+      const fileBase=(String(item.title||"midad-lesson").replace(/[^\\p{L}\\p{N}-]+/gu,"-").replace(/^-|-$/g,"")||"midad-lesson").slice(0,60);
+      const pptx=new PptxGenJS();pptx.layout="LAYOUT_WIDE";pptx.author="مِداد";pptx.subject="مورد تعليمي";pptx.title=item.title||"درس تعليمي";pptx.lang="ar-SA";pptx.theme={headFontFace:"Arial",bodyFontFace:"Arial",lang:"ar-SA"};
+      slides.forEach((s,i)=>{
+        const slide=pptx.addSlide();slide.background={color:i===0?"EAF1EA":"F8FAF7"};
+        slide.addText(i===0?"مِداد | ملخص تعليمي":"مِداد | "+(i),{x:0.55,y:0.3,w:12.1,h:0.35,fontFace:"Arial",fontSize:13,color:"66806D",align:"right",margin:0,breakLine:false});
+        slide.addText(s.heading,{x:0.75,y:1.0,w:11.8,h:1.0,fontFace:"Arial",fontSize:i===0?30:26,bold:true,color:"294B39",align:"right",valign:"mid",rtlMode:true,margin:0.08,fit:"shrink"});
+        slide.addText(s.body,{x:0.9,y:2.25,w:11.5,h:2.3,fontFace:"Arial",fontSize:19,color:"34463A",align:"right",valign:"top",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink"});
+        if(s.example)slide.addText([{text:"مثال توضيحي: ",options:{bold:true,color:"55745D"}},{text:s.example,options:{color:"34463A"}}],{x:0.9,y:5.0,w:11.5,h:1.0,fontFace:"Arial",fontSize:16,align:"right",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink",fill:{color:"E8EFE8"},line:{color:"D5E1D5"}});
+        slide.addText((i+1)+" / "+slides.length,{x:11.8,y:7.0,w:0.8,h:0.25,fontSize:10,color:"829487",align:"right",margin:0});
+      });
+      const pptxBlob=await pptx.write({outputType:"blob"});
+      const docParas=[new docx.Paragraph({text:item.title||"درس تعليمي",heading:docx.HeadingLevel.TITLE,bidirectional:true,alignment:docx.AlignmentType.RIGHT})];
+      if(item.subject||item.level)docParas.push(new docx.Paragraph({text:[item.subject,item.level].filter(Boolean).join(" · "),alignment:docx.AlignmentType.RIGHT,bidirectional:true}));
+      if(item.data?.intro)docParas.push(new docx.Paragraph({text:String(item.data.intro),alignment:docx.AlignmentType.RIGHT,bidirectional:true,spacing:{after:240}}));
+      slides.slice(1).forEach((s,i)=>{docParas.push(new docx.Paragraph({text:s.heading,heading:docx.HeadingLevel.HEADING_1,bidirectional:true,alignment:docx.AlignmentType.RIGHT}));if(s.body)docParas.push(new docx.Paragraph({text:s.body,bidirectional:true,alignment:docx.AlignmentType.RIGHT,spacing:{after:160}}));if(s.example)docParas.push(new docx.Paragraph({children:[new docx.TextRun({text:"مثال توضيحي: ",bold:true}),new docx.TextRun(s.example)],bidirectional:true,alignment:docx.AlignmentType.RIGHT,spacing:{after:220}}));});
+      const document=new docx.Document({sections:[{properties:{page:{margin:{top:900,right:900,bottom:900,left:900}}},children:docParas}]});
+      const docxBlob=await docx.Packer.toBlob(document);
+      const staging=document.createElement("div");
+      staging.style.cssText="position:fixed;left:-20000px;top:0;width:1280px;z-index:-1;direction:rtl;font-family:Arial,sans-serif";
+      document.body.appendChild(staging);
+      const zip=new JSZip(),pdf=new jspdf.jsPDF({orientation:"landscape",unit:"px",format:[1280,720],compress:true});
+      for(let i=0;i<slides.length;i++){
+        const s=slides[i];
+        staging.innerHTML='<div dir="rtl" style="box-sizing:border-box;width:1280px;height:720px;padding:76px 90px;background:'+(i===0?'#eaf1ea':'#f8faf7')+';color:#294b39;display:flex;flex-direction:column;justify-content:center;font-family:Arial,sans-serif"><div style="font-size:22px;color:#66806d;margin-bottom:46px">مِداد · عرض تعليمي</div><div style="font-size:'+(i===0?54:46)+'px;font-weight:700;line-height:1.35;margin-bottom:32px">'+safe(s.heading)+'</div><div style="font-size:30px;line-height:1.8;color:#34463a;white-space:pre-wrap">'+safe(s.body)+'</div>'+(s.example?'<div style="margin-top:34px;padding:22px 28px;border-radius:18px;background:#e8efe8;font-size:25px;line-height:1.6"><b>مثال توضيحي: </b>'+safe(s.example)+'</div>':'')+'<div style="position:absolute;bottom:38px;left:90px;color:#829487;font-size:18px">'+(i+1)+' / '+slides.length+'</div></div>';
+        const canvas=await html2canvas(staging.firstElementChild,{scale:1,backgroundColor:null,useCORS:true});
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+        if(!blob)throw new Error("تعذر إنشاء إحدى صور الشرائح.");
+        zip.file("slide-"+String(i+1).padStart(2,"0")+".png",blob);
+        if(i>0)pdf.addPage([1280,720],"landscape");
+        pdf.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG",0,0,1280,720,undefined,"FAST");
+        setStatus("تم تجهيز "+(i+1)+" من "+slides.length+" شريحة...");
+      }
+      staging.remove();
+      const pdfBlob=pdf.output("blob"),pngBlob=await zip.generateAsync({type:"blob"});
+      const blobs={pptx:pptxBlob,pdf:pdfBlob,png:pngBlob,docx:docxBlob};
+      Object.entries(blobs).forEach(([key,blob])=>{if(experienceExportUrls[key])URL.revokeObjectURL(experienceExportUrls[key]);experienceExportUrls[key]=URL.createObjectURL(blob)});
+      const linkHost=document.getElementById("experience-export-links");
+      if(linkHost)linkHost.innerHTML=experienceExportLinks();
+      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP.");
+      item.exportReady=true;
+    }catch(error){
+      console.error("Midad export error",error);
+      setStatus((error.message||"تعذر إنشاء الملفات.")+" يمكنك إعادة فتح التجربة والمحاولة مجدداً.");
+      const host=document.getElementById("experience-export-links");
+      if(host)host.innerHTML='<button class="btn primary small" onclick="retryExperienceFiles(\''+safe(item.id)+'\')">إعادة إنشاء الملفات</button>';
+    }
+  }
+  window.retryExperienceFiles=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(item)generateExperienceFiles(item)};
+
   function resultPage(){
     const item=db.experiences.find(x=>x.id===currentExperienceId);
     if(!item){page="experience";return featurePage()}
@@ -165,7 +261,7 @@
     else if(item.mode==="audio") body=renderAudioSummary(item);
     else if(item.mode==="chart") body=renderChartSummary(item);
     else body=renderSummary(item);
-    return header+tools+'<div id="experience-result" class="experience-result">'+body+'</div>';
+    return header+tools+experienceExportPanel(item)+'<div id="experience-result" class="experience-result">'+body+'</div>';
   }
 
   function renderSlides(item){
@@ -335,7 +431,7 @@
   window.answerExperience=function(i,j){experienceAnswers[i]=j;render()};
   window.reuseExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;navigate("experience");setTimeout(()=>{const type=x.sourceType||"text";const selector=document.getElementById("expSourceType");if(selector){selector.value=type;midadExperienceSourceTypeChanged()}const textId=type==="file"?"expFileText":type==="video"?"expVideoTranscript":"expSource";const box=document.getElementById(textId);if(box)box.value=x.source||"";const url=document.getElementById("expUrl");if(url)url.value=x.sourceUrl||"";toast("أصبح المصدر جاهزاً لإعادة الاستخدام")},0)};
   window.editExperience=function(idValue){const x=db.experiences.find(v=>v.id===idValue);if(!x)return;openModal("تعديل التجربة التعليمية","عدّل المحتوى المنظم ثم احفظه.",'<form onsubmit="saveExperienceEdit(event,\''+idValue+'\')"><div class="form-field"><label>عنوان التجربة</label><input name="title" value="'+safe(x.title)+'" required></div><div class="form-field"><label>محتوى النمط بصيغة JSON</label><textarea name="data" rows="14" style="direction:ltr;text-align:left;font-family:monospace">'+safe(JSON.stringify(x.data,null,2))+'</textarea><small class="muted">يمكن تعديل العناوين والنصوص والأمثلة والأسئلة مع الحفاظ على بنية JSON.</small></div><div class="modal-actions"><button class="btn primary">حفظ التعديل</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')};
-  window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;save();closeModal();render();toast("تم حفظ التعديلات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
+  window.saveExperienceEdit=function(e,idValue){e.preventDefault();const x=db.experiences.find(v=>v.id===idValue);if(!x)return;const f=new FormData(e.target);try{const data=JSON.parse(f.get("data"));if(!Array.isArray(data.sections)||!data.sections.length)throw new Error();x.title=String(f.get("title")||x.title);x.data=data;Object.keys(experienceExportUrls).forEach(k=>{URL.revokeObjectURL(experienceExportUrls[k]);delete experienceExportUrls[k]});save();closeModal();render();generateExperienceFiles(x);toast("تم حفظ التعديلات وإعادة تجهيز الملفات")}catch(_){toast("صيغة JSON غير صالحة أو ينقصها قسم واحد على الأقل")}};
   window.saveExperienceNow=function(){save();toast("تم حفظ التجربة في مساحة مِداد على هذا الجهاز")};
   window.printExperience=function(){window.print()};
   const baseRender=window.render;
