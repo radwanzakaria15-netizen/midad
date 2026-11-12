@@ -196,6 +196,8 @@
     Object.entries(blobs).forEach(([key,blob])=>{if(blob)experienceExportUrls[key]=URL.createObjectURL(blob)});
     const host=document.getElementById("experience-export-links");
     if(host)host.innerHTML=experienceExportLinks();
+    const preview=document.getElementById("experience-infographic-preview");
+    if(preview)preview.innerHTML=experienceInfographicPreview(item);
   }
   function loadExperienceLibrary(src, globalName){
     if(window[globalName])return Promise.resolve(window[globalName]);
@@ -225,8 +227,8 @@
       '<div id="experience-export-links" class="item-actions">'+(ready?experienceExportLinks():'<span class="muted">سيظهر هنا تنزيل PowerPoint وPDF وملفات PNG وWord.</span>')+'</div></section>';
   }
   function experienceExportLinks(){
-    const labels={pptx:"تنزيل PowerPoint",pdf:"تنزيل PDF",png:"تنزيل صور PNG (ZIP)",docx:"تنزيل Word"};
-    return Object.keys(labels).filter(k=>experienceExportUrls[k]).map(k=>'<a class="btn '+(k==="pptx"?"primary":"light")+' small" href="'+experienceExportUrls[k]+'" download="'+({pptx:"midad-lesson.pptx",pdf:"midad-lesson.pdf",png:"midad-slides-png.zip",docx:"midad-lesson.docx"}[k])+'">'+labels[k]+'</a>').join("");
+    const labels={infographic:"صورة الملخص PNG",pptx:"تنزيل PowerPoint",pdf:"تنزيل PDF",png:"تنزيل صور الشرائح (ZIP)",docx:"تنزيل Word"};
+    return Object.keys(labels).filter(k=>experienceExportUrls[k]).map(k=>'<a class="btn '+(k==="infographic"?"primary":"light")+' small" href="'+experienceExportUrls[k]+'" download="'+({infographic:"midad-infographic.png",pptx:"midad-lesson.pptx",pdf:"midad-lesson.pdf",png:"midad-slides-png.zip",docx:"midad-lesson.docx"}[k])+'">'+labels[k]+'</a>').join("");
   }
   async function generateSlideImages(item,setStatus){
     if(item.mode!=="slides")return [];
@@ -253,9 +255,24 @@
     if(currentExperienceId===item.id&&page==="experience-result")render();
     return images;
   }
+  function experienceInfographicPreview(item){
+    const src=experienceExportUrls.infographic;
+    return src?'<section class="card" style="margin:16px 0"><div class="section-title"><div><h3>الملخص البصري كصورة</h3><p>صورة واحدة تجمع أهم أفكار الدرس، جاهزة للحفظ والمشاركة.</p></div></div><img src="'+src+'" alt="الملخص البصري لدرس '+safe(item.title)+'" style="display:block;width:100%;height:auto;max-height:900px;object-fit:contain;border-radius:14px;background:#f4f7f3"></section>':'<section class="card" style="margin:16px 0"><b>جارٍ إعداد صورة الملخص البصري...</b><p class="muted">سيظهر هنا ملخص مصوّر يجمع أهم الأفكار في صورة واحدة.</p></section>';
+  }
+  async function createExperienceInfographic(item,html2canvas,images){
+    const d=item.data||{},sections=arr(d.sections).slice(0,10),terms=arr(d.keyTerms).slice(0,8);
+    const width=1080,cardRows=Math.ceil(sections.length/2),height=Math.max(1350,560+cardRows*300+Math.ceil(terms.length/4)*130);
+    const host=document.createElement("div");
+    host.style.cssText="position:fixed;left:-20000px;top:0;width:"+width+"px;z-index:-1;direction:rtl;font-family:Tajawal,Arial,sans-serif";
+    const cards=sections.map((s,i)=>'<article style="box-sizing:border-box;min-height:245px;padding:26px 28px;border:2px solid #dce8dc;border-radius:22px;background:#fff"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><span style="display:inline-flex;width:42px;height:42px;align-items:center;justify-content:center;border-radius:14px;background:#e7f0e7;color:#315b3e;font-size:22px;font-weight:700">'+(i+1)+'</span><h3 style="margin:0;color:#294b39;font-size:27px;line-height:1.35">'+safe(s.heading||"فكرة رئيسية")+"</h3></div><p style=\"margin:0;color:#405348;font-size:22px;line-height:1.75;white-space:pre-wrap\">"+safe(s.body||"")+"</p>"+(s.example?'<div style="margin-top:15px;padding:12px 16px;border-radius:12px;background:#f2f6f1;color:#536c58;font-size:19px;line-height:1.6"><b>مثال: </b>'+safe(s.example)+"</div>":"")+"</article>").join("");
+    const termsHtml=terms.length?'<section style="margin-top:28px;padding:24px;border-radius:22px;background:#edf3ed"><h3 style="margin:0 0 16px;color:#294b39;font-size:26px">مصطلحات أساسية</h3><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">'+terms.map(k=>'<div style="padding:14px;border-radius:14px;background:white"><b style="display:block;color:#315b3e;font-size:19px">'+safe(k.term||"")+"</b><span style=\"display:block;margin-top:6px;color:#53645a;font-size:16px;line-height:1.5\">"+safe(k.definition||"")+"</span></div>").join("")+"</div></section>":"";
+    host.innerHTML='<div dir="rtl" style="box-sizing:border-box;width:'+width+'px;min-height:'+height+'px;padding:54px 58px;background:linear-gradient(145deg,#f4f8f3,#e8f0e8);color:#294b39"><header style="padding:34px 38px;border-radius:28px;background:#fff;border:2px solid #dce8dc"><div style="font-size:20px;color:#6b8870;font-weight:700;letter-spacing:1px">مِداد · ملخص بصري تعليمي</div><h1 style="margin:18px 0 12px;font-size:48px;line-height:1.3;color:#294b39">'+safe(d.title||item.title)+'</h1><p style="margin:0;font-size:24px;line-height:1.7;color:#53645a">'+safe(d.intro||"أهم أفكار الدرس في صورة واحدة.")+'</p>'+(images&&images[0]?'<img src="'+images[0]+'" style="display:block;width:100%;height:300px;object-fit:cover;margin-top:24px;border-radius:20px">':"")+'</header><h2 style="margin:30px 0 18px;font-size:30px;color:#315b3e">أهم أفكار الدرس</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">'+cards+"</div>"+termsHtml+'<footer style="margin-top:28px;text-align:center;color:#6b8870;font-size:17px">إعداد تعليمي بواسطة مِداد</footer></div>';
+    document.body.appendChild(host);
+    try{const canvas=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#edf3ed",useCORS:true});const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw new Error("تعذر تحويل الملخص البصري إلى صورة PNG.");return blob;}finally{host.remove()}
+  }
   async function generateExperienceFiles(item){
     const cached=await loadArtifactBlobs(item);
-    if(cached&&cached.pptx&&cached.pdf&&cached.png&&cached.docx){
+    if(cached&&cached.infographic&&cached.pptx&&cached.pdf&&cached.png&&cached.docx){
       attachArtifactBlobs(item,cached);
       const cachedStatus=document.getElementById("experience-export-status");
       if(cachedStatus)cachedStatus.textContent="تم استعادة الملفات المحفوظة على هذا الجهاز دون إعادة توليدها.";
@@ -289,6 +306,8 @@
         if(s.example)slide.addText([{text:"مثال توضيحي: ",options:{bold:true,color:"55745D"}},{text:s.example,options:{color:"34463A"}}],{x:0.9,y:5.0,w:11.5,h:1.0,fontFace:"Arial",fontSize:16,align:"right",rtlMode:true,breakLine:false,margin:0.12,fit:"shrink",fill:{color:"E8EFE8"},line:{color:"D5E1D5"}});
         slide.addText((i+1)+" / "+slides.length,{x:11.8,y:7.0,w:0.8,h:0.25,fontSize:10,color:"829487",align:"right",margin:0});
       });
+      setStatus("جارٍ تصميم صورة الملخص البصري...");
+      const infographicBlob=await createExperienceInfographic(item,html2canvas,images);
       const pptxBlob=await pptx.write({outputType:"blob"});
       const docParas=[new docx.Paragraph({text:item.title||"درس تعليمي",heading:docx.HeadingLevel.TITLE,bidirectional:true,alignment:docx.AlignmentType.RIGHT})];
       if(item.subject||item.level)docParas.push(new docx.Paragraph({text:[item.subject,item.level].filter(Boolean).join(" · "),alignment:docx.AlignmentType.RIGHT,bidirectional:true}));
@@ -313,11 +332,12 @@
       }
       staging.remove();
       const pdfBlob=pdf.output("blob"),pngBlob=await zip.generateAsync({type:"blob"});
-      const blobs={pptx:pptxBlob,pdf:pdfBlob,png:pngBlob,docx:docxBlob};
+      const blobs={infographic:infographicBlob,pptx:pptxBlob,pdf:pdfBlob,png:pngBlob,docx:docxBlob};
       attachArtifactBlobs(item,blobs);
       const persisted=await saveArtifactBlobs(item,blobs);
       const failedImages=images.filter(x=>!x).length;
-      setStatus("اكتمل إنشاء الملفات الأربعة. صور الشرائح مجمّعة في ملف ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض.")+(persisted?" حُفظت الملفات محلياً لاستعادتها عند فتح التجربة لاحقاً.":" تعذر حفظ نسخة محلية دائمة؛ ستظل الملفات متاحة في هذه الجلسة فقط."));
+      setStatus("اكتمل إنشاء صورة الملخص والملفات الأربعة. صور الشرائح مجمّعة في ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض.")+(persisted?" حُفظت الملفات محلياً لاستعادتها عند فتح التجربة لاحقاً.":" تعذر حفظ نسخة محلية دائمة؛ ستظل الملفات متاحة في هذه الجلسة فقط."));
+      const preview=document.getElementById("experience-infographic-preview");if(preview)preview.innerHTML=experienceInfographicPreview(item);
       item.exportReady=true;
     }catch(error){
       console.error("Midad export error",error);
@@ -344,7 +364,7 @@
     else if(item.mode==="audio") body=renderAudioSummary(item);
     else if(item.mode==="chart") body=renderChartSummary(item);
     else body=renderSummary(item);
-    return header+tools+experienceExportPanel(item)+'<div id="experience-result" class="experience-result">'+body+'</div>';
+    return header+tools+experienceExportPanel(item)+'<div id="experience-infographic-preview">'+experienceInfographicPreview(item)+'</div><div id="experience-result" class="experience-result">'+body+'</div>';
   }
 
   function renderSlides(item){
