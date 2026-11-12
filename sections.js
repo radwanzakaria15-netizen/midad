@@ -69,7 +69,7 @@ window.downloadTaskPdf=async function(id,part){
   if(!window.jspdf?.jsPDF)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";s.onload=ok;s.onerror=no;document.head.appendChild(s)});
   const d=t.generatedData||{},research=t.category==="بحث",answers=part==="answers",heading=research?"عناوين بحوث مقترحة":answers?"الإجابات النموذجية وسلم التنقيط":"أسئلة "+t.category+" رقم "+t.number,color=research?"#806aa0":answers?"#5579a8":"#537d68";
   const source=research?(d.suggestions||[]):(d.questions||[]);
-  const perPage=research?7:4,groups=[];for(let i=0;i<source.length;i+=perPage)groups.push(source.slice(i,i+perPage));if(!groups.length)groups.push([]);
+  const perPage=research?6:3,groups=[];for(let i=0;i<source.length;i+=perPage)groups.push(source.slice(i,i+perPage));if(!groups.length)groups.push([]);
   const PDF=window.jspdf.jsPDF,pdf=new PDF({orientation:"portrait",unit:"pt",format:"a4",compress:true});
   for(let pageIndex=0;pageIndex<groups.length;pageIndex++){
    const rows=groups[pageIndex].map((item,j)=>{const index=pageIndex*perPage+j;return research?'<li style="margin:0 0 24px;padding:0 5px 8px;break-inside:avoid">'+escTask(item)+'</li>':'<li style="margin:0 0 28px;padding:0 5px 12px;break-inside:avoid"><div style="font-weight:700">'+(index+1)+'. '+escTask(item.question)+'</div><div style="margin-top:10px;color:'+color+';font-size:18px;font-weight:700">العلامة: '+escTask(item.points)+' نقطة</div>'+(answers?'<div style="margin-top:12px;line-height:1.8;white-space:pre-wrap">'+escTask(item.answer)+'</div>':'')+'</li>'}).join("");
