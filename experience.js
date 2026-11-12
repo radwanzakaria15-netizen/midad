@@ -473,12 +473,69 @@
       '</section>';
   }
 
+  function splitLessonSource(text,maxChars=15000){
+    const blocks=String(text||"").split(/\n{2,}/).map(x=>x.trim()).filter(Boolean);
+    const chunks=[];let current="";
+    for(let block of blocks){
+      while(block.length>maxChars){
+        if(current){chunks.push(current);current=""}
+        let cut=block.lastIndexOf(" ",maxChars);
+        if(cut<Math.floor(maxChars*.6))cut=maxChars;
+        chunks.push(block.slice(0,cut).trim());
+        block=block.slice(cut).trim();
+      }
+      if(!block)continue;
+      if(current&&current.length+block.length+2>maxChars){chunks.push(current);current=block}
+      else current=current?current+"\n\n"+block:block;
+    }
+    if(current)chunks.push(current);
+    return chunks;
+  }
+  async function summarizeLongLessonSource(source,meta,signal,onProgress){
+    let working=source,pass=0;
+    while(working.length>18000&&pass<3){
+      const chunks=splitLessonSource(working,15000);
+      const notes=new Array(chunks.length);let next=0,done=0;
+      async function summarizeWorker(){
+        while(next<chunks.length){
+          const index=next++;
+          const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal,body:JSON.stringify({
+            kind:"experience",outputType:"experience",mode:"summary",
+            lessonTitle:meta.title+" — تحليل الجزء "+(index+1),title:meta.title,
+            subject:meta.subject,level:meta.level,content:chunks[index],questionCount:5
+          })});
+          const raw=await response.text();let payload={};
+          try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("تعذرت قراءة نتيجة تحليل الجزء "+(index+1)+" من المصدر.")}
+          if(!response.ok)throw new Error(payload.error||("فشل تحليل الجزء "+(index+1)+" (HTTP "+response.status+")."));
+          const data=payload.result||payload;
+          if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("نتيجة تحليل الجزء "+(index+1)+" غير مكتملة.");
+          const parts=[];
+          if(data.intro)parts.push(String(data.intro).slice(0,220));
+          data.sections.slice(0,6).forEach(section=>{
+            const heading=String(section.heading||"").slice(0,100);
+            const body=String(section.body||"").slice(0,260);
+            const example=String(section.example||"").slice(0,100);
+            if(heading||body)parts.push((heading?heading+": ":"")+body+(example?" مثال: "+example:""));
+          });
+          notes[index]="الجزء "+(index+1)+":\n"+parts.join("\n");
+          done++;
+          if(onProgress)onProgress(done,chunks.length,pass+1);
+        }
+      }
+      await Promise.all(Array.from({length:Math.min(2,chunks.length)},summarizeWorker));
+      working=notes.join("\n\n");
+      pass++;
+    }
+    if(working.length>18000)throw new Error("المصدر كبير جداً ليتسع في سياق التوليد حتى بعد التلخيص المرحلي. جرّب تقسيمه إلى ملفات أصغر.");
+    return working;
+  }
+
   window.generateExperience=async function(mode){
     const type=document.getElementById("expSourceType")?.value||"text";
-    const content=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)||"";
+    const originalContent=(type==="file"?document.getElementById("expFileText")?.value:type==="video"?document.getElementById("expVideoTranscript")?.value:document.getElementById("expSource")?.value)||"";
+    let content=originalContent;
     const sourceUrl=type==="video"?(document.getElementById("expUrl")?.value.trim()||""):"";
     const title=(document.getElementById("expLessonTitle")?.value||"").trim()||"درس تعليمي",subject=(document.getElementById("expSubject")?.value||"").trim(),level=(document.getElementById("expLevel")?.value||"").trim();
-    if(content.length>18000){toast("المصدر طويل جداً حالياً. لم نرسل النص حتى لا يُحذف جزء منه؛ حدّ المحرك الحالي 18000 حرف، وسيُضاف التقسيم التلقائي في تحديث لاحق.");return}
      if(content.trim().length<80){toast(type==="video"?"أدخل تفريغ الفيديو بما لا يقل عن 80 حرفاً.":"أدخل نصاً لا يقل عن 80 حرفاً.");return}
     if(type==="video"&&!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)){toast("أدخل رابط YouTube صحيحاً يبدأ بـ HTTPS.");return}
     if(!db.aiEndpoint){toast("أضف رابط Gemini الآمن من الإعدادات");navigate("settings");return}
@@ -486,13 +543,18 @@
     cards.forEach(b=>{b.disabled=true;b.dataset.previousText=b.innerHTML;b.innerHTML="<span>جارٍ الإنشاء...</span>"});
     if(window.midadTaskStart)window.midadTaskStart(taskId,"جارٍ إنشاء التجربة التعليمية في الخلفية");
     let succeeded=false,failureMessage="تعذّر إكمال التجربة. تحقق من اتصال الذكاء الاصطناعي وحاول مجدداً.";
-    const controller=new AbortController(),requestTimer=setTimeout(()=>controller.abort(),90000);
+    const controller=new AbortController(),requestTimer=setTimeout(()=>controller.abort(),180000);
     try{
+      if(content.length>18000){
+        cards.forEach(b=>{b.innerHTML="<span>جارٍ تحليل أجزاء المصدر الطويل...</span>"});
+        toast("المصدر طويل؛ سيحلله مِداد على أجزاء ثم يدمج خلاصاتها قبل إنشاء التجربة.");
+        content=await summarizeLongLessonSource(content,{title,subject,level},controller.signal,(done,total,pass)=>{cards.forEach(b=>{b.innerHTML="<span>تحليل المصدر · المرحلة "+pass+" · "+done+"/"+total+"</span>"})});
+      }
       const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:"experience",outputType:"experience",mode,lessonTitle:title,title,subject,level,content,sourceUrl,sourceType:type,questionCount:10,include:{mcq:true,tf:true,flashcards:true}})});
       const raw=await response.text();let payload={};try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
       const data=payload.result||payload;if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
-      const item={id:id(),title:data.title||"تجربة تعليمية",subject,level,source:content,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
+      const item={id:id(),title:data.title||"تجربة تعليمية",subject,level,source:content,sourceOriginalLength:originalContent.length,sourceSummarized:originalContent.length>18000,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;experienceSceneStep=0;matchState={left:null,right:null,matched:[]};
       if(page==="experience"||page==="experience-result"){currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});generateExperienceFiles(item)}
       toast("اكتمل إنشاء التجربة وحُفظت، وبدأ تجهيز ملفاتها تلقائياً");
