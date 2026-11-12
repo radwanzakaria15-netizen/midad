@@ -6,7 +6,7 @@
   let experienceSceneStep = 0;
   let matchState = { left: null, right: null, matched: [] };
 
-  const modeNames = {board:"الشرح بالسبورة",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",slides:"الملخص الإبداعي — شرائح",video:"ملخص فيديو",audio:"الملخص الصوتي",chart:"المخطط البياني",assessment:"التقويم والمراجعة",notebook:"مخرجات NotebookLM"};
+  const modeNames = {board:"الشرح بالسبورة",interactive:"الشرح التفاعلي المتحرّك",summary:"الملخّص الإبداعي",slides:"الملخص الإبداعي — شرائح",video:"ملخص فيديو",audio:"الملخص الصوتي",chart:"المخطط البياني",assessment:"التقويم والمراجعة"};
   const modeDescriptions = {
     board:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
     interactive:"مشاهد تعليمية متحركة تشرح الظواهر خطوة بخطوة مع عناصر تتحرك وتتفاعل.",
@@ -30,7 +30,7 @@
       '<div class="section-title"><div><h3>دفتر NotebookLM</h3><p>اربط حساب Google لإرسال مصادر الدرس إلى دفاترك.</p></div><span class="pill '+(connected?'green':'blue')+'">'+(connected?'الحساب مرتبط':'غير مرتبط')+'</span></div>'+
       (connected?
         '<div class="form-grid"><div class="form-field full"><label for="midadNotebookSelect">اختر الدفتر</label><select id="midadNotebookSelect"><option value="">اضغط «عرض الدفاتر» أولاً</option></select></div><div class="form-field full"><label for="midadNotebookName">اسم دفتر جديد (اختياري)</label><input id="midadNotebookName" maxlength="180" placeholder="مِداد - '+safe("دفتر الدرس")+'"></div></div>'+
-        '<div class="toolbar" style="margin-top:12px"><button class="btn light small" onclick="midadLoadNotebooks()">عرض الدفاتر</button><button class="btn secondary small" onclick="midadCreateNotebook()">إنشاء دفتر</button><button class="btn primary small" onclick="midadSendNotebookSource()">إرسال الدرس إلى الدفتر</button><button class="btn light small" onclick="midadOpenNotebook()">فتح NotebookLM</button><button class="btn light small" onclick="midadDisconnectNotebook()">فصل الجلسة</button></div>'+
+        '<div class="toolbar" style="margin-top:12px"><button class="btn light small" onclick="midadLoadNotebooks()">عرض الدفاتر</button><button class="btn secondary small" onclick="midadCreateNotebook()">إنشاء دفتر</button><button class="btn primary small" onclick="midadSendNotebookSource()">إرسال الدرس إلى الدفتر</button><button class="btn light small" onclick="midadDisconnectNotebook()">فصل الجلسة</button></div>'+
         '<p class="muted" id="midadNotebookStatus" aria-live="polite">اختر دفتراً ثم أرسل نص الدرس أو رابطه.</p>'
         :'<p class="muted" style="line-height:1.8">يُستخدم حساب Google الذي توافق على ربطه. بعد الربط يمكنك اختيار دفتر أو إنشاء دفتر جديد وإرسال محتوى الدرس إليه.</p><button class="btn primary" onclick="midadConnectNotebook()">ربط حساب Google</button>')+
       '</section>';
@@ -44,12 +44,6 @@
   window.midadConnectNotebook=function(){
     if(!notebookBase()){toast("رابط الخادم غير مضبوط.");return}
     location.href=notebookBase()+"/oauth/google/start";
-  };
-  window.midadOpenNotebook=function(){
-    const notebookName=document.getElementById("midadNotebookSelect")?.value||(()=>{try{return sessionStorage.getItem(notebookChoiceKey)||""}catch(_){return ""}})();
-    if(!notebookName){toast("اختر دفتر NotebookLM أولاً.");return}
-    const notebookId=notebookName.split("/").pop();
-    window.open("https://notebooklm.google.com/notebook/"+encodeURIComponent(notebookId),"_blank","noopener,noreferrer");
   };
   window.midadDisconnectNotebook=function(){
     try{sessionStorage.removeItem(notebookSessionKey);sessionStorage.removeItem(notebookChoiceKey)}catch(_){}
@@ -137,7 +131,6 @@
       '<div class="form-field full" id="expVideoSource" style="display:none"><label for="expUrl">رابط YouTube</label><input id="expUrl" type="url" placeholder="https://www.youtube.com/..."><label for="expVideoTranscript" style="margin-top:10px">تفريغ الكلام أو نص الفيديو</label><textarea id="expVideoTranscript" rows="6" maxlength="18000" placeholder="الصق تفريغ الفيديو هنا؛ الرابط وحده لا يتيح استخراج الكلام تلقائياً."></textarea></div>'+
       '<div class="form-field full" id="expFileSource" style="display:none"><label for="expFile">اختر ملفاً نصياً</label><input id="expFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="midadReadExperienceFile(this)"><small class="muted">يدعم ملفات PDF وWord بصيغة DOCX، ويُستخرج النص منها تلقائياً.</small><textarea id="expFileText" rows="6" maxlength="18000" placeholder="سيظهر النص المستخرج من الملف هنا..." style="margin-top:10px"></textarea></div>'+
       '<p class="muted full" id="expSourceHint">سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.</p></div></section>'+notebookPanel()+
-      '<section class="card" id="midadNotebookImport" style="margin:16px 0;border-color:#d9e5d9"><div class="section-title"><div><h3>إضافة مخرجات NotebookLM</h3><p>بعد إنشاء المخرج في NotebookLM، أضف نصه أو ارفع ملف PDF أو Word ليظهر داخل مِداد.</p></div></div><div class="form-grid"><div class="form-field full"><label for="midadNotebookOutputText">الصق نص المخرج هنا</label><textarea id="midadNotebookOutputText" rows="5" maxlength="30000" placeholder="الصق محتوى المخرج الذي نسخته من NotebookLM..."></textarea></div><div class="form-field full"><label for="midadNotebookOutputFile">أو ارفع مخرجاً بصيغة PDF أو Word</label><input id="midadNotebookOutputFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="midadReadNotebookOutput(this)"><small class="muted">سيُستخرج النص من الملف ويُضاف كتجربة محفوظة داخل مِداد.</small></div></div><div class="toolbar"><button class="btn primary" onclick="midadImportNotebookOutput()">إضافة المخرج إلى مِداد</button></div><p class="muted" id="midadNotebookImportStatus" aria-live="polite">تُضاف المخرجات التي تستوردها هنا إلى قائمة تجاربي المحفوظة.</p></section>'+
       '<div class="section-title experience-section-title"><div><h3>اختر تجربة التعلم</h3><p>كل نمط يُنشأ بصورة مستقلة ويمكن تعديله وحفظه.</p></div></div>'+
       '<div class="experience-modes">'+
       '<button class="experience-mode summary-mode" onclick="generateExperience(\'slides\')"><span class="experience-icon">▤</span><b>الملخص الإبداعي</b><small>'+modeDescriptions.slides+'</small><span class="mode-action">إنشاء الشرائح ←</span></button>'+
@@ -154,22 +147,6 @@
     const target=document.getElementById(type==="video"?"expVideoSource":type==="file"?"expFileSource":"expTextSource");if(target)target.style.display="";
     const hint=document.getElementById("expSourceHint");if(hint)hint.textContent=type==="video"?"يلزم رابط YouTube مع تفريغ نصي؛ لا نستخرج صوت الفيديو تلقائياً حالياً.":type==="file"?"تُقرأ الملفات النصية المدعومة قبل إرسالها إلى الذكاء الاصطناعي.":"سيُحلّل الذكاء الاصطناعي النص الذي أدخلته فقط.";
   };
-  window.midadReadNotebookOutput=async function(input){
-    const file=input?.files?.[0],status=document.getElementById("midadNotebookImportStatus"),box=document.getElementById("midadNotebookOutputText");
-    if(!file||!box)return;
-    if(status)status.textContent="جارٍ استخراج النص من الملف...";
-    try{box.value=await window.midadExtractDocumentText(file);if(status)status.textContent="تم استخراج النص. اضغط «إضافة المخرج إلى مِداد» لحفظه."}
-    catch(e){box.value="";if(status)status.textContent=e.message||"تعذرت قراءة الملف."}
-  };
-  window.midadImportNotebookOutput=function(){
-    const box=document.getElementById("midadNotebookOutputText"),status=document.getElementById("midadNotebookImportStatus"),raw=String(box?.value||"").trim();
-    if(raw.length<20){if(status)status.textContent="أضف نص المخرج أولاً (20 حرفاً على الأقل).";return}
-    const chunks=raw.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
-    const parts=(chunks.length?chunks:[raw]).reduce((all,part)=>{if(part.length<=2200){all.push(part);return all}for(let i=0;i<part.length;i+=2200)all.push(part.slice(i,i+2200));return all},[]).slice(0,30);
-    const sections=parts.map((body,i)=>({heading:"جزء "+(i+1),body}));
-    const item={id:id(),title:"مخرج NotebookLM - "+new Date().toLocaleDateString("ar"),source:"NotebookLM",sourceType:"notebook",mode:"notebook",data:{title:"مخرجات NotebookLM",sections},created:new Date().toISOString()};
-    db.experiences.push(item);save();currentExperienceId=item.id;experienceStep=0;page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});toast("تمت إضافة المخرج إلى مِداد وحفظه.");
-  };
   window.midadReadExperienceFile=async function(input){const file=input?.files?.[0],out=document.getElementById("expFileText");if(!file||!out)return;out.value="جارٍ استخراج النص من الملف...";try{out.value=await window.midadExtractDocumentText(file);toast("تم استخراج النص من الملف بنجاح.");}catch(e){out.value="";toast(e.message||"تعذرت قراءة الملف.");}};
 
   function resultPage(){
@@ -185,7 +162,6 @@
     else if(item.mode==="interactive"||item.mode==="video") body=renderInteractive(item);
     else if(item.mode==="assessment") body=renderAssessment(item);
     else if(item.mode==="audio") body=renderAudioSummary(item);
-    else if(item.mode==="notebook") body=renderNotebookOutput(item);
     else if(item.mode==="chart") body=renderChartSummary(item);
     else body=renderSummary(item);
     return header+tools+'<div id="experience-result" class="experience-result">'+body+'</div>';
@@ -266,11 +242,6 @@
     const rightOrder=pairs.map((_,i)=>i).reverse();
     window.__midadMatchedPairs=matchState.matched.slice();
     return '<section class="matching-game"><div class="matching-head"><div><span>لعبة تفاعلية</span><h3>صل كل عنصر بما يناسبه</h3><p>اختر بطاقة من العمود الأول ثم البطاقة المطابقة من العمود الثاني.</p></div><b>'+matchState.matched.length+' / '+pairs.length+'</b></div><div class="matching-board"><svg class="matching-lines" aria-hidden="true"></svg><div class="matching-columns"><div>'+pairs.map((p,i)=>'<button data-match-side="left" data-match-index="'+i+'" class="match-card '+(matchState.matched.includes(i)?"matched":matchState.left===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'left\','+i+')">'+safe(p.left)+'</button>').join("")+'</div><div>'+rightOrder.map(i=>'<button data-match-side="right" data-match-index="'+i+'" class="match-card '+(matchState.matched.includes(i)?"matched":matchState.right===i?"selected":"")+'" '+(matchState.matched.includes(i)?"disabled":"")+' onclick="selectMatchCard(\'right\','+i+')">'+safe(pairs[i].right)+'</button>').join("")+'</div></div></div><p class="match-feedback">'+(matchState.matched.length===pairs.length?"أحسنت! أكملت المطابقة بنجاح.":matchState.left!==null&&matchState.right!==null&&matchState.left!==matchState.right?"ليست مطابقة، حاول مجدداً.":"اختر زوجاً صحيحاً للمتابعة.")+'</p></section>';
-  }
-
-  function renderNotebookOutput(item){
-    const d=item.data||{};
-    return '<section class="summary-sheet"><div class="summary-heading"><span>مستورد من NotebookLM</span><h2>'+safe(d.title||item.title)+'</h2><p>محتوى أُضيف من مخرجات NotebookLM إلى مساحة مِداد.</p></div><div class="summary-grid">'+arr(d.sections).map((s,i)=>'<article class="summary-point"><span>'+(i+1)+'</span><h3>'+safe(s.heading||("جزء "+(i+1)))+'</h3><p style="white-space:pre-wrap">'+safe(s.body)+'</p></article>').join("")+'</div></section>';
   }
 
   function renderAudioSummary(item){
