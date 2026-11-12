@@ -25,7 +25,7 @@ window.activitiesPage=function(){
 };
 window.openTask=function(category){
  const kind=category||"واجب منزلي",n=numberFor(kind);
- openModal("إنشاء "+kind,"أدخل المادة والمستوى وأرفق مصدر الدرس.",'<form id="taskCreateForm"><div class="task-form-banner" style="--task-accent:'+accents[kind]+'"><div><span>نشاط جديد</span><strong>'+(kind==="بحث"?"اقتراحات بحث":kind+" رقم "+n)+'</strong></div><i>'+"▤"+'</i></div><div class="form-grid">'+
+ openModal("إنشاء "+kind,"أدخل المادة والمستوى وأرفق مصدر الدرس.",'<form id="taskCreateForm"><div class="task-form-banner" style="--task-accent:'+accents[kind]+'"><div><span>نشاط جديد</span><strong>'+(kind==="بحث"?"اقتراحات بحث":kind+" رقم "+n)+'</strong></div><i class="task-form-icon">'+taskIcon(kind)+'</i></div><div class="form-grid">'+
  '<div class="form-field"><label>المادة</label><input id="taskSubject" required placeholder="مثال: علوم الطبيعة والحياة"></div><div class="form-field"><label>المستوى الدراسي</label><input id="taskLevel" required placeholder="مثال: الرابعة متوسط"></div>'+
  (kind!=="بحث"?'<div class="form-field"><label>عدد الأسئلة</label><input id="taskQuestionCount" type="number" min="1" max="30" value="8" required></div><div class="form-field"><label>العلامة الكلية</label><input id="taskMaxScore" type="number" min="1" max="100" step="0.5" value="20" required><small class="muted">اختر أي علامة تريدها؛ توزّع النقاط تلقائياً.</small></div>' : '')+
  '<div class="form-field full"><label>مصدر النشاط</label><select id="taskSourceType" onchange="midadTaskSourceTypeChanged()"><option value="text">نص الدرس</option><option value="file">ملف PDF أو Word</option><option value="video">فيديو (مع تفريغ نصه)</option></select></div>'+
