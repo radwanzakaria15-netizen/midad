@@ -277,10 +277,10 @@ Example: ${example}`;
     const difficulty = clean(input.difficulty || "سهل", 30);
     const activityType = clean(input.activityType || "متنوع", 60);
     const taskCategory = clean(input.taskCategory || input.category || "واجب منزلي", 60);
-    const maxScore = Number(input.maxScore) === 10 ? 10 : 20;
+    const maxScore = Math.max(1, Math.min(100, Number(input.maxScore) || 20));
     const content = clean(input.content, 18000);
     const sourceUrl = clean(input.sourceUrl, 1000);
-    const questionCount = Math.max(5, Math.min(15, Number(input.questionCount) || 10));
+    const questionCount = Math.max(1, Math.min(30, Number(input.questionCount) || 10));
     const include = input.include && typeof input.include === "object" ? input.include : {};
     const mode = ["board","interactive","summary","slides","video","audio","chart","lessonpdf"].includes(input.mode) ? input.mode : ["board","interactive","summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
     const generationMode = ({slides:"summary",video:"interactive",audio:"summary",chart:"summary",lessonpdf:"summary"})[mode] || mode;
@@ -308,11 +308,7 @@ Example: ${example}`;
         task = "حلّل المصدر واستخرج فقط من 8 إلى 12 عنوان بحث مدرسي ممكن تقديمها انطلاقاً من موضوعاته. اجعل العناوين دقيقة ومتنوعة وغير مكررة وقابلة للبحث ومناسبة للمادة والمستوى. أخرج العناوين فقط دون مقدمة أو إشكالية أو خطة أو شرح أو كتابة أي بحث.";
       } else {
         format = '{"title":"عنوان النشاط","instructions":"تعليمات موجزة","questions":[{"question":"نص السؤال","answer":"الإجابة النموذجية وخطوات الحل","points":2}]}';
-        task = taskCategory === "امتحان"
-          ? "أنشئ امتحاناً منظماً من 6 إلى 8 أسئلة متنوعة ومتدرجة الصعوبة، مع تعليمات ومدة مقترحة. ضع نقاطاً لكل سؤال واجعل مجموعها بالضبط " + maxScore + " نقطة. أرفق إجابة نموذجية دقيقة وسلم تصحيح مختصراً في answer."
-          : taskCategory === "اختبار"
-          ? "أنشئ اختباراً من 5 إلى 7 أسئلة متنوعة لقياس الفهم، مع تعليمات موجزة. ضع نقاطاً لكل سؤال واجعل مجموعها بالضبط " + maxScore + " نقطة. أرفق إجابة نموذجية وسلم تصحيح مختصراً في answer."
-          : "أنشئ واجباً منزلياً من 5 إلى 7 تمارين متنوعة ومتدرجة، مع تعليمات واضحة. ضع نقاطاً لكل سؤال واجعل مجموعها بالضبط " + maxScore + " نقطة. أرفق الحل النموذجي وسلم التصحيح في answer.";
+        task = "أنشئ بالضبط " + questionCount + " سؤالاً/تمريناً في " + taskCategory + "، متنوعة ومتدرجة ومناسبة للمستوى، مع تعليمات واضحة. ضع نقاطاً لكل سؤال واجعل مجموعها بالضبط " + maxScore + " نقطة. أرفق إجابة نموذجية دقيقة وسلم تصحيح مختصراً في answer. لا تتجاوز العدد المطلوب ولا تقل عنه.";
       }
     } else {
       format = kind === "activity"
@@ -342,7 +338,7 @@ Example: ${example}`;
       let text = "";
       text = await pollinationsChat(env, prompt, {
         temperature: 0.35,
-        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 2600 : kind === "task" ? 2400 : mode === "lessonpdf" ? 4800 : 3000
+        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 4200 : kind === "task" ? 4200 : mode === "lessonpdf" ? 4800 : 3000
       });
       let parsed;
       try { parsed = JSON.parse(text); } catch { return json({ error: "تعذر قراءة صيغة النتيجة. أعد المحاولة." }, 502, origin); }
@@ -388,7 +384,7 @@ Example: ${example}`;
           parsed.questions = [];
         } else {
           parsed.instructions = clean(parsed.instructions, 1200);
-          parsed.questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, 12).map(q => ({ question: clean(q.question || q.q, 700), answer: clean(q.answer || q.a, 1000), points: Math.max(0, Number(q.points) || 0) })).filter(q => q.question) : [];
+          parsed.questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, 30).map(q => ({ question: clean(q.question || q.q, 700), answer: clean(q.answer || q.a, 1000), points: Math.max(0, Number(q.points) || 0) })).filter(q => q.question) : [];
           if (!parsed.questions.length) return json({ error: "لم يتم إنشاء أسئلة صالحة للمهمة." }, 502, origin);
           const weights = parsed.questions.map(q => q.points > 0 ? q.points : 1);
           const weightTotal = weights.reduce((a,b)=>a+b,0);
