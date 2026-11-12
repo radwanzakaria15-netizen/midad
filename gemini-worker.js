@@ -237,10 +237,13 @@ export default {
         const level = clean(body.level, 100);
         if (!slideTitle || !slideBody) return json({ error: "أرسل عنوان الشريحة وشرحها لتوليد صورة مرتبطة بها." }, 400, origin);
         // Convert the exact Arabic slide content into a concrete English visual brief.
-        const briefRaw = await pollinationsChat(env,
-          "Create ONE precise visual prompt in English for an educational illustration. The image must depict the exact concept described below, not a generic picture of the subject. Identify the main objects, their actions, and the setting from the lesson. Do not add unrelated objects or concepts. Do not depict any writing, letters, numbers, labels, captions, signs, logos, or watermarks. Suitable for a clean school textbook illustration. Return JSON only: {\\"visual_prompt\\":\\"...\\"}.\nSubject: " + subject + "\\nLearner level: " + level + "\\nSlide title: " + slideTitle + "\\nSlide explanation: " + slideBody + "\\nExample: " + example,
-          { temperature: 0.1, max_tokens: 220 }
-        );
+        const briefRequest = `Create ONE precise visual prompt in English for an educational illustration. The image must depict the exact concept described below, not a generic picture of the subject. Identify the main objects, their actions, and the setting from the lesson. Do not add unrelated objects or concepts. Do not depict any writing, letters, numbers, labels, captions, signs, logos, or watermarks. Suitable for a clean school textbook illustration. Return JSON only: {"visual_prompt":"..."}.
+Subject: ${subject}
+Learner level: ${level}
+Slide title: ${slideTitle}
+Slide explanation: ${slideBody}
+Example: ${example}`;
+        const briefRaw = await pollinationsChat(env, briefRequest, { temperature: 0.1, max_tokens: 220 });
         let visualPrompt = "";
         try { visualPrompt = JSON.parse(briefRaw).visual_prompt || ""; } catch {}
         if (!visualPrompt) throw new Error("تعذر إعداد وصف بصري دقيق للشريحة.");
