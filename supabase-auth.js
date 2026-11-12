@@ -12,6 +12,9 @@
     .app,.mobile-nav{display:none!important}
     body.midad-authenticated .app{display:block!important}
     body.midad-authenticated .mobile-nav{display:flex!important}
+    .midad-auth-guest{width:100%;margin-top:12px;min-height:48px;border:1px solid #cbd9c8;border-radius:14px;background:#f7faf5;color:#36533c;font:700 15px Tajawal,Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}
+    .midad-auth-guest:hover{background:#edf4e9;border-color:#a9c2a5}
+    body.midad-guest [onclick="midadCreateInvite()"],body.midad-guest [onclick="midadSignOut()"]{display:none!important}
     #midad-auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 12% 12%,#dce9d9 0,transparent 36%),radial-gradient(ellipse at 88% 90%,#e8e3d2 0,transparent 34%),#f3f5ef;font-family:Tajawal,Arial,sans-serif;color:#26372c;direction:rtl;position:relative;overflow:hidden}
     #midad-auth-gate:before,#midad-auth-gate:after{content:'';position:absolute;border:1px solid #cbd9c8;border-radius:50%;pointer-events:none}
     #midad-auth-gate:before{width:330px;height:330px;top:-190px;right:-120px}.midad-auth-gate:after{width:260px;height:260px;bottom:-170px;left:-90px}
@@ -59,6 +62,7 @@
         <label class="midad-auth-field" id="midad-invite-wrap" hidden><span>رمز الدعوة (يُترك فارغاً لإنشاء أول حساب فقط)</span><input id="midad-auth-invite" autocomplete="off" maxlength="32" placeholder="رمز الدعوة" dir="ltr"></label>
         <button class="midad-auth-submit" id="midad-auth-submit" type="submit">دخول إلى مِداد</button>
       </form>
+      <button type="button" class="midad-auth-guest" onclick="midadGuestMode()">الدخول مؤقتًا دون حساب</button>
       <div class="midad-auth-msg" id="midad-auth-msg" role="status"></div>
       <p class="midad-auth-note">إنشاء حساب الأستاذ الجديد يتطلب رمز دعوة صالحاً بعد إنشاء الحساب الأول.</p>
     </div>`;
@@ -86,7 +90,16 @@
     setBusy(false);
   };
 
+  window.midadGuestMode = () => {
+    currentUser = null;
+    if (window.midadUseGuestWorkspace) window.midadUseGuestWorkspace();
+    gate.style.display = 'none';
+    document.body.classList.add('midad-authenticated', 'midad-guest');
+    if (typeof window.toast === 'function') window.toast('وضع مؤقت: تُحفظ بياناتك على هذا الجهاز فقط.');
+  };
+
   function showWorkspace(user) {
+    document.body.classList.remove('midad-guest');
     const changedUser = !currentUser || currentUser.id !== user.id;
     currentUser = user;
     if (changedUser && typeof window.midadUseUserWorkspace === 'function') window.midadUseUserWorkspace(user);
@@ -94,6 +107,7 @@
     document.body.classList.add('midad-authenticated');
   }
   function showGate() {
+    document.body.classList.remove('midad-guest');
     currentUser = null;
     document.body.classList.remove('midad-authenticated');
     gate.style.display = 'grid';
