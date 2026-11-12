@@ -151,6 +151,7 @@
 
 
   const experienceExportUrls = {};
+  let experienceExportOwnerId = null;
   function loadExperienceLibrary(src, globalName){
     if(window[globalName])return Promise.resolve(window[globalName]);
     if(window.__midadLibraryLoads?.[globalName])return window.__midadLibraryLoads[globalName];
@@ -173,7 +174,7 @@
     }));
   }
   function experienceExportPanel(item){
-    const ready=Object.keys(experienceExportUrls).length>0;
+    const ready=experienceExportOwnerId===item.id&&Object.keys(experienceExportUrls).length>0;
     return '<section class="card" id="experience-export-panel" style="margin:16px 0;border:1px solid #d9e5d9;background:#fbfdfb">'+
       '<div class="section-title"><div><h3>ملفات الدرس الجاهزة</h3><p id="experience-export-status" aria-live="polite">'+(ready?'اكتمل تجهيز الملفات.':'جارٍ تجهيز ملفات الدرس تلقائياً بعد الإنشاء...')+'</p></div></div>'+
       '<div id="experience-export-links" class="item-actions">'+(ready?experienceExportLinks():'<span class="muted">سيظهر هنا تنزيل PowerPoint وPDF وملفات PNG وWord.</span>')+'</div></section>';
@@ -187,6 +188,7 @@
     const links=document.getElementById("experience-export-links");
     const setStatus=t=>{const el=document.getElementById("experience-export-status");if(el)el.textContent=t};
     try{
+      if(experienceExportOwnerId!==item.id){Object.keys(experienceExportUrls).forEach(k=>{URL.revokeObjectURL(experienceExportUrls[k]);delete experienceExportUrls[k]});experienceExportOwnerId=item.id;}
       setStatus("جارٍ إعداد ملفات العرض والوثيقة والصور...");
       const [PptxGenJS,html2canvas,jspdf,JSZip,docx]=await Promise.all([
         loadExperienceLibrary("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","pptxgen"),
@@ -211,11 +213,11 @@
       if(item.subject||item.level)docParas.push(new docx.Paragraph({text:[item.subject,item.level].filter(Boolean).join(" · "),alignment:docx.AlignmentType.RIGHT,bidirectional:true}));
       if(item.data?.intro)docParas.push(new docx.Paragraph({text:String(item.data.intro),alignment:docx.AlignmentType.RIGHT,bidirectional:true,spacing:{after:240}}));
       slides.slice(1).forEach((s,i)=>{docParas.push(new docx.Paragraph({text:s.heading,heading:docx.HeadingLevel.HEADING_1,bidirectional:true,alignment:docx.AlignmentType.RIGHT}));if(s.body)docParas.push(new docx.Paragraph({text:s.body,bidirectional:true,alignment:docx.AlignmentType.RIGHT,spacing:{after:160}}));if(s.example)docParas.push(new docx.Paragraph({children:[new docx.TextRun({text:"مثال توضيحي: ",bold:true}),new docx.TextRun(s.example)],bidirectional:true,alignment:docx.AlignmentType.RIGHT,spacing:{after:220}}));});
-      const document=new docx.Document({sections:[{properties:{page:{margin:{top:900,right:900,bottom:900,left:900}}},children:docParas}]});
-      const docxBlob=await docx.Packer.toBlob(document);
-      const staging=document.createElement("div");
+      const docxDocument=new docx.Document({sections:[{properties:{page:{margin:{top:900,right:900,bottom:900,left:900}}},children:docParas}]});
+      const docxBlob=await docx.Packer.toBlob(docxDocument);
+      const staging=window.document.createElement("div");
       staging.style.cssText="position:fixed;left:-20000px;top:0;width:1280px;z-index:-1;direction:rtl;font-family:Arial,sans-serif";
-      document.body.appendChild(staging);
+      window.document.body.appendChild(staging);
       const zip=new JSZip(),pdf=new jspdf.jsPDF({orientation:"landscape",unit:"px",format:[1280,720],compress:true});
       for(let i=0;i<slides.length;i++){
         const s=slides[i];
@@ -407,7 +409,7 @@
       const raw=await response.text();let payload={};try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("استجابة الخادم غير مفهومة. تحقق من نشر خدمة Gemini.")}
       if(!response.ok)throw new Error(payload.error||("فشل الطلب برمز "+response.status));
       const data=payload.result||payload;if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("النتيجة غير مكتملة؛ أعد المحاولة");
-      const item={id:id(),title:data.title||"تجربة تعليمية",source:content,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
+      const item={id:id(),title:data.title||"تجربة تعليمية",subject,level,source:content,sourceUrl,sourceType:type,mode,data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;experienceSceneStep=0;matchState={left:null,right:null,matched:[]};
       if(page==="experience"||page==="experience-result"){currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"})}
       toast("اكتمل إنشاء التجربة وحُفظت، ويمكنك فتحها من التجارب المحفوظة");
