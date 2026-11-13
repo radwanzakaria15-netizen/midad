@@ -28,6 +28,7 @@ async function permission(){
 }
 window.midadPersonalEnableNotifications=permission;
 window.midadPersonalTestNotification=async function(){
+ try{navigator.vibrate?.([300,120,300,120,600])}catch(e){}
  const ok=await permission();if(!ok)return;
  const sent=await notify({id:"manual-test-"+Date.now(),title:"اختبار إشعارات مِداد",detail:"إذا ظهر هذا الإشعار، فإن إذن الإشعارات يعمل على هذا الجهاز."});
  if(sent)toast("أُرسل إشعار الاختبار. إذا لم يصدر اهتزاز، فتحقق من إعدادات إشعارات الموقع والهزّاز في Android.");
