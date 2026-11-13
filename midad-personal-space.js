@@ -64,7 +64,7 @@ function write(d){try{localStorage.setItem(KEY+who(),JSON.stringify(d));return t
 function empty(t,p){return '<div class="px-empty"><b>'+esc(t)+'</b><span>'+esc(p)+'</span></div>'}
 function act(t,f){
  const handler=String(f).replaceAll("\\'","'");
- const m=handler.match(/^window\\.(midadPersonal[A-Za-z]+)\\('([^']*)'(?:,'([^']*)')?\\)$/);
+ const m=handler.match(/^window\.(midadPersonal[A-Za-z]+)\('([^']*)'(?:,'([^']*)')?\)$/);
  if(!m)return '<button type="button" class="px-action" disabled>'+t+'</button>';
  return '<button type="button" class="px-action" data-px-method="'+esc(m[1])+'" data-px-arg1="'+esc(m[2])+'" data-px-arg2="'+esc(m[3]||"")+'">'+t+'</button>';
 }
