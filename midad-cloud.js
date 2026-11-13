@@ -13,7 +13,7 @@
     if (local?.teacher && local.teacher !== 'الأستاذ') merged.teacher = local.teacher;
     if (local?.school) merged.school = local.school;
     if (local?.year && local.year !== '2026 / 2027') merged.year = local.year;
-    const arrayKeys = ['classes','students','lessons','activities','assessments','attendance','resources','experiences'];
+    const arrayKeys = ['classes','students','lessons','activities','assessments','attendance','resources','grades','experiences'];
     for (const key of arrayKeys) {
       const cloudRows = Array.isArray(remote?.[key]) ? remote[key] : [];
       const localRows = Array.isArray(local?.[key]) ? local[key] : [];
