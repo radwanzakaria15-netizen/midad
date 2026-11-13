@@ -55,6 +55,13 @@ async function notify(x){
 async function check(){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  const d=read(),now=new Date(),date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),time=now.toTimeString().slice(0,5);
+ d.notifiedAlerts=Array.isArray(d.notifiedAlerts)?d.notifiedAlerts:[];
+ const smart=typeof window.midadPersonalGetSmartAlerts==="function"?window.midadPersonalGetSmartAlerts():[];
+ for(const alert of smart){
+  if(d.notifiedAlerts.includes(alert.id))continue;
+  const sent=await notify({id:"smart-"+alert.id,title:alert.title,detail:alert.detail});
+  if(sent){d.notifiedAlerts.push(alert.id);write(d)}
+ }
  for(const x of (d.reminders||[])){if(x.done||x.firedAt||!x.date||!x.time||x.date!==date||x.time>time)continue;const k=x.id+date+x.time;if(seen.has(k))continue;seen.add(k);const sent=await notify({id:k,title:(x.type==="alarm"?"حان موعد المنبّه: ":"حان موعد التذكير: ")+x.title,detail:x.detail});if(sent){x.firedAt=new Date().toISOString();write(d)}else seen.delete(k)}
 }
 const base=window.render;window.render=function(){base();enhance()};
