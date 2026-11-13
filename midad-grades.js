@@ -28,6 +28,20 @@ window.midadSaveGrade=function(e,taskId){
  if(!save())return;
  closeModal();render();toast("تم إرسال النقطة إلى فضاء "+st.name+".");
 };
+window.midadOpenGradeForStudent=function(studentId){
+ const st=(db.students||[]).find(x=>x.id===studentId);if(!st)return;
+ openModal("إرسال نقطة إلى "+st.name,"أدخل اسم الواجب والنقطة، وستظهر النتيجة مباشرة في قسم «النقاط» لدى الطالب.",'<form id="midadSingleGradeForm"><div class="form-grid"><div class="form-field full"><label>اسم الواجب أو الاختبار</label><input name="title" required maxlength="120" placeholder="مثال: فرض الفصل الأول"></div><div class="form-field"><label>المادة</label><input name="subject" placeholder="مثال: الرياضيات"></div><div class="form-field"><label>النقطة</label><input name="score" type="number" min="0" max="100" step="0.25" value="0" required></div><div class="form-field"><label>على</label><input name="outOf" type="number" min="1" max="100" step="0.25" value="20" required></div><div class="form-field full"><label>ملاحظة للطالب (اختيارية)</label><textarea name="feedback" placeholder="ملاحظة توجيهية أو تشجيعية..."></textarea></div></div><div class="modal-actions"><button class="btn primary">حفظ وإرسال النقطة</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>');
+ document.getElementById("midadSingleGradeForm").onsubmit=e=>window.midadSaveStudentGrade(e,studentId);
+};
+window.midadSaveStudentGrade=function(e,studentId){
+ e.preventDefault();const st=(db.students||[]).find(x=>x.id===studentId);if(!st)return;
+ const f=new FormData(e.target),title=String(f.get("title")||"").trim(),subject=String(f.get("subject")||"").trim(),score=Number(f.get("score")),outOf=Number(f.get("outOf")),feedback=String(f.get("feedback")||"").trim();
+ if(!title||!Number.isFinite(score)||!Number.isFinite(outOf)||outOf<=0||score<0||score>outOf){toast("تحقق من اسم الواجب والنقطة والدرجة الكاملة.");return}
+ db.grades=db.grades||[];const old=db.grades.find(g=>g.studentId===studentId&&!g.taskId&&g.title===title&&g.subject===subject),now=new Date().toISOString();
+ const value={id:old?.id||("grade-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),taskId:null,studentId,classId:st.classId,title,subject,score,outOf,feedback,published:true,publishedAt:now,createdAt:old?.createdAt||now};
+ if(old)Object.assign(old,value);else db.grades.push(value);
+ if(!save())return;closeModal();render();toast("تم إرسال النقطة إلى فضاء "+st.name+".");
+};
 const css=document.createElement("style");css.textContent=`
 .grade-existing{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}.grade-existing h4{margin:0 0 8px;color:var(--deep);font-size:13px}.grade-existing-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}.grade-existing-row span{flex:1}.grade-existing-row b{color:#2f7650}.grade-existing-row small{color:var(--muted)}
 `;document.head.appendChild(css);
