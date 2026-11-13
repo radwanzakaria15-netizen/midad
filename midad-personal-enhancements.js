@@ -431,3 +431,74 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
   `;
   document.head.appendChild(style);
 })();
+
+
+/* Header icon alignment — notes and reminders */
+(() => {
+  "use strict";
+  if (document.getElementById("midad-notes-reminders-header-icons")) return;
+  const style = document.createElement("style");
+  style.id = "midad-notes-reminders-header-icons";
+  style.textContent = `
+    .midad-personal-mode .px-panel:has(.px-notes)>header,
+    .midad-personal-mode .px-panel:has(.px-alerts)>header {
+      min-height:60px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-start;
+      gap:3px;
+      padding:5px 62px 15px 4px!important;
+    }
+    .midad-personal-mode .px-panel:has(.px-notes)>header:before,
+    .midad-personal-mode .px-panel:has(.px-alerts)>header:before {
+      right:0;top:5px;
+      width:48px;height:48px;
+      border-radius:15px;
+    }
+    .midad-personal-mode .px-panel:has(.px-notes)>header:after,
+    .midad-personal-mode .px-panel:has(.px-alerts)>header:after {
+      content:"";
+      position:absolute;
+      right:11px;top:16px;
+      width:26px;height:26px;
+      display:block;
+      font-size:0;
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:contain;
+    }
+    .midad-personal-mode .px-panel:has(.px-notes)>header:after {
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237765a2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3.5h8l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 2-1.5Z'/%3E%3Cpath d='M14.5 3.8V8H19M8.5 12h7M8.5 16h7'/%3E%3C/svg%3E");
+    }
+    .midad-personal-mode .px-panel:has(.px-alerts)>header:after {
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23547796' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3.5 2'/%3E%3C/svg%3E");
+    }
+    .midad-personal-mode .px-panel:has(.px-notes)>header h2,
+    .midad-personal-mode .px-panel:has(.px-alerts)>header h2 {
+      margin:0!important;
+      line-height:1.35;
+    }
+    .midad-personal-mode .px-panel:has(.px-notes)>header p,
+    .midad-personal-mode .px-panel:has(.px-alerts)>header p {
+      margin:0!important;
+      line-height:1.6;
+    }
+    @media(max-width:760px) {
+      .midad-personal-mode .px-panel:has(.px-notes)>header,
+      .midad-personal-mode .px-panel:has(.px-alerts)>header {
+        min-height:58px;
+        padding-right:59px!important;
+      }
+      .midad-personal-mode .px-panel:has(.px-notes)>header:before,
+      .midad-personal-mode .px-panel:has(.px-alerts)>header:before {
+        width:45px;height:45px;
+      }
+      .midad-personal-mode .px-panel:has(.px-notes)>header:after,
+      .midad-personal-mode .px-panel:has(.px-alerts)>header:after {
+        right:10px;top:15px;width:25px;height:25px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
