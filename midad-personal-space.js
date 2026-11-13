@@ -63,7 +63,7 @@ function read(){try{let d=Object.assign({events:[],notes:[],reminders:[],tasks:[
 function write(d){try{localStorage.setItem(KEY+who(),JSON.stringify(d));return true}catch(e){toast("تعذر حفظ المساحة الشخصية.");return false}}
 function empty(t,p){return '<div class="px-empty"><b>'+esc(t)+'</b><span>'+esc(p)+'</span></div>'}
 function act(t,f){
- const m=String(f).match(/^window\\.(midadPersonal[A-Za-z]+)\\(\\s*(['"])(.*?)\\2(?:\\s*,\\s*(['"])(.*?)\\4)?\\s*\\)$/);
+ const m=String(f).match(/^window\.(midadPersonal[A-Za-z]+)\(\s*(['"])(.*?)\2(?:\s*,\s*(['"])(.*?)\4)?\s*\)$/);
  if(!m)return '<button type="button" class="px-action" disabled>'+t+'</button>';
  return '<button type="button" class="px-action" data-px-method="'+esc(m[1])+'" data-px-arg1="'+esc(m[3])+'" data-px-arg2="'+esc(m[5]||"")+'">'+t+'</button>';
 }
