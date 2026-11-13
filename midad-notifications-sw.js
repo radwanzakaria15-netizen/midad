@@ -1,0 +1,1 @@
+self.addEventListener("notificationclick",event=>{event.notification.close();event.waitUntil((async()=>{const all=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of all){if("focus" in client){await client.focus();return client.navigate("./")}}if(clients.openWindow)return clients.openWindow("./")})())});
