@@ -11,6 +11,7 @@
   let mode = 'login';
   let busy = false;
   let currentUser = null;
+  window.midadGetTeacherIdentity = () => currentUser?.id || ('guest-' + (document.getElementById('teacherName')?.textContent || 'teacher'));
   let pendingConfirmationEmail = '';
 
   const css = document.createElement('style');
