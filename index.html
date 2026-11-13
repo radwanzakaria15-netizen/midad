@@ -269,7 +269,7 @@ main,#main{animation:none!important;filter:none!important}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 let KEY='midad_workspace_v3';
-const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'https://hidden-boat-c81b.radwanzakaria15.workers.dev/',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[]};
+const defaults={teacher:'الأستاذ',school:'',year:'2026 / 2027',aiEndpoint:'https://hidden-boat-c81b.radwanzakaria15.workers.dev/',classes:[],students:[],lessons:[],activities:[],assessments:[],attendance:[],resources:[],grades:[]};
 let db=load(),page='home',board=null,boardCtx=null,boardDrawing=false,boardTool='pen',boardColor='#563829',boardSize=4,boardHistory=[];
 function load(){try{const saved=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'));if(!saved.aiEndpoint)saved.aiEndpoint=defaults.aiEndpoint;return saved}catch(e){return {...defaults}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));if(window.midadCloudQueueSave)window.midadCloudQueueSave(db);return true}catch(e){toast('مساحة التخزين في المتصفح ممتلئة. احذف بعض الملفات أو نزّل نسخة احتياطية.');return false}}
