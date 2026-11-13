@@ -24,8 +24,8 @@ function personalPage(){
  '<p class="personal-storage-note">خصوصية: تُحفظ هذه البيانات في مساحة تخزين هذا المتصفح وعلى هذا الجهاز، ولا تُضاف إلى بيانات الأقسام أو تُعرض للطلاب.</p>';
 }
 window.midadPersonalActive=false;
-window.midadPersonalOpen=function(){window.midadPersonalActive=true;window.render();window.scrollTo({top:0,behavior:"smooth"})};
-window.midadPersonalExit=function(){window.midadPersonalActive=false;window.navigate("home")};
+window.midadPersonalOpen=function(){window.midadPersonalActive=true;document.body.classList.add("midad-personal-mode");window.render();window.scrollTo({top:0,behavior:"smooth"})};
+window.midadPersonalExit=function(){window.midadPersonalActive=false;document.body.classList.remove("midad-personal-mode");window.navigate("home")};
 window.midadPersonalAdd=function(kind){
  const labels={event:"إضافة موعد إلى جدولي",note:"تدوين ملاحظة شخصية",reminder:"إضافة تنبيه"};
  const fields=kind==="event"?'<div class="form-field full"><label>عنوان الموعد</label><input name="title" required maxlength="100"></div><div class="form-field"><label>التاريخ</label><input type="date" name="date" required value="'+new Date().toISOString().slice(0,10)+'"></div><div class="form-field"><label>المكان</label><input name="place" maxlength="80" placeholder="اختياري"></div><div class="form-field"><label>من</label><input type="time" name="start"></div><div class="form-field"><label>إلى</label><input type="time" name="end"></div><div class="form-field full"><label>تفاصيل</label><textarea name="detail"></textarea></div>':kind==="note"?'<div class="form-field full"><label>عنوان الملاحظة</label><input name="title" required maxlength="100"></div><div class="form-field full"><label>المحتوى</label><textarea name="text" required style="min-height:130px"></textarea></div>':'<div class="form-field full"><label>عنوان التنبيه</label><input name="title" required maxlength="100"></div><div class="form-field"><label>التاريخ</label><input type="date" name="date" required value="'+new Date().toISOString().slice(0,10)+'"></div><div class="form-field"><label>الوقت</label><input type="time" name="time"></div><div class="form-field full"><label>تفاصيل إضافية</label><textarea name="detail"></textarea></div>';
@@ -37,6 +37,7 @@ window.midadPersonalToggle=function(id){const d=data(),x=d.reminders.find(v=>v.i
 const baseRender=window.render;
 window.render=function(){if(window.midadPersonalActive){const m=document.getElementById("main");if(m)m.innerHTML=personalPage();return}baseRender()};
 const css=document.createElement("style");css.textContent=`
+.midad-personal-mode .shell{grid-template-columns:minmax(0,1fr);max-width:1250px}.midad-personal-mode .sidebar,.midad-personal-mode .mobile-nav{display:none!important}
 #personalSpaceButton{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #dce8dc;border-radius:13px;background:#edf4ed;color:#286342;font:800 12px Tajawal,Cairo,sans-serif;white-space:nowrap}
 #personalSpaceButton svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .personal-welcome{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:25px 27px;margin-bottom:17px;border:1px solid #dce8dc;border-radius:22px;background:linear-gradient(125deg,#f8fcf8,#eaf2ea)}
