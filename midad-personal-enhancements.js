@@ -27,17 +27,41 @@ async function permission(){
  return true;
 }
 window.midadPersonalEnableNotifications=permission;
+window.midadPersonalTestNotification=async function(){
+ const ok=await permission();if(!ok)return;
+ const sent=await notify({id:"manual-test-"+Date.now(),title:"اختبار إشعارات مِداد",detail:"إذا ظهر هذا الإشعار، فإن إذن الإشعارات يعمل على هذا الجهاز."});
+ if(sent)toast("أُرسل إشعار الاختبار. إذا لم يصدر اهتزاز، فتحقق من إعدادات إشعارات الموقع والهزّاز في Android.");
+ else toast("تعذر إرسال الإشعار. تحقق من أذونات مِداد وإعدادات المتصفح.");
+};
 async function notify(x){
  if(!("Notification" in window)||Notification.permission!=="granted")return false;
  const vibration=[300,120,300,120,600],opts={body:x.detail||"حان موعد التذكير.",tag:"midad-"+x.id,renotify:true,vibrate:vibration,requireInteraction:true,silent:false,timestamp:Date.now(),data:{url:"./"}};
- try{navigator.vibrate?.(vibration)}catch(e){}
- try{if(navigator.setAppBadge)await navigator.setAppBadge(1)}catch(e){}
- try{if("serviceWorker" in navigator){let reg=await navigator.serviceWorker.getRegistration("./");if(!reg)reg=await navigator.serviceWorker.register("./midad-notifications-sw.js",{scope:"./"});await reg.showNotification(x.title,opts)}else new Notification(x.title,opts);return true}
- catch(e){try{new Notification(x.title,opts);return true}catch(error){return false}}
+ try{
+  if("serviceWorker" in navigator){
+   let reg=await navigator.serviceWorker.getRegistration("./");
+   if(!reg)reg=await navigator.serviceWorker.register("./midad-notifications-sw.js",{scope:"./"});
+   await navigator.serviceWorker.ready;
+   await reg.showNotification(x.title,opts);
+  }else new Notification(x.title,opts);
+  try{navigator.vibrate?.(vibration)}catch(e){}
+  try{if(navigator.setAppBadge)await navigator.setAppBadge(1)}catch(e){}
+  return true;
+ }catch(error){
+  console.error("Midad notification failed:",error);
+  try{new Notification(x.title,opts);try{navigator.vibrate?.(vibration)}catch(e){}return true}
+  catch(fallbackError){console.error("Midad notification fallback failed:",fallbackError);return false}
+ }
 }
 async function check(){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  const d=read(),now=new Date(),date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),time=now.toTimeString().slice(0,5);
+ d.notifiedAlerts=Array.isArray(d.notifiedAlerts)?d.notifiedAlerts:[];
+ const smart=typeof window.midadPersonalGetSmartAlerts==="function"?window.midadPersonalGetSmartAlerts():[];
+ for(const alert of smart){
+  if(d.notifiedAlerts.includes(alert.id))continue;
+  const sent=await notify({id:"smart-"+alert.id,title:alert.title,detail:alert.detail});
+  if(sent){d.notifiedAlerts.push(alert.id);write(d)}
+ }
  for(const x of (d.reminders||[])){if(x.done||x.firedAt||!x.date||!x.time||x.date!==date||x.time>time)continue;const k=x.id+date+x.time;if(seen.has(k))continue;seen.add(k);const sent=await notify({id:k,title:(x.type==="alarm"?"حان موعد المنبّه: ":"حان موعد التذكير: ")+x.title,detail:x.detail});if(sent){x.firedAt=new Date().toISOString();write(d)}else seen.delete(k)}
 }
 const base=window.render;window.render=function(){base();enhance()};
