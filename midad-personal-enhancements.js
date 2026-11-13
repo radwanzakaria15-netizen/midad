@@ -27,13 +27,30 @@ async function permission(){
  return true;
 }
 window.midadPersonalEnableNotifications=permission;
+window.midadPersonalTestNotification=async function(){
+ const ok=await permission();if(!ok)return;
+ const sent=await notify({id:"manual-test-"+Date.now(),title:"اختبار إشعارات مِداد",detail:"إذا ظهر هذا الإشعار، فإن إذن الإشعارات يعمل على هذا الجهاز."});
+ if(sent)toast("أُرسل إشعار الاختبار. إذا لم يصدر اهتزاز، فتحقق من إعدادات إشعارات الموقع والهزّاز في Android.");
+ else toast("تعذر إرسال الإشعار. تحقق من أذونات مِداد وإعدادات المتصفح.");
+};
 async function notify(x){
  if(!("Notification" in window)||Notification.permission!=="granted")return false;
  const vibration=[300,120,300,120,600],opts={body:x.detail||"حان موعد التذكير.",tag:"midad-"+x.id,renotify:true,vibrate:vibration,requireInteraction:true,silent:false,timestamp:Date.now(),data:{url:"./"}};
- try{navigator.vibrate?.(vibration)}catch(e){}
- try{if(navigator.setAppBadge)await navigator.setAppBadge(1)}catch(e){}
- try{if("serviceWorker" in navigator){let reg=await navigator.serviceWorker.getRegistration("./");if(!reg)reg=await navigator.serviceWorker.register("./midad-notifications-sw.js",{scope:"./"});await reg.showNotification(x.title,opts)}else new Notification(x.title,opts);return true}
- catch(e){try{new Notification(x.title,opts);return true}catch(error){return false}}
+ try{
+  if("serviceWorker" in navigator){
+   let reg=await navigator.serviceWorker.getRegistration("./");
+   if(!reg)reg=await navigator.serviceWorker.register("./midad-notifications-sw.js",{scope:"./"});
+   await navigator.serviceWorker.ready;
+   await reg.showNotification(x.title,opts);
+  }else new Notification(x.title,opts);
+  try{navigator.vibrate?.(vibration)}catch(e){}
+  try{if(navigator.setAppBadge)await navigator.setAppBadge(1)}catch(e){}
+  return true;
+ }catch(error){
+  console.error("Midad notification failed:",error);
+  try{new Notification(x.title,opts);try{navigator.vibrate?.(vibration)}catch(e){}return true}
+  catch(fallbackError){console.error("Midad notification fallback failed:",fallbackError);return false}
+ }
 }
 async function check(){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
