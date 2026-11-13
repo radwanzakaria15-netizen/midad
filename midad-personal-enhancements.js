@@ -323,7 +323,7 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
     }
 
     /* Reminders: compact agenda rows with a clear action area */
-    .midad-personal-mode .px-panel .px-event {
+    .midad-personal-mode .px-panel .px-event:has(.px-check) {
       display:grid;
       grid-template-columns:28px minmax(0,1fr) auto auto;
       align-items:center;gap:10px;
@@ -337,39 +337,39 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
       transform:none!important;
       transition:border-color .18s ease,box-shadow .18s ease;
     }
-    .midad-personal-mode .px-panel .px-event:hover {
+    .midad-personal-mode .px-panel .px-event:has(.px-check):hover {
       border-color:#cbd9e5!important;
       box-shadow:0 8px 18px rgba(42,61,80,.065);
     }
-    .midad-personal-mode .px-panel .px-event:before {display:none!important}
-    .midad-personal-mode .px-panel .px-event>.px-check {
+    .midad-personal-mode .px-panel .px-event:has(.px-check):before {display:none!important}
+    .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-check {
       grid-column:1;grid-row:1;
       width:25px;height:25px;min-width:25px;
       border:1px solid #cbd8e2;border-radius:8px;
       background:#f6f9fb;color:#47745d;
     }
-    .midad-personal-mode .px-panel .px-event>div:first-of-type {
+    .midad-personal-mode .px-panel .px-event:has(.px-check)>div:first-of-type {
       grid-column:2;grid-row:1;
       min-width:0;width:auto;flex:none;
     }
-    .midad-personal-mode .px-panel .px-event b {
+    .midad-personal-mode .px-panel .px-event:has(.px-check) b {
       color:#30485d;font-size:12px;line-height:1.6;
     }
-    .midad-personal-mode .px-panel .px-event small {
+    .midad-personal-mode .px-panel .px-event:has(.px-check) small {
       display:block;margin-top:4px;color:#64829a;
       font-size:10px;line-height:1.6;
     }
-    .midad-personal-mode .px-panel .px-event p {
+    .midad-personal-mode .px-panel .px-event:has(.px-check) p {
       margin:4px 0 0;color:#8996a2;
       font-size:10px;line-height:1.65;
     }
-    .midad-personal-mode .px-panel .px-event>.px-action {
+    .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-action {
       grid-row:1;align-self:center;
       padding:7px 10px;border:1px solid #e4eaf0;
       border-radius:8px;background:#f9fbfc;
       color:#637b8e;font-size:10px;white-space:nowrap;
     }
-    .midad-personal-mode .px-panel .px-event>.px-action:hover {
+    .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-action:hover {
       background:#edf3f7;color:#34546f;
     }
 
@@ -405,20 +405,20 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
     @media(max-width:760px) {
       .midad-personal-mode .px-notes {grid-template-columns:1fr!important;gap:10px!important}
       .midad-personal-mode .px-notes .px-note {min-height:0!important;padding:14px!important}
-      .midad-personal-mode .px-panel .px-event {
+      .midad-personal-mode .px-panel .px-event:has(.px-check) {
         grid-template-columns:27px minmax(0,1fr) auto;
         gap:8px;padding:11px 9px!important;
       }
-      .midad-personal-mode .px-panel .px-event>.px-action {
+      .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-action {
         grid-row:2;grid-column:2;justify-self:start;
       }
-      .midad-personal-mode .px-panel .px-event>.px-action:last-child {
+      .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-action:last-child {
         grid-column:3;grid-row:2;
       }
-      .midad-personal-mode .px-panel .px-event>div:first-of-type {
+      .midad-personal-mode .px-panel .px-event:has(.px-check)>div:first-of-type {
         grid-column:2/-1;grid-row:1;
       }
-      .midad-personal-mode .px-panel .px-event>.px-check {grid-row:1}
+      .midad-personal-mode .px-panel .px-event:has(.px-check)>.px-check {grid-row:1}
       .midad-personal-mode .px-panel .px-alert {grid-template-columns:1fr}
       .midad-personal-mode .px-panel .px-alert .btn {justify-self:start}
       .midad-personal-mode .px-panel:has(.px-notes)>header,
@@ -426,7 +426,7 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
     }
     @media(prefers-reduced-motion:reduce) {
       .midad-personal-mode .px-notes .px-note,
-      .midad-personal-mode .px-panel .px-event {transition:none}
+      .midad-personal-mode .px-panel .px-event:has(.px-check) {transition:none}
     }
   `;
   document.head.appendChild(style);
