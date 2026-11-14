@@ -9,7 +9,7 @@
 ## إعداد Cloudflare
 1. في Pages > Settings > Variables and Secrets > Production تأكد من وجود SUPABASE_URL وSUPABASE_ANON_KEY.
 2. اربط D1 باسم midad بالـ binding DB (الموجود في wrangler.toml).
-3. نفّذ migration 0002_accounts_resources.sql على قاعدة D1. إن كان التنفيذ من Wrangler متاحاً: npx wrangler d1 migrations apply midad --remote.
+3. نفّذ migration 0002_accounts_resources.sql على قاعدة D1 قبل تفعيل تسجيل الأستاذ؛ يتضمن أعمدة الحجز المؤقت لدعوات الأستاذ. إن كان التنفيذ من Wrangler متاحاً: npx wrangler d1 migrations apply midad --remote.
 4. تأكد أن Pages ينشر من main وأن مجلد functions ضمن جذر المشروع.
 
 ## إعداد Supabase
@@ -23,8 +23,9 @@
 ## وظائف API المضافة
 - GET/POST /api/account: قراءة/إنشاء ملف المستخدم. الدور الافتراضي student.
 - POST /api/invites: دعوة أستاذ من حساب teacher/admin.
-- POST /api/invites/validate: التحقق من رمز الدعوة واسم المستخدم قبل إنشاء حساب المصادقة.
-- POST /api/invites/redeem: استهلاك رمز دعوة من 8 أحرف وصالح 48 ساعة بعد تسجيل الدخول.
+- POST /api/invites/validate: يحجز رمز الدعوة ذرياً لاسم المستخدم لمدة 10 دقائق ويعيد رمز حجز عشوائياً؛ يجب حفظه ضمن بيانات تسجيل المصادقة.
+- POST /api/invites/redeem: يستهلك الدعوة فقط إذا طابق رمز الحجز واسم المستخدم ولم تنتهِ مهلة الحجز.
+- POST /api/invites/release: يحرر الحجز غير المستخدم عند فشل إنشاء حساب المصادقة. رمز الحجز عالي العشوائية ولا يُخزّن في D1 إلا بعد تجزئته.
 - GET/POST/PATCH /api/resources: قراءة الموارد، إرسال مورد pending، ومراجعته حسب التخصص.
 - GET/PUT /api/ratings: ملخص التقييم وتقييم واحد لكل UID.
 - عميل الواجهة: midad-cloud-auth.js.
