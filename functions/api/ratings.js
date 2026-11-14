@@ -9,6 +9,7 @@ export async function onRequest({request,env}){
   if(!auth)return json({error:'سجّل الدخول لتقييم الموقع.'},401);
   if(!await profile(env.DB,auth.id))return json({error:'أكمل إعداد حسابك أولاً.'},409);
   let body;try{body=await request.json()}catch{return json({error:'البيانات غير صالحة.'},400)}
+  if(!body||typeof body!=='object'||Array.isArray(body))return json({error:'البيانات غير صالحة.'},400);
   const rating=Number(body.rating),comment=String(body.comment||'').trim();
   if(!Number.isInteger(rating)||rating<1||rating>5||comment.length>1000)return json({error:'التقييم يجب أن يكون من 1 إلى 5.'},400);
   const now=new Date().toISOString();
