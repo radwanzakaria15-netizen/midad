@@ -22,6 +22,11 @@
       "database_id": "690c0f14-c064-4efd-9761-ec4cea0acdfc",
       "migrations_dir": "migrations"
     }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "MIDAD_GOOGLE_SESSIONS",
+      "id": "f584f9dad410478e835012834eb5a401"
+    }
   ]
 }
-
