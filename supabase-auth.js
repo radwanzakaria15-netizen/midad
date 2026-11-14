@@ -404,8 +404,12 @@
     if(!name||!validUsername(username)||!/^[A-HJ-NP-Z2-9]{8}$/.test(invite)){toast('تحقق من الاسم واسم المستخدم ورمز الدعوة.');return}
     const submit=event.target.querySelector('button[type="submit"]');if(submit){submit.disabled=true;submit.textContent='جارٍ التفعيل…'}
     try{
-      const reservation=await window.MidadCloudAuth.validateTeacherInvite({code:invite,username});
-      const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username,reservationToken:reservation.reservationToken});
+      let reservation;
+      if(pending.reservationToken)reservation={reservationToken:pending.reservationToken};
+      else{reservation=await window.MidadCloudAuth.validateTeacherInvite({code:invite,username});pending.reservationToken=reservation.reservationToken;}
+      let created;
+      try{created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username,reservationToken:reservation.reservationToken});}
+      catch(error){reservation=await window.MidadCloudAuth.validateTeacherInvite({code:invite,username});pending.reservationToken=reservation.reservationToken;created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username,reservationToken:reservation.reservationToken});}
       if(String(values.recoveryEmail||'').trim()){
         try{await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:String(values.recoveryEmail).trim()});}
         catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
