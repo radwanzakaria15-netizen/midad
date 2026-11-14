@@ -7,7 +7,7 @@
     throw new Error(detail.error || 'تعذر تحميل إعدادات Supabase من الخادم.');
   }
   const supabaseConfig = await configResponse.json();
-  const SUPABASE_URL = String(supabaseConfig.url || '').replace(/\\/$/, '');
+  const SUPABASE_URL = String(supabaseConfig.url || '').replace(/\/$/, '');
   const SUPABASE_PUBLISHABLE_KEY = String(supabaseConfig.anonKey || '');
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     throw new Error('إعدادات Supabase غير مكتملة. تحقق من متغيرات Cloudflare.');
