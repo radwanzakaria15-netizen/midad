@@ -1,11 +1,28 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hidden-boat-c81b",
-  "main": "gemini-worker.js",
-  "compatibility_date": "2026-11-11",
+  "name": "midad-app-preview",
+  "main": "./midad-worker.js",
+  "compatibility_date": "2026-11-14",
   "account_id": "2a481904d29d94559258bb790f68dc88",
   "workers_dev": true,
+  "preview_urls": true,
   "keep_vars": true,
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "midad",
+      "database_id": "690c0f14-c064-4efd-9761-ec4cea0acdfc",
+      "migrations_dir": "migrations"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "MIDAD_GOOGLE_SESSIONS",

@@ -1,0 +1,12 @@
+/.github/
+/functions/
+/migrations/
+/supabase/
+/wrangler.jsonc
+/wrangler.toml
+/wrangler.gemini.jsonc
+/midad-worker.js
+/gemini-worker.js
+/README.md
+/GEMINI-SETUP.md
+/MIDAD-CLOUDFLARE-AUTH.md
