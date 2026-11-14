@@ -9,7 +9,10 @@
   };
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{storage:authStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   let mode = 'login';
+  let accountType = 'student';
   let busy = false;
+  let oauthFinalizing = false;
+  const PENDING_REG_KEY = 'midad_pending_registration';
   let currentUser = null;
   window.midadGetTeacherIdentity = () => currentUser?.id || ('guest-' + (document.getElementById('teacherName')?.textContent || 'teacher'));
   let pendingConfirmationEmail = '';
@@ -244,6 +247,43 @@
     }
     @media(max-width:380px){.midad-auth-card{padding:23px 18px}.midad-auth-intro{padding:19px}}
   `;
+
+    /* Registration role selector, password guidance and explicit app theme support */
+    .midad-auth-role-wrap{margin:0 0 17px}
+    .midad-auth-role-label{display:block;font-size:12px;font-weight:900;color:var(--auth-text);margin:0 2px 8px}
+    .midad-auth-roles{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .midad-auth-role{min-height:64px;padding:10px 12px;border:1px solid #e1e8e1;border-radius:13px;background:#fbfdfb;color:#53645a;display:flex;align-items:center;gap:10px;text-align:right;font:800 12px Cairo,Tajawal,sans-serif;cursor:pointer}
+    .midad-auth-role svg{width:22px;height:22px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .midad-auth-role.active{border-color:#6eaa80;background:#edf5ef;color:#286342;box-shadow:0 0 0 2px rgba(46,125,75,.08)}
+    .midad-auth-role small{display:block;font-size:10px;font-weight:600;color:#829087;margin-top:2px}
+    .midad-auth-strength-copy{display:flex;justify-content:space-between;gap:8px;margin:7px 2px 0;color:var(--auth-muted);font-size:10px}
+    .midad-auth-strength-copy strong{color:var(--auth-green);font-weight:900}
+    .midad-auth-invite-note{font-size:10px;color:var(--auth-muted);margin:5px 3px 0;line-height:1.7}
+    .midad-auth-field[hidden],.midad-auth-role-wrap[hidden],.midad-auth-row[hidden],.midad-auth-divider[hidden],.midad-auth-google[hidden]{display:none!important}
+    .midad-auth-google:disabled{opacity:.6}
+    body.midad-night #midad-auth-gate{background:radial-gradient(ellipse at 12% 12%,#29392e 0,transparent 36%),#202923;color:#e5eee7}
+    body.midad-night .midad-auth-layout{background:#26342a;border-color:#35483a;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+    body.midad-night .midad-auth-card{background:#26342a}
+    body.midad-night .midad-auth-card:before{color:#eef6ef}
+    body.midad-night .midad-auth-card:after{color:#aab9ad}
+    body.midad-night .midad-auth-tabs{background:#202c23;border-color:#3a4b3e}
+    body.midad-night .midad-auth-tabs:before{background:#35443a}
+    body.midad-night .midad-auth-tabs button{color:#a7b5aa}
+    body.midad-night .midad-auth-tabs button.active{color:#9bddaf}
+    body.midad-night .midad-auth-input-wrap{background:#202c23;border-color:#3a4b3e}
+    body.midad-night .midad-auth-input-wrap input{color:#edf5ee}
+    body.midad-night .midad-auth-field>span,body.midad-night .midad-auth-role-label{color:#c3d0c5}
+    body.midad-night .midad-auth-role{background:#202c23;border-color:#3a4b3e;color:#c4d1c6}
+    body.midad-night .midad-auth-role.active{background:#304a37;border-color:#72bd8d;color:#a9e0b8}
+    body.midad-night .midad-auth-role small{color:#9eafa1}
+    body.midad-night .midad-auth-submit{background:#39845a;color:#fff}
+    body.midad-night .midad-auth-google{background:#29382d;border-color:#405445;color:#edf5ee}
+    body.midad-night .midad-auth-strength i{background:#3c4a40}
+    body.midad-night .midad-auth-strength-copy{color:#a7b5aa}
+    body.midad-night .midad-auth-invite-note{color:#a7b5aa}
+    body.midad-night .midad-auth-msg.error,body.midad-night .midad-auth-msg.ok{background:#263f30;color:#a6e2b7}
+    @media(max-width:420px){.midad-auth-role{padding:9px 8px;gap:7px;font-size:11px}.midad-auth-role svg{width:19px;height:19px}}
+
   document.head.appendChild(css);
   const gate = document.createElement('section');
   gate.id = 'midad-auth-gate';
@@ -257,15 +297,22 @@
       <div class="midad-auth-card">
       <div class="midad-auth-tabs" id="midad-auth-tabs"><button type="button" id="midad-login-tab" class="active" onclick="midadAuthMode('login')">دخول</button><button type="button" id="midad-signup-tab" onclick="midadAuthMode('signup')">حساب جديد</button></div>
       <form id="midad-auth-form" novalidate>
-        <label class="midad-auth-field" id="midad-name-wrap" hidden><span>الاسم الكامل</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><input id="midad-auth-name" autocomplete="name" maxlength="90" placeholder="اكتب اسمك الكامل"></div><small class="midad-auth-error" id="midad-name-error"></small></label>
+        <div class="midad-auth-role-wrap" id="midad-role-wrap" hidden>
+          <span class="midad-auth-role-label">نوع الحساب</span>
+          <div class="midad-auth-roles" role="group" aria-label="نوع الحساب">
+            <button type="button" class="midad-auth-role active" id="midad-role-student" aria-pressed="true" onclick="midadSelectRole('student')"><svg viewBox="0 0 24 24"><path d="M3 9 12 4l9 5-9 5z"/><path d="M7 12v5c3 2 7 2 10 0v-5M21 9v6"/></svg><span>طالب<small>حساب متعلم</small></span></button>
+            <button type="button" class="midad-auth-role" id="midad-role-teacher" aria-pressed="false" onclick="midadSelectRole('teacher')"><svg viewBox="0 0 24 24"><path d="M4 20V5h16v15M8 9h8M8 13h5M8 17h8M2 20h20"/></svg><span>أستاذ<small>مساحة تعليمية</small></span></button>
+          </div>
+        </div>
+        <label class="midad-auth-field" id="midad-name-wrap" hidden><span>الاسم</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><input id="midad-auth-name" autocomplete="name" maxlength="90" placeholder="اكتب اسمك الكامل"></div><small class="midad-auth-error" id="midad-name-error"></small></label>
         <label class="midad-auth-field"><span>البريد الإلكتروني</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><input id="midad-auth-email" type="email" autocomplete="email" required placeholder="name@example.com" dir="ltr"></div><small class="midad-auth-error" id="midad-email-error"></small></label>
-        <label class="midad-auth-field"><span>كلمة المرور</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="midad-auth-password" type="password" autocomplete="current-password" required placeholder="••••••••" dir="ltr"><button type="button" class="midad-auth-eye" id="midad-auth-eye" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="midad-auth-error" id="midad-password-error"></small><div class="midad-auth-strength" id="midad-auth-strength" data-level="0" hidden><i></i><i></i><i></i><i></i></div></label>
-        <label class="midad-auth-field" id="midad-invite-wrap" hidden><span>رمز دعوة الأستاذ</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-3 3"/></svg><input id="midad-auth-invite" autocomplete="off" maxlength="32" placeholder="اتركه فارغًا للحساب الأول" dir="ltr"></div></label>
+        <label class="midad-auth-field"><span>كلمة المرور</span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="midad-auth-password" type="password" autocomplete="current-password" required placeholder="••••••••" dir="ltr"><button type="button" class="midad-auth-eye" id="midad-auth-eye" aria-label="إظهار كلمة المرور"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><small class="midad-auth-error" id="midad-password-error"></small><div class="midad-auth-strength" id="midad-auth-strength" data-level="0" hidden><i></i><i></i><i></i><i></i></div><div class="midad-auth-strength-copy" id="midad-auth-strength-copy" hidden><span>قوة كلمة المرور</span><strong id="midad-auth-strength-label">لم تُكتب بعد</strong></div></label>
+        <label class="midad-auth-field" id="midad-invite-wrap" hidden><span>رمز الدعوة من أستاذ سابق <b aria-hidden="true">*</b></span><div class="midad-auth-input-wrap"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-3 3"/></svg><input id="midad-auth-invite" autocomplete="off" maxlength="32" placeholder="أدخل رمز الدعوة" dir="ltr" aria-required="true"></div><small class="midad-auth-error" id="midad-invite-error"></small><p class="midad-auth-invite-note">هذا الرمز مطلوب لإنشاء حساب أستاذ.</p></label>
         <div class="midad-auth-row" id="midad-auth-row"><label class="midad-auth-remember"><input type="checkbox" id="midad-remember" checked><span class="midad-auth-switch"></span>تذكّرني</label><button type="button" class="midad-auth-link" id="midad-forgot">نسيت كلمة المرور؟</button></div>
         <button class="midad-auth-submit" id="midad-auth-submit" type="submit">دخول إلى مِداد</button>
       </form>
-      <div class="midad-auth-divider"><span>أو تابع عبر</span></div>
-      <button type="button" class="midad-auth-google" id="midad-auth-google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#4A90E2" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3c1.6-4.9 6.1-8.5 11.4-8.5Z"/></svg>المتابعة باستخدام Google</button>
+      <div class="midad-auth-divider" id="midad-auth-divider" hidden><span>أو سجّل بسرعة باستخدام</span></div>
+      <button type="button" class="midad-auth-google" id="midad-auth-google" hidden><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#4A90E2" d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"/><path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3c1.6-4.9 6.1-8.5 11.4-8.5Z"/></svg>التسجيل باستخدام Google</button>
       <button type="button" class="midad-auth-guest" onclick="midadGuestMode()">الدخول مؤقتًا دون حساب</button>
       <button type="button" class="midad-auth-guest" id="midad-auth-resend" hidden onclick="midadResendConfirmation()">إعادة إرسال رسالة التأكيد</button>
       <div class="midad-auth-msg" id="midad-auth-msg" role="status" aria-live="polite"></div>
@@ -289,7 +336,7 @@
     document.getElementById('midad-auth-google').disabled = value;
   }
   function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);}
-  function fieldError(id,text){const el=document.getElementById(id);el.textContent=text||'';el.classList.toggle('show',!!text);}
+  function fieldError(id,text){const el=document.getElementById(id);if(!el)return;el.textContent=text||'';el.classList.toggle('show',!!text);}
   function validateForm(){
     let ok=true;
     const email=document.getElementById('midad-auth-email').value.trim();
@@ -301,25 +348,44 @@
       const name=document.getElementById('midad-auth-name').value.trim();
       fieldError('midad-name-error',name?'':'أدخل اسمك الكامل.');
       if(!name)ok=false;
+      if(accountType==='teacher'){
+        const invite=document.getElementById('midad-auth-invite').value.trim();
+        fieldError('midad-invite-error',invite?'':'رمز الدعوة من أستاذ سابق مطلوب.');
+        if(!invite)ok=false;
+      }else fieldError('midad-invite-error','');
     }
     return ok;
   }
   function strengthLevel(value){
     let score=0;if(value.length>=8)score++;if(/[A-Z]/.test(value)&&/[a-z]/.test(value))score++;if(/\d/.test(value))score++;if(/[^A-Za-z0-9]/.test(value))score++;return Math.min(4,score);
   }
+  window.midadSelectRole=(role)=>{
+    accountType=role==='teacher'?'teacher':'student';
+    document.getElementById('midad-role-student').classList.toggle('active',accountType==='student');
+    document.getElementById('midad-role-teacher').classList.toggle('active',accountType==='teacher');
+    document.getElementById('midad-role-student').setAttribute('aria-pressed',String(accountType==='student'));
+    document.getElementById('midad-role-teacher').setAttribute('aria-pressed',String(accountType==='teacher'));
+    document.getElementById('midad-invite-wrap').hidden=mode!=='signup'||accountType!=='teacher';
+    document.getElementById('midad-auth-note').textContent=accountType==='teacher'?'يتطلب حساب الأستاذ رمز الدعوة من أستاذ سابق.':'أنشئ حسابك كطالب للانضمام إلى مساحة مِداد.';
+    fieldError('midad-invite-error','');
+  };
   window.midadAuthMode = (next) => {
     mode = next === 'signup' ? 'signup' : 'login';
     document.getElementById('midad-login-tab').classList.toggle('active',mode==='login');
     document.getElementById('midad-signup-tab').classList.toggle('active',mode==='signup');
     document.getElementById('midad-auth-tabs').classList.toggle('signup',mode==='signup');
     document.getElementById('midad-name-wrap').hidden=mode!=='signup';
-    document.getElementById('midad-invite-wrap').hidden=mode!=='signup';
+    document.getElementById('midad-role-wrap').hidden=mode!=='signup';
+    document.getElementById('midad-invite-wrap').hidden=mode!=='signup'||accountType!=='teacher';
     document.getElementById('midad-auth-password').autocomplete=mode==='login'?'current-password':'new-password';
     document.getElementById('midad-auth-strength').hidden=mode!=='signup';
+    document.getElementById('midad-auth-strength-copy').hidden=mode!=='signup';
     document.getElementById('midad-auth-row').hidden=mode==='signup';
-    document.getElementById('midad-auth-note').textContent=mode==='signup'?'إنشاء حساب الأستاذ الجديد يتطلب رمز دعوة صالحًا بعد إنشاء الحساب الأول.':'بياناتك محفوظة بأمان في مساحة مِداد.';
+    document.getElementById('midad-auth-divider').hidden=mode!=='signup';
+    document.getElementById('midad-auth-google').hidden=mode!=='signup';
+    document.getElementById('midad-auth-note').textContent=mode==='signup'?(accountType==='teacher'?'يتطلب حساب الأستاذ رمز الدعوة من أستاذ سابق.':'أنشئ حسابك كطالب للانضمام إلى مساحة مِداد.'):'بياناتك محفوظة بأمان في مساحة مِداد.';
     document.getElementById('midad-auth-msg').className='midad-auth-msg';
-    ['midad-email-error','midad-password-error','midad-name-error'].forEach(id=>fieldError(id,''));
+    ['midad-email-error','midad-password-error','midad-name-error','midad-invite-error'].forEach(id=>fieldError(id,''));
     pendingConfirmationEmail='';
     document.getElementById('midad-auth-resend').hidden=true;
     setBusy(false);
@@ -336,8 +402,12 @@
     document.getElementById('midad-auth-eye').setAttribute('aria-label',visible?'إخفاء كلمة المرور':'إظهار كلمة المرور');
   });
   document.getElementById('midad-auth-password').addEventListener('input',e=>{
-    const meter=document.getElementById('midad-auth-strength');meter.dataset.level=String(strengthLevel(e.target.value));
+    const meter=document.getElementById('midad-auth-strength'),level=strengthLevel(e.target.value);
+    meter.dataset.level=String(level);
+    const labels=['لم تُكتب بعد','ضعيفة','متوسطة','جيدة','قوية'];
+    document.getElementById('midad-auth-strength-label').textContent=e.target.value?labels[level]:'لم تُكتب بعد';
   });
+  document.getElementById('midad-auth-invite').addEventListener('input',e=>fieldError('midad-invite-error',''));
   ['midad-auth-email','midad-auth-password','midad-auth-name'].forEach(id=>document.getElementById(id).addEventListener('input',()=>fieldError(id.replace('midad-auth-','midad-')+'-error','')));
   window.midadGuestMode = () => {
     currentUser=null;
@@ -374,8 +444,8 @@
         await showSuccessThenWorkspace(data.user);
       }else{
         const fullName=document.getElementById('midad-auth-name').value.trim();
-        const inviteCode=document.getElementById('midad-auth-invite').value.trim().toUpperCase();
-        const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName,invite_code:inviteCode}}});
+        const inviteCode=accountType==='teacher'?document.getElementById('midad-auth-invite').value.trim().toUpperCase():'';
+        const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName,account_type:accountType,invite_code:inviteCode}}});
         if(error)throw error;
         if(data.session&&data.user){await showSuccessThenWorkspace(data.user);message('تم إنشاء الحساب وتسجيل الدخول بنجاح.');}
         else{pendingConfirmationEmail=email;message('تم إنشاء الحساب. افتح رسالة تأكيد البريد واضغط رابط التأكيد. يمكنك إعادة إرسال الرسالة من الزر أدناه.','ok');}
@@ -389,12 +459,18 @@
     }finally{setBusy(false);}
   });
   document.getElementById('midad-auth-google').addEventListener('click',async()=>{
-    if(busy)return;setBusy(true);
+    if(busy)return;
+    if(accountType==='teacher'&&!document.getElementById('midad-auth-invite').value.trim()){
+      fieldError('midad-invite-error','رمز الدعوة من أستاذ سابق مطلوب قبل التسجيل باستخدام Google.');return;
+    }
+    setBusy(true);
     try{
+      const pending={account_type:accountType,invite_code:accountType==='teacher'?document.getElementById('midad-auth-invite').value.trim().toUpperCase():'',full_name:document.getElementById('midad-auth-name').value.trim(),created_at:Date.now()};
+      localStorage.setItem(PENDING_REG_KEY,JSON.stringify(pending));
       const redirectTo=window.location.origin+window.location.pathname;
       const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
       if(error)throw error;
-    }catch(error){message(error.message||'تعذّر بدء تسجيل الدخول عبر Google.','error');setBusy(false);}
+    }catch(error){localStorage.removeItem(PENDING_REG_KEY);message(error.message||'تعذّر بدء التسجيل باستخدام Google.','error');setBusy(false);}
   });
   document.getElementById('midad-forgot').addEventListener('click',async()=>{
     const email=document.getElementById('midad-auth-email').value.trim();
@@ -426,12 +502,32 @@
   };
   window.midadSignOut=async()=>{const {error}=await client.auth.signOut();if(error)toast(error.message);};
   window.midadSupabase=client;
+  async function resolveAuthenticatedUser(user){
+    if(!user)return;
+    if(oauthFinalizing)return;
+    let pending=null;
+    try{pending=JSON.parse(localStorage.getItem(PENDING_REG_KEY)||'null')}catch(e){}
+    if(pending&&pending.account_type){
+      oauthFinalizing=true;
+      try{
+        const {error}=await client.rpc('complete_midad_registration',{p_role:pending.account_type,p_invite_code:pending.invite_code||'',p_full_name:pending.full_name||user.user_metadata?.full_name||''});
+        if(error)throw error;
+        localStorage.removeItem(PENDING_REG_KEY);
+        message('تم إنشاء حسابك وتأكيد نوعه بنجاح.','ok');
+      }catch(error){
+        await client.auth.signOut();
+        message(error.message||'تعذر إكمال تسجيل الحساب. تحقق من رمز الدعوة ثم أعد المحاولة.','error');
+        return;
+      }finally{oauthFinalizing=false;}
+    }
+    showWorkspace(user);
+  }
   client.auth.onAuthStateChange((event,session)=>{
-    if(session?.user)showWorkspace(session.user);
+    if(session?.user)resolveAuthenticatedUser(session.user);
     else if(event==='SIGNED_OUT'){if(window.midadCloudStop)window.midadCloudStop();showGate();}
   });
   client.auth.getSession().then(({data,error})=>{
     if(error)message(error.message,'error');
-    if(data.session?.user)showWorkspace(data.session.user);else showGate();
+    if(data.session?.user)resolveAuthenticatedUser(data.session.user);else showGate();
   });
 })();
