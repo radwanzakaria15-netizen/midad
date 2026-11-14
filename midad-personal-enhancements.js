@@ -551,3 +551,28 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("./midad-notifi
   `;
   document.head.appendChild(style);
 })();
+
+
+/* Reliable entry point for the personal workspace button */
+(() => {
+  const button = document.getElementById("personalSpaceButton");
+  if (!button) return;
+  button.addEventListener("click", event => {
+    event.preventDefault();
+    try {
+      window.midadPersonalActive = true;
+      document.body.classList.add("midad-personal-mode");
+      document.querySelector(".mobile-nav")?.setAttribute("aria-hidden", "true");
+      if (typeof window.render === "function") window.render();
+      else throw new Error("Midad render function is unavailable");
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) {}
+      if (typeof check === "function") check();
+    } catch (error) {
+      console.error("Midad personal workspace open failed:", error);
+      window.midadPersonalActive = false;
+      document.body.classList.remove("midad-personal-mode");
+      document.querySelector(".mobile-nav")?.removeAttribute("aria-hidden");
+      if (typeof toast === "function") toast("تعذر فتح منصتي. حدّث الصفحة وحاول مجدداً.");
+    }
+  });
+})();
