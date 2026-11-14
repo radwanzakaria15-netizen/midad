@@ -5,5 +5,5 @@ compatibility_date = "2026-11-14"
 [[d1_databases]]
 binding = "DB"
 database_name = "midad"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "690c0f14-c064-4efd-9761-ec4cea0acdfc"
 migrations_dir = "migrations"
