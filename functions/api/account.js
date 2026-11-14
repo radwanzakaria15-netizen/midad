@@ -6,6 +6,7 @@ export async function onRequest({request,env}){
   const current=await profile(env.DB,auth.id);
   if(request.method==='GET')return json({user:current||null});
   let body;try{body=await request.json()}catch{return json({error:'البيانات غير صالحة.'},400)}
+  if(!body||typeof body!=='object'||Array.isArray(body))return json({error:'البيانات غير صالحة.'},400);
   const name=String(body.name||'').trim();
   const username=body.username==null?null:String(body.username).trim().toLowerCase();
   const recovery=body.recoveryEmail==null?null:String(body.recoveryEmail).trim().toLowerCase();
