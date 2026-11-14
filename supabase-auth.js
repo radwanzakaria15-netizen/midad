@@ -390,7 +390,10 @@
     }
     const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username});
     const recovery=String(extra.recoveryEmail||meta.recovery_email||'').trim();
-    if(recovery)await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:recovery});
+    if(recovery){
+      try{await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:recovery});}
+      catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
+    }
     return created.user;
   }
   window.midadCompleteGoogleSetup=async function(event){
@@ -399,8 +402,14 @@
     const name=String(values.name||'').trim(),username=String(values.username||'').trim().toLowerCase(),invite=String(values.invite||'').trim().toUpperCase();
     if(!name||!validUsername(username)||!/^[A-HJ-NP-Z2-9]{8}$/.test(invite)){toast('تحقق من الاسم واسم المستخدم ورمز الدعوة.');return}
     const submit=event.target.querySelector('button[type="submit"]');if(submit){submit.disabled=true;submit.textContent='جارٍ التفعيل…'}
-    try{const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username});if(String(values.recoveryEmail||'').trim())await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:String(values.recoveryEmail).trim()});window.midadGoogleSetupResolve=null;closeModal();pending.resolve(created.user);}
-    catch(error){if(submit){submit.disabled=false;submit.textContent='تفعيل الحساب'}toast(error.message||'تعذر تفعيل الحساب.')}
+    try{
+      const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username});
+      if(String(values.recoveryEmail||'').trim()){
+        try{await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:String(values.recoveryEmail).trim()});}
+        catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
+      }
+      window.midadGoogleSetupResolve=null;closeModal();pending.resolve(created.user);
+    }catch(error){if(submit){submit.disabled=false;submit.textContent='تفعيل الحساب'}toast(error.message||'تعذر تفعيل الحساب.')}
   };
   async function activateTeacher(user){user.midadProfile=await ensureTeacherProfile(user);return user;}
   document.getElementById('midad-auth-form').addEventListener('submit',async event=>{
