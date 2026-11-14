@@ -432,7 +432,10 @@
         if(error)throw error;
         if(data.session&&data.user){
           const created=await window.MidadCloudAuth.redeemTeacherInvite({code:inviteCode,name:fullName,username});
-          if(recoveryEmail)await window.MidadCloudAuth.updateProfile({name:fullName,username,recoveryEmail});
+          if(recoveryEmail){
+            try{await window.MidadCloudAuth.updateProfile({name:fullName,username,recoveryEmail});}
+            catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
+          }
           data.user.midadProfile=created.user;await showSuccessThenWorkspace(data.user);
           message('تم إنشاء حساب الأستاذ وتفعيله بنجاح.');
         }else{
