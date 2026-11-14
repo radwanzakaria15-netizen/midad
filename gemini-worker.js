@@ -121,7 +121,7 @@ export default {
       const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
       authUrl.search = new URLSearchParams({
         client_id: env.GOOGLE_CLIENT_ID,
-        redirect_uri: "https://hidden-boat-c81b.radwanzakaria15.workers.dev/oauth/google/callback",
+        redirect_uri: "https://midad-app-preview.radwanzakaria15.workers.dev/oauth/google/callback",
         response_type: "code",
         scope: NOTEBOOK_SCOPE,
         access_type: "offline",
@@ -147,7 +147,7 @@ export default {
         code,
         client_id: env.GOOGLE_CLIENT_ID,
         client_secret: env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: "https://hidden-boat-c81b.radwanzakaria15.workers.dev/oauth/google/callback",
+        redirect_uri: "https://midad-app-preview.radwanzakaria15.workers.dev/oauth/google/callback",
         grant_type: "authorization_code"
       });
       const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
