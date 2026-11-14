@@ -47,23 +47,3 @@ CREATE TABLE IF NOT EXISTS midad_ratings (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS midad_discussions (
-  id TEXT PRIMARY KEY NOT NULL,
-  owner_id TEXT NOT NULL,
-  owner_name TEXT NOT NULL,
-  body TEXT NOT NULL,
-  created_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_midad_discussions_created ON midad_discussions(created_at DESC);
-
-CREATE TABLE IF NOT EXISTS midad_discussion_posts (
-  id TEXT PRIMARY KEY NOT NULL,
-  discussion_id TEXT NOT NULL,
-  owner_id TEXT NOT NULL,
-  owner_name TEXT NOT NULL,
-  body TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  FOREIGN KEY(discussion_id) REFERENCES midad_discussions(id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_midad_posts_discussion ON midad_discussion_posts(discussion_id,created_at);
