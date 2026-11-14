@@ -9,7 +9,7 @@
 ## إعداد Cloudflare
 1. في Pages > Settings > Variables and Secrets > Production تأكد من وجود SUPABASE_URL وSUPABASE_ANON_KEY.
 2. اربط D1 باسم midad بالـ binding DB (الموجود في wrangler.toml).
-3. نفّذ migration 0002_midad_accounts_resources.sql على قاعدة D1. إن كان التنفيذ من Wrangler متاحاً: npx wrangler d1 migrations apply midad --remote.
+3. نفّذ migration 0002_accounts_resources.sql على قاعدة D1. إن كان التنفيذ من Wrangler متاحاً: npx wrangler d1 migrations apply midad --remote.
 4. تأكد أن Pages ينشر من main وأن مجلد functions ضمن جذر المشروع.
 
 ## إعداد Supabase
