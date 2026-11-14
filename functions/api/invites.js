@@ -1,6 +1,6 @@
 import {json,getUser,profile} from './_auth.js';
 const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function makeCode(){let s='';for(let i=0;i<8;i++)s+=alphabet[Math.floor(Math.random()*alphabet.length)];return s}
+function makeCode(){const bytes=new Uint8Array(8);crypto.getRandomValues(bytes);let s='';for(const byte of bytes)s+=alphabet[byte%alphabet.length];return s}
 export async function onRequest({request,env}){
   if(!['POST','PUT'].includes(request.method))return json({error:'طريقة الطلب غير مدعومة.'},405);
   let auth;try{auth=await getUser(request,env)}catch(e){return json({error:e.message},500)}
