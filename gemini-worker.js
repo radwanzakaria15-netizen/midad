@@ -265,6 +265,8 @@ Example: ${example}`;
         return json({ error: "تعذر توليد الصورة: " + clean(error.message || "خطأ غير معروف", 240) }, 502, origin);
       }
     }
+    if (request.method === "GET" && path === "/") return Response.redirect(APP_URL, 302);
+    if (request.method === "GET" && path === "/health") return json({ ok: true, service: "Midad Pollinations Worker", model: "openai/gpt-5.4-nano", keyConfigured: !!env.POLLINATIONS_API_KEY }, 200, origin);
     if (request.method === "GET") return json({ ok: true, service: "Midad Pollinations Worker", model: "openai/gpt-5.4-nano", keyConfigured: !!env.POLLINATIONS_API_KEY }, 200, origin);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, origin);
     let input;
