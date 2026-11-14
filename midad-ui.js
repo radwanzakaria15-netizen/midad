@@ -129,7 +129,7 @@ function errorElement(field) {
 }
 function fieldMessage(field) {
   const value = String(field.value ?? "").trim();
-  const label = field.labels?.[0]?.textContent?.trim() || field.getAttribute("aria-label") || "هذا الحقل";
+  const host = fieldContainer(field);\n  const label = field.labels?.[0]?.textContent?.trim() || host.querySelector("label")?.textContent?.trim() || field.getAttribute("aria-label") || "هذا الحقل";
   if (field.disabled || field.type === "hidden" || field.closest("[hidden]")) return "";
   if (field.required && (field.type === "checkbox" ? !field.checked : field.type === "radio" ? !field.form?.querySelector('input[name="' + CSS.escape(field.name) + '"]:checked') : !value)) return "يرجى إدخال " + label.replace(/[*：:]/g, "").trim() + ".";
   if (!value) return "";
