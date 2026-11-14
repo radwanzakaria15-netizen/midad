@@ -20,7 +20,7 @@ async function permission(){
  if(!("Notification" in window)){toast("هذا المتصفح لا يدعم إشعارات الجهاز.");return false}
  if(!window.isSecureContext){toast("يجب فتح مِداد عبر اتصال آمن HTTPS لتفعيل الإشعارات.");return false}
  let p=Notification.permission;
- try{if(p==="default")p=await Notification.requestPermission()}catch(e){toast("تعذر طلب إذن الإشعارات من المتصفح.");return false}
+ try{if(p==="default"){const approved=await ui.confirm("يحتاج مِداد إلى إذن الإشعارات لإرسال تذكيرات المواعيد والمهام على هذا الجهاز. لن يُطلب الإذن من المتصفح إلا بعد موافقتك.",{title:"السماح بالإشعارات",icon:"♧",okText:"متابعة"});if(!approved)return false;p=await Notification.requestPermission()}}catch(e){toast("تعذر طلب إذن الإشعارات من المتصفح.");return false}
  if(p!=="granted"){toast(p==="denied"?"الإشعارات محظورة من إعدادات المتصفح. اسمح بها لموقع مِداد ثم أعد المحاولة.":"لم تمنح إذن إشعارات الجهاز.");return false}
  if("serviceWorker" in navigator){try{await navigator.serviceWorker.register("./midad-notifications-sw.js",{scope:"./"});await navigator.serviceWorker.ready}catch(e){toast("تم السماح بالإشعارات، لكن تعذر تجهيز خدمة إشعارات الخلفية.");return false}}
  toast("تم تفعيل إذن الإشعارات. ستعمل المواعيد ما دامت المنصة مفتوحة أو مسموحاً لها بالعمل في الخلفية.");
