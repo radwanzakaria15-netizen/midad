@@ -520,6 +520,14 @@
         message(error.message||'تعذر إكمال تسجيل الحساب. تحقق من رمز الدعوة ثم أعد المحاولة.','error');
         return;
       }finally{oauthFinalizing=false;}
+    }else{
+      const {data:profile,error:profileError}=await client.from('profiles').select('account_type').eq('id',user.id).maybeSingle();
+      if(profileError){message('تعذر التحقق من نوع حسابك. حاول تحديث الصفحة.','error');showGate();return;}
+      if(profile?.account_type==='pending'){
+        await client.auth.signOut();
+        message('لم يكتمل إنشاء هذا الحساب. اختر نوع الحساب وأعد التسجيل باستخدام Google.','error');
+        return;
+      }
     }
     showWorkspace(user);
   }
