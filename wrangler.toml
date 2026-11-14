@@ -1,0 +1,9 @@
+name = "midad"
+pages_build_output_dir = "."
+compatibility_date = "2026-11-14"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "midad"
+database_id = "690c0f14-c064-4efd-9761-ec4cea0acdfc"
+migrations_dir = "migrations"
