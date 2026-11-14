@@ -18,6 +18,7 @@ window.MidadCloudAuth={
  updateProfile:data=>request('/account',{method:'PATCH',body:data}),
  createTeacherInvite:subject=>request('/invites',{method:'POST',body:{subject}}),
  validateTeacherInvite:data=>request('/invites/validate',{method:'POST',body:data}),
+ releaseTeacherInvite:data=>request('/invites/release',{method:'POST',body:data}),
  redeemTeacherInvite:data=>request('/invites/redeem',{method:'POST',body:data}),
  resources:()=>request('/resources'),
  submitResource:data=>request('/resources',{method:'POST',body:data}),
