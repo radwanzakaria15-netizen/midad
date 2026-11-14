@@ -388,7 +388,8 @@
           </form>`);
       });
     }
-    const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username});
+    const reservation=await window.MidadCloudAuth.validateTeacherInvite({code:invite,username});
+      const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username,reservationToken:reservation.reservationToken});
     const recovery=String(extra.recoveryEmail||meta.recovery_email||'').trim();
     if(recovery){
       try{await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:recovery});}
@@ -403,7 +404,8 @@
     if(!name||!validUsername(username)||!/^[A-HJ-NP-Z2-9]{8}$/.test(invite)){toast('تحقق من الاسم واسم المستخدم ورمز الدعوة.');return}
     const submit=event.target.querySelector('button[type="submit"]');if(submit){submit.disabled=true;submit.textContent='جارٍ التفعيل…'}
     try{
-      const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username});
+      const reservation=await window.MidadCloudAuth.validateTeacherInvite({code:invite,username});
+      const created=await window.MidadCloudAuth.redeemTeacherInvite({code:invite,name,username,reservationToken:reservation.reservationToken});
       if(String(values.recoveryEmail||'').trim()){
         try{await window.MidadCloudAuth.updateProfile({name,username,recoveryEmail:String(values.recoveryEmail).trim()});}
         catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
@@ -424,14 +426,15 @@
       }else{
         const fullName=document.getElementById('midad-auth-name').value.trim();
         const inviteCode=document.getElementById('midad-auth-invite').value.trim().toUpperCase();
+        let reservationToken='';
         const recoveryEmail=document.getElementById('midad-auth-recovery').value.trim();
         if(recoveryEmail&&!validEmail(recoveryEmail)){message('بريد الاستعادة غير صالح.','error');return}
         // Validate the invitation and username before creating a Supabase identity.
-        await window.MidadCloudAuth.validateTeacherInvite({code:inviteCode,username});
-        const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName,username,invite_code:inviteCode,recovery_email:recoveryEmail}}});
-        if(error)throw error;
+        const reservation=await window.MidadCloudAuth.validateTeacherInvite({code:inviteCode,username});reservationToken=reservation.reservationToken;
+        const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName,username,invite_code:inviteCode,invite_reservation:reservationToken,recovery_email:recoveryEmail}}});
+        if(error){await window.MidadCloudAuth.releaseTeacherInvite({code:inviteCode,username,reservationToken}).catch(()=>{});throw error;}
         if(data.session&&data.user){
-          const created=await window.MidadCloudAuth.redeemTeacherInvite({code:inviteCode,name:fullName,username});
+          const created=await window.MidadCloudAuth.redeemTeacherInvite({code:inviteCode,name:fullName,username,reservationToken});
           if(recoveryEmail){
             try{await window.MidadCloudAuth.updateProfile({name:fullName,username,recoveryEmail});}
             catch(error){toast('تم تفعيل الحساب، لكن تعذر حفظ بريد الاستعادة. يمكنك إضافته لاحقاً.');}
@@ -439,6 +442,7 @@
           data.user.midadProfile=created.user;await showSuccessThenWorkspace(data.user);
           message('تم إنشاء حساب الأستاذ وتفعيله بنجاح.');
         }else{
+          await window.MidadCloudAuth.releaseTeacherInvite({code:inviteCode,username,reservationToken}).catch(()=>{});
           message('تم إنشاء حساب المصادقة لكن لم تبدأ جلسة دخول. لأن اسم المستخدم مرتبط ببريد افتراضي لا يستقبل الرسائل، يجب تعطيل تأكيد البريد الإلكتروني في إعدادات Supabase قبل التسجيل. لم يُفعّل حساب الأستاذ بعد.','error');
         }
       }
