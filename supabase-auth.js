@@ -455,6 +455,7 @@
       if(/email_address_not_authorized|not authorized/i.test(raw))message('خدمة البريد الافتراضية في Supabase لا ترسل إلى هذا العنوان. يلزم إعداد SMTP مخصص حتى تصل رسائل التأكيد.','error');
       else if(/over_email_send_rate_limit|email rate limit|too many requests/i.test(raw))message('تجاوز المشروع حد إرسال رسائل البريد مؤقتًا. انتظر قبل المحاولة مجددًا.','error');
       else if(/email not confirmed/i.test(raw)){pendingConfirmationEmail=email;message('حسابك موجود لكنه ينتظر تأكيد البريد. أعد إرسال رسالة التأكيد أدناه.','error');}
+      else if(/رمز الدعوة|دعوة أستاذ|invite code|invalid.*invite/i.test(raw))message('رمز الدعوة غير صالح أو منتهي أو مستخدم. اطلب رمزًا جديدًا من أستاذ سابق.','error');
       else message(raw||'تعذّر إكمال العملية. تحقق من البيانات وحاول مجددًا.','error');
     }finally{setBusy(false);}
   });
@@ -523,7 +524,7 @@
     showWorkspace(user);
   }
   client.auth.onAuthStateChange((event,session)=>{
-    if(session?.user)resolveAuthenticatedUser(session.user);
+    if(session?.user)window.setTimeout(()=>resolveAuthenticatedUser(session.user),0);
     else if(event==='SIGNED_OUT'){if(window.midadCloudStop)window.midadCloudStop();showGate();}
   });
   client.auth.getSession().then(({data,error})=>{
