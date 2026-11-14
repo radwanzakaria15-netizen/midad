@@ -14,9 +14,11 @@
 
 ## إعداد Supabase
 1. Authentication > Providers: فعّل Email، وGoogle إن رغبت.
-2. أضف نطاق موقع Pages ونطاق github.io إلى Authentication > URL Configuration > Redirect URLs / Site URL حسب بيئة النشر.
-3. Google OAuth يتطلب إنشاء OAuth Client في Google Cloud وإضافة Client ID/Secret في إعداد مزود Google في Supabase.
-4. تفعيل استعادة كلمة المرور يتطلب إعداد SMTP/قوالب البريد في Supabase؛ لا يمكن ضمان التسليم باستخدام إعدادات البريد التجريبية.
+2. من Authentication > Sign In / Providers > Email عطّل Confirm email؛ لأن اسم المستخدم يُحوّل داخلياً إلى عنوان اصطناعي مثل username@midad.app ولا يمكنه استقبال رسالة تأكيد.
+3. بريد الاستعادة الذي يدخله الأستاذ يُحفظ في ملفه على D1، لكن إرسال رابط إعادة تعيين إليه لم يُفعّل بعد؛ لا تستخدم resetPasswordForEmail مع البريد الاصطناعي.
+4. أنشئ أول حساب مشرف يدوياً: سجّل حساب المصادقة الأول باسم مستخدم، ثم خذ UID الخاص به من Supabase Authentication > Users وأضف ملفه في D1 بعد تطبيق migration، مع role='admin'. لا تمنح أي حساب آخر هذا الدور من المتصفح.
+5. أضف نطاق موقع Pages إلى Authentication > URL Configuration > Redirect URLs / Site URL.
+6. Google OAuth يتطلب إنشاء OAuth Client في Google Cloud وإضافة Client ID/Secret في إعداد مزود Google في Supabase. أول دخول عبر Google يطلب الاسم واسم المستخدم ورمز دعوة أستاذ.
 
 ## وظائف API المضافة
 - GET/POST /api/account: قراءة/إنشاء ملف المستخدم. الدور الافتراضي student.
@@ -26,7 +28,8 @@
 - GET/PUT /api/ratings: ملخص التقييم وتقييم واحد لكل UID.
 - عميل الواجهة: midad-cloud-auth.js.
 
-## ربط الواجهة
-أضف قبل سكربتات التطبيق:
-<script src="midad-cloud-auth.js"></script>
-واستدعِ MidadCloudAuth بعد تحميل عميل Supabase الحالي. Google وتسجيل username يجب أن يستخدما Supabase Auth. username@midad.app بريد اصطناعي داخلي لا يستقبل رسائل؛ لذلك استرجاع كلمة المرور يحتاج بريد استرجاع حقيقياً موثقاً وربط عملية الإرسال بهذا البريد في تدفق آمن، وليس إرسال reset إلى البريد الاصطناعي.
+## سلوك الواجهة
+- الطالب يختار «طالب» من شاشة البداية ويدخل بمعرّفه المكوّن من 6 أرقام فقط؛ لا تظهر له واجهة تسجيل الأستاذ.
+- الأستاذ يدخل باسم المستخدم وكلمة المرور، ويمكنه إنشاء حساب برمز دعوة، وإضافة بريد استعادة اختياري.
+- التصفح العام متاح دون حساب؛ عمليات النشر والتفاعل تتطلب حساباً.
+- ملف midad-cloud-auth.js يجب أن يُحمّل قبل supabase-auth.js.
