@@ -455,10 +455,14 @@
     const value=document.getElementById('midad-generated-invite')?.textContent||'';
     try{await navigator.clipboard.writeText(value);toast('تم نسخ الرمز');}catch(error){toast('يمكنك تحديد الرمز ونسخه يدويًا');}
   };
-  window.midadCreateInvite=async()=>{
-    if(!currentUser)return;
-    try{const result=await window.MidadCloudAuth.createTeacherInvite(currentUser.midadProfile?.subject||'');openModal('دعوة أستاذ جديد','أرسل هذا الرمز إلى الأستاذ. الرمز صالح لمرة واحدة ولمدة 48 ساعة.','<div class="midad-auth-invite" id="midad-generated-invite">'+String(result.code).replace(/[&<>"]/g,'')+'</div><div class="modal-actions"><button class="btn primary" onclick="navigator.clipboard?.writeText(document.getElementById(\'midad-generated-invite\').textContent).then(()=>toast(\'تم نسخ الرمز\')).catch(()=>toast(\'انسخ الرمز يدوياً\'))">نسخ الرمز</button><button class="btn light" onclick="closeModal()">إغلاق</button></div>');}
-    catch(error){toast(error.message||'تعذر إنشاء رمز الدعوة');}
+  window.midadCreateInvite=()=>{
+    openModal('دعوة أستاذ جديد','حدد تخصص الأستاذ الذي تريد دعوته. الرمز صالح لمرة واحدة ولمدة 48 ساعة.','<form onsubmit="window.midadSubmitInvite(event)"><label class="form-field"><span>التخصص</span><input name="subject" required maxlength="100" placeholder="مثال: اللغة العربية"></label><div class="modal-actions"><button class="btn primary" type="submit">إنشاء الرمز</button><button class="btn light" type="button" onclick="closeModal()">إلغاء</button></div></form>');
+  };
+  window.midadSubmitInvite=async event=>{
+    event.preventDefault();const form=event.target,subject=String(new FormData(form).get('subject')||'').trim();if(!subject)return;
+    const button=form.querySelector('button[type="submit"]');if(button){button.disabled=true;button.textContent='جارٍ الإنشاء…'}
+    try{const result=await window.MidadCloudAuth.createTeacherInvite(subject);openModal('رمز دعوة الأستاذ','أرسل الرمز التالي. صالح لمرة واحدة ولمدة 48 ساعة.','<div class="midad-auth-invite" id="midad-generated-invite">'+String(result.code).replace(/[&<>"]/g,'')+'</div><div class="modal-actions"><button class="btn primary" onclick="navigator.clipboard?.writeText(document.getElementById(\'midad-generated-invite\').textContent).then(()=>toast(\'تم نسخ الرمز\')).catch(()=>toast(\'انسخ الرمز يدوياً\'))">نسخ الرمز</button><button class="btn light" onclick="closeModal()">إغلاق</button></div>');}
+    catch(error){if(button){button.disabled=false;button.textContent='إنشاء الرمز'}toast(error.message||'تعذر إنشاء رمز الدعوة.')}
   };
   window.midadSignOut=async()=>{const {error}=await client.auth.signOut();if(error)toast(error.message);};
   window.midadSupabase=client;
