@@ -43,6 +43,44 @@ style.textContent += `\n/* Keep hidden dialog controls hidden despite component 
 document.head.appendChild(style);
 
 let activeFinish = null;
+let backgroundScrollY = 0;
+let backgroundLocked = false;
+let savedBodyStyles = null;
+
+function lockBackgroundScroll() {
+  if (backgroundLocked) return;
+  backgroundLocked = true;
+  backgroundScrollY = window.scrollY || window.pageYOffset || 0;
+  savedBodyStyles = {
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+    overflow: document.body.style.overflow
+  };
+  document.body.style.position = "fixed";
+  document.body.style.top = "-" + backgroundScrollY + "px";
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+  document.body.style.overflow = "hidden";
+}
+
+function unlockBackgroundScroll() {
+  if (!backgroundLocked) return;
+  backgroundLocked = false;
+  const previous = savedBodyStyles || {};
+  document.body.style.position = previous.position || "";
+  document.body.style.top = previous.top || "";
+  document.body.style.left = previous.left || "";
+  document.body.style.right = previous.right || "";
+  document.body.style.width = previous.width || "";
+  document.body.style.overflow = previous.overflow || "";
+  savedBodyStyles = null;
+  window.scrollTo(0, backgroundScrollY);
+}
+
 function show(kind, message, options = {}) {
   return new Promise(resolve => {
     if (activeFinish) activeFinish(kind === "confirm" ? false : null);
@@ -75,6 +113,7 @@ function show(kind, message, options = {}) {
       settled = true;
       cleanup();
       if (dialog.open) dialog.close();
+      unlockBackgroundScroll();
       resolve(value);
     };
     const onSubmit = event => {
@@ -92,6 +131,7 @@ function show(kind, message, options = {}) {
     dialog.addEventListener("cancel", onCancel);
     dialog.addEventListener("click", onBackdrop);
     cancel.addEventListener("click", onCancelButton);
+    lockBackgroundScroll();
     dialog.showModal();
     requestAnimationFrame(() => {
       dialog.style.opacity = "1";
