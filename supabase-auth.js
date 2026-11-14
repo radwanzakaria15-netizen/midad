@@ -14,6 +14,7 @@
   window.midadGetTeacherIdentity = () => currentUser?.id || ('guest-' + (document.getElementById('teacherName')?.textContent || 'teacher'));
   let pendingConfirmationEmail = '';
   let processingUserId = '';
+  let manualAuthFlow = false;
   const usernameEmail = value => String(value||'').trim().toLowerCase()+'@midad.app';
 
   const css = document.createElement('style');
@@ -406,7 +407,7 @@
     event.preventDefault();if(busy||!validateForm())return;
     const username=document.getElementById('midad-auth-email').value.trim().toLowerCase();
     const email=usernameEmail(username),password=document.getElementById('midad-auth-password').value;
-    setBusy(true);
+    setBusy(true);manualAuthFlow=true;
     try{
       if(mode==='login'){
         const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;
@@ -432,7 +433,7 @@
       if(/already registered|user already registered/i.test(raw))message('اسم المستخدم مسجل بالفعل. جرّب تسجيل الدخول.','error');
       else if(/invalid login credentials/i.test(raw))message('اسم المستخدم أو كلمة المرور غير صحيحة.','error');
       else message(raw||'تعذّر إكمال العملية. تحقق من البيانات ورمز الدعوة.','error');
-    }finally{setBusy(false);}
+    }finally{setBusy(false);manualAuthFlow=false;}
   });
   document.getElementById('midad-auth-google').addEventListener('click',async()=>{
     if(busy)return;setBusy(true);
@@ -467,7 +468,7 @@
   window.midadSignOut=async()=>{const {error}=await client.auth.signOut();if(error)toast(error.message);};
   window.midadSupabase=client;
   client.auth.onAuthStateChange((event,session)=>{
-    if(session?.user)showWorkspace(session.user);
+    if(session?.user&&!manualAuthFlow)showWorkspace(session.user);
     else if(event==='SIGNED_OUT'){if(window.midadCloudStop)window.midadCloudStop();showGate();}
   });
   client.auth.getSession().then(({data,error})=>{
