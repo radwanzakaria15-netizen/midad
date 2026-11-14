@@ -284,14 +284,19 @@
     body.midad-night .midad-auth-msg.error,body.midad-night .midad-auth-msg.ok{background:#263f30;color:#a6e2b7}
     @media(max-width:420px){.midad-auth-role{padding:9px 8px;gap:7px;font-size:11px}.midad-auth-role svg{width:19px;height:19px}}
 
+    #midad-auth-gate[data-auth-mode="signup"] .midad-auth-card:before{content:"أنشئ حسابك في مِداد"}
+    #midad-auth-gate[data-auth-mode="signup"] .midad-auth-card:after{content:"اختر نوع الحساب وأكمل بيانات التسجيل"}
+    #midad-auth-gate[data-auth-mode="login"] .midad-auth-card:before{content:"مرحباً بعودتك"}
+    #midad-auth-gate[data-auth-mode="login"] .midad-auth-card:after{content:"سجّل الدخول لمتابعة مساحتك التعليمية"}
+
   document.head.appendChild(css);
   const gate = document.createElement('section');
   gate.id = 'midad-auth-gate';
   gate.innerHTML = `
     <div class="midad-auth-layout">
       <aside class="midad-auth-intro">
-        <div class="midad-auth-intro-brand"><div class="midad-auth-intro-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5c2.8-.9 5.4-.4 8 1.4v12c-2.6-1.8-5.2-2.3-8-1.4z"/><path d="M20 5.5c-2.8-.9-5.4-.4-8 1.4v12c2.6-1.8 5.2-2.3 8-1.4z"/></svg></div><div><strong>مِداد</strong><small>مساحة الأستاذ التعليمية</small></div></div>
-        <div class="midad-auth-intro-copy"><span class="eyebrow">تعليم أكثر تنظيماً</span><h2>كل أدواتك التعليمية في مساحة واحدة.</h2><p>أنشئ دروسك، تابع تلاميذك، ونظّم عملك اليومي بسهولة ووضوح.</p></div>
+        <div class="midad-auth-intro-brand"><div class="midad-auth-intro-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5c2.8-.9 5.4-.4 8 1.4v12c-2.6-1.8-5.2-2.3-8-1.4z"/><path d="M20 5.5c-2.8-.9-5.4-.4-8 1.4v12c2.6-1.8 5.2-2.3 8-1.4z"/></svg></div><div><strong>مِداد</strong><small>مساحة تعليمية للطالب والأستاذ</small></div></div>
+        <div class="midad-auth-intro-copy"><span class="eyebrow">تعليم أكثر تنظيماً</span><h2>كل أدواتك التعليمية في مساحة واحدة.</h2><p>تعلّم وعلّم ونظّم عملك اليومي في مساحة واحدة تجمع الطالب والأستاذ.</p></div>
         <div class="midad-auth-art"><span><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>إعداد الدروس</span><span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M17 8h4m-2-2v4"/></svg>متابعة التلاميذ</span></div>
       </aside>
       <div class="midad-auth-card">
@@ -371,6 +376,7 @@
   };
   window.midadAuthMode = (next) => {
     mode = next === 'signup' ? 'signup' : 'login';
+    gate.dataset.authMode=mode;
     document.getElementById('midad-login-tab').classList.toggle('active',mode==='login');
     document.getElementById('midad-signup-tab').classList.toggle('active',mode==='signup');
     document.getElementById('midad-auth-tabs').classList.toggle('signup',mode==='signup');
