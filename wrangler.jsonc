@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hidden-boat-c81b",
+  "name": "midad-app-preview",
   "main": "gemini-worker.js",
   "compatibility_date": "2026-11-11",
   "account_id": "2a481904d29d94559258bb790f68dc88",
