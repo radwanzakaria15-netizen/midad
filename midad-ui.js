@@ -39,6 +39,7 @@ style.textContent = `
 .midad-night .midad-ui-cancel{background:#35483a;border-color:#536c58!important;color:#e7f0e6}
 @media(prefers-reduced-motion:reduce){.midad-ui-dialog{transition:none}}
 `;
+style.textContent += `\n/* Keep hidden dialog controls hidden despite component display rules. */\ndialog [hidden], .md-dialog [hidden] { display: none !important; }\n`;
 document.head.appendChild(style);
 
 let activeFinish = null;
