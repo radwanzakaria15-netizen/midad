@@ -1,96 +1,46 @@
-/* Midad cloud workspace sync. Relies on Supabase RLS for owner isolation. */
+/* Midad cloud workspace sync through Cloudflare Pages Functions + D1.
+   Teacher identity is verified server-side using the current Supabase session.
+   Student lookup is served by the separate public /api/student endpoint. */
 (() => {
-  let activeUser = null;
-  let saveTimer = null;
-  let lastSaved = '';
-  let loading = false;
-
-  const clone = value => JSON.parse(JSON.stringify(value || {}));
-  const mergeWorkspace = (remote, local) => {
-    // Cloud values are the baseline on a second device; only meaningful local
-    // profile values override them, never blank/default local defaults.
-    const merged = { ...local, ...remote };
-    if (local?.teacher && local.teacher !== 'الأستاذ') merged.teacher = local.teacher;
-    if (local?.school) merged.school = local.school;
-    if (local?.year && local.year !== '2026 / 2027') merged.year = local.year;
-    const arrayKeys = ['classes','students','lessons','activities','assessments','attendance','resources','grades','experiences'];
-    for (const key of arrayKeys) {
-      const cloudRows = Array.isArray(remote?.[key]) ? remote[key] : [];
-      const localRows = Array.isArray(local?.[key]) ? local[key] : [];
-      const byId = new Map();
-      cloudRows.forEach((row, index) => byId.set(row?.id || '__cloud_'+key+'_'+index, row));
-      localRows.forEach((row, index) => byId.set(row?.id || '__local_'+key+'_'+index, row));
-      merged[key] = Array.from(byId.values());
-    }
+  let activeUser=null,saveTimer=null,lastSaved='',loading=false;
+  const clone=value=>JSON.parse(JSON.stringify(value||{}));
+  const mergeWorkspace=(remote,local)=>{
+    const merged={...local,...remote};
+    if(local?.teacher&&local.teacher!=='الأستاذ')merged.teacher=local.teacher;
+    if(local?.school)merged.school=local.school;
+    if(local?.year&&local.year!=='2026 / 2027')merged.year=local.year;
+    const keys=['classes','students','lessons','activities','assessments','attendance','resources','grades','experiences','schedule','classNotes'];
+    for(const key of keys){const a=Array.isArray(remote?.[key])?remote[key]:[],b=Array.isArray(local?.[key])?local[key]:[],map=new Map();a.forEach((v,i)=>map.set(v?.id||'remote-'+key+'-'+i,v));b.forEach((v,i)=>map.set(v?.id||'local-'+key+'-'+i,v));merged[key]=Array.from(map.values())}
     return merged;
   };
-
-  async function readCloud(userId) {
-    const { data, error } = await window.midadSupabase
-      .from('teacher_workspaces')
-      .select('workspace,updated_at')
-      .eq('owner_id', userId)
-      .maybeSingle();
-    if (error) throw error;
-    return data || null;
+  async function token(){
+    if(!window.midadSupabase?.auth)throw new Error('جلسة الأستاذ غير متاحة. سجّل الدخول مجدداً.');
+    const {data,error}=await window.midadSupabase.auth.getSession();if(error)throw error;
+    const value=data?.session?.access_token;if(!value)throw new Error('انتهت جلسة الدخول. سجّل الدخول مجدداً.');return value;
   }
-
-  async function writeCloud(userId, workspace) {
-    const serialized = JSON.stringify(workspace);
-    if (serialized.length > 850000) {
-      throw new Error('حجم بيانات مساحة العمل كبير للمزامنة الحالية. الملفات المرفقة تحتاج نقلها إلى التخزين السحابي المخصص أولاً.');
-    }
-    const { error } = await window.midadSupabase
-      .from('teacher_workspaces')
-      .upsert({ owner_id: userId, workspace, updated_at: new Date().toISOString() }, { onConflict: 'owner_id' });
-    if (error) throw error;
-    lastSaved = serialized;
+  async function api(path,options={}){
+    const access=await token();
+    const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','Authorization':'Bearer '+access,...(options.headers||{})}});
+    const body=await response.json().catch(()=>({error:'استجابة غير مفهومة من الخادم.'}));
+    if(!response.ok){const error=new Error(body.error||'تعذر الاتصال بالخادم السحابي.');error.status=response.status;throw error}return body;
   }
-
-  window.midadCloudLoadWorkspace = async (user, localWorkspace) => {
-    activeUser = user;
-    loading = true;
-    try {
-      const remote = await readCloud(user.id);
+  async function writeCloud(workspace){
+    const serialized=JSON.stringify(workspace);if(serialized.length>850000)throw new Error('حجم بيانات مساحة العمل كبير. الملفات المرفقة تحتاج إلى تخزين ملفات مخصص.');
+    await api('/api/workspace',{method:'PUT',body:JSON.stringify({workspace})});lastSaved=serialized;
+  }
+  window.midadCloudLoadWorkspace=async(user,localWorkspace)=>{
+    activeUser=user;loading=true;
+    try{
+      let remote;try{remote=await api('/api/workspace')}catch(error){if(error.status!==404)throw error}
       let result;
-      if (!remote) {
-        result = clone(localWorkspace);
-        await writeCloud(user.id, result);
-        if (typeof window.toast === 'function') window.toast('تم إنشاء النسخة السحابية لمساحة عملك.');
-      } else {
-        result = mergeWorkspace(remote.workspace, localWorkspace);
-        const before = JSON.stringify(remote.workspace || {});
-        const after = JSON.stringify(result);
-        if (before !== after) await writeCloud(user.id, result);
-        else lastSaved = after;
-        if (typeof window.toast === 'function') window.toast('تم تحميل بياناتك ومزامنتها.');
-      }
+      if(!remote?.workspace){result=clone(localWorkspace);await writeCloud(result);if(typeof window.toast==='function')window.toast('تم إنشاء مساحة عملك على Cloudflare.')}
+      else{result=mergeWorkspace(remote.workspace,localWorkspace);const before=JSON.stringify(remote.workspace||''),after=JSON.stringify(result);if(before!==after)await writeCloud(result);else lastSaved=after;if(typeof window.toast==='function')window.toast('تم تحميل بياناتك ومزامنتها سحابياً.')}
       return result;
-    } finally {
-      loading = false;
-    }
+    }finally{loading=false}
   };
-
-  window.midadCloudQueueSave = workspace => {
-    if (!activeUser || loading) return;
-    const snapshot = clone(workspace);
-    const serialized = JSON.stringify(snapshot);
-    if (serialized === lastSaved) return;
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
-      try {
-        await writeCloud(activeUser.id, snapshot);
-        if (typeof window.toast === 'function') window.toast('تم حفظ التغييرات سحابياً.');
-      } catch (error) {
-        console.error('Midad cloud sync:', error);
-        if (typeof window.toast === 'function') window.toast(error.message || 'تعذرت المزامنة؛ بياناتك المحلية محفوظة.');
-      }
-    }, 1200);
+  window.midadCloudQueueSave=workspace=>{
+    if(!activeUser||loading)return;const snapshot=clone(workspace),serialized=JSON.stringify(snapshot);if(serialized===lastSaved)return;
+    clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await writeCloud(snapshot);if(typeof window.toast==='function')window.toast('تم حفظ التغييرات في Cloudflare.')}catch(error){console.error('Midad Cloudflare sync:',error);if(typeof window.toast==='function')window.toast(error.message||'تعذرت المزامنة؛ النسخة المحلية لم تُحذف.')}},1200);
   };
-
-  window.midadCloudStop = () => {
-    clearTimeout(saveTimer);
-    activeUser = null;
-    lastSaved = '';
-  };
+  window.midadCloudStop=()=>{clearTimeout(saveTimer);activeUser=null;lastSaved=''};
 })();
