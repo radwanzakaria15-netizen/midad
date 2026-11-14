@@ -1,7 +1,17 @@
 /* Midad teacher authentication — Supabase JS v2 */
-(() => {
-  const SUPABASE_URL = 'https://titltzjtsxmlqadpmezr.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2084oivvToJNqZvQwHTBiA_YXR3ouo7';
+(async () => {
+  // Load the matching Supabase project settings from the current Pages environment.
+  const configResponse = await fetch('/api/config', { cache: 'no-store' });
+  if (!configResponse.ok) {
+    const detail = await configResponse.json().catch(() => ({}));
+    throw new Error(detail.error || 'تعذر تحميل إعدادات Supabase من الخادم.');
+  }
+  const supabaseConfig = await configResponse.json();
+  const SUPABASE_URL = String(supabaseConfig.url || '').replace(/\\/$/, '');
+  const SUPABASE_PUBLISHABLE_KEY = String(supabaseConfig.anonKey || '');
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error('إعدادات Supabase غير مكتملة. تحقق من متغيرات Cloudflare.');
+  }
   const authStorage = {
     getItem(key){return (localStorage.getItem('midad_auth_remember')==='false'?sessionStorage.getItem(key):localStorage.getItem(key)) || sessionStorage.getItem(key) || localStorage.getItem(key);},
     setItem(key,value){if(localStorage.getItem('midad_auth_remember')==='false'){sessionStorage.setItem(key,value);localStorage.removeItem(key);}else{localStorage.setItem(key,value);sessionStorage.removeItem(key);}},
