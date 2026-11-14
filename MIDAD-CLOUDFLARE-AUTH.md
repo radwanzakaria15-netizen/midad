@@ -23,7 +23,8 @@
 ## وظائف API المضافة
 - GET/POST /api/account: قراءة/إنشاء ملف المستخدم. الدور الافتراضي student.
 - POST /api/invites: دعوة أستاذ من حساب teacher/admin.
-- POST /api/invites/redeem: استهلاك رمز دعوة من 8 أحرف وصالح 48 ساعة.
+- POST /api/invites/validate: التحقق من رمز الدعوة واسم المستخدم قبل إنشاء حساب المصادقة.
+- POST /api/invites/redeem: استهلاك رمز دعوة من 8 أحرف وصالح 48 ساعة بعد تسجيل الدخول.
 - GET/POST/PATCH /api/resources: قراءة الموارد، إرسال مورد pending، ومراجعته حسب التخصص.
 - GET/PUT /api/ratings: ملخص التقييم وتقييم واحد لكل UID.
 - عميل الواجهة: midad-cloud-auth.js.
