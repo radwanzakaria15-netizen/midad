@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS midad_invites (
   expires_at TEXT NOT NULL,
   used INTEGER NOT NULL DEFAULT 0 CHECK(used IN (0,1)),
   used_by TEXT,
+  reserved_username TEXT,
+  reservation_token_hash TEXT,
+  reserved_until TEXT,
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_midad_invites_expiry ON midad_invites(expires_at,used);
