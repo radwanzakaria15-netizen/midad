@@ -417,6 +417,8 @@
         const inviteCode=document.getElementById('midad-auth-invite').value.trim().toUpperCase();
         const recoveryEmail=document.getElementById('midad-auth-recovery').value.trim();
         if(recoveryEmail&&!validEmail(recoveryEmail)){message('بريد الاستعادة غير صالح.','error');return}
+        // Validate the invitation and username before creating a Supabase identity.
+        await window.MidadCloudAuth.validateTeacherInvite({code:inviteCode,username});
         const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:fullName,username,invite_code:inviteCode,recovery_email:recoveryEmail}}});
         if(error)throw error;
         if(data.session&&data.user){
