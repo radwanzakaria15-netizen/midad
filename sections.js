@@ -42,6 +42,66 @@ if(!file||!subject||!level){toast("أكمل البيانات واختر ملف �
 try{const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=()=>reject(new Error("تعذرت قراءة الملف."));fr.readAsDataURL(file)});const number=numberFor(category),item={id:taskId(),kind:"task",category,number,title:category+" رقم "+number+" — "+subject,subject,level,dueDate,assignment:{scope,classId,studentId},uploadedFile:{name:file.name,type:file.type,size:file.size,data},generatedData:{},created:new Date().toISOString()};db.activities.push(item);if(!save()){db.activities.pop();return}closeModal();render();toast("تم حفظ النشاط المرفوع وتحديد مستهدفيه.")}catch(err){toast(err.message||"تعذر رفع النشاط.")}};
 window.midadTaskTargetChanged=function(){const student=$("taskTargetType")?.value==="student",wrap=$("taskTargetStudentWrap");if(wrap)wrap.style.display=student?"":"none";window.midadTaskTargetClassChanged()};window.midadTaskTargetClassChanged=function(){const classId=$("taskTargetClass")?.value||"",select=$("taskTargetStudent");if(!select)return;select.innerHTML=(db.students||[]).filter(s=>s.classId===classId).map(s=>'<option value="'+escTask(s.id)+'">'+escTask(s.name)+'</option>').join("");if(!select.options.length)select.innerHTML='<option value="">لا يوجد طلبة في هذا القسم</option>'};window.midadTaskSourceTypeChanged=function(){const type=$("taskSourceType")?.value||"text";["taskTextSource","taskVideoSource","taskFileSource"].forEach(id=>{const el=$(id);if(el)el.style.display="none"});const el=$(type==="video"?"taskVideoSource":type==="file"?"taskFileSource":"taskTextSource");if(el)el.style.display="";const hint=$("taskSourceHint");if(hint)hint.textContent=type==="video"?"أدخل رابط YouTube وتفريغ الكلام يدوياً؛ لا نستخرج الصوت تلقائياً حالياً.":type==="file"?"اقرأ الملف أولاً ثم أنشئ النشاط.":"ألصق نص الدرس ليُبنى النشاط عليه."};
 window.midadReadTaskFile=async function(input){const file=input?.files?.[0],out=$("taskFileText");if(!file||!out)return;out.value="جارٍ استخراج النص...";try{out.value=await window.midadExtractDocumentText(file);toast("تم استخراج النص من الملف.")}catch(e){out.value="";toast(e.message||"تعذرت قراءة الملف.")}};
+function splitTaskSource(text,maxChars=12000){
+ const blocks=String(text||"").replace(/\r\n?/g,"\n").split(/\n{2,}/).map(x=>x.trim()).filter(Boolean);
+ const chunks=[];let current="";
+ for(let block of blocks){
+  while(block.length>maxChars){
+   if(current){chunks.push(current);current=""}
+   let cut=block.lastIndexOf(" ",maxChars);
+   if(cut<Math.floor(maxChars*.6))cut=maxChars;
+   chunks.push(block.slice(0,cut).trim());
+   block=block.slice(cut).trim();
+  }
+  if(!block)continue;
+  if(current&&current.length+block.length+2>maxChars){chunks.push(current);current=block}
+  else current=current?current+"\n\n"+block:block;
+ }
+ if(current)chunks.push(current);
+ return chunks;
+}
+async function summarizeTaskSource(source,meta,signal,onProgress){
+ let working=String(source||"").trim(),pass=0;
+ const safeLimit=16000;
+ while(working.length>safeLimit&&pass<3){
+  const chunks=splitTaskSource(working,12000);
+  if(!chunks.length)throw new Error("تعذر تقسيم المصدر إلى أجزاء قابلة للتحليل.");
+  const notes=new Array(chunks.length);let next=0,done=0;
+  async function summarizeWorker(){
+   while(next<chunks.length){
+    const index=next++;
+    const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal,body:JSON.stringify({
+     kind:"experience",outputType:"experience",mode:"summary",
+     lessonTitle:meta.lessonTitle+" — تحليل الجزء "+(index+1),
+     title:meta.lessonTitle,subject:meta.subject,level:meta.level,
+     content:chunks[index],questionCount:5
+    })});
+    const raw=await response.text();let payload={};
+    try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error("تعذرت قراءة نتيجة تلخيص الجزء "+(index+1)+".")}
+    if(!response.ok)throw new Error(payload.error||("فشل تلخيص الجزء "+(index+1)+" (HTTP "+response.status+")."));
+    const data=payload.result||payload;
+    if(!Array.isArray(data.sections)||!data.sections.length)throw new Error("نتيجة تلخيص الجزء "+(index+1)+" غير مكتملة.");
+    const parts=[];
+    if(data.intro)parts.push("تمهيد: "+String(data.intro).slice(0,350));
+    data.sections.slice(0,7).forEach(section=>{
+     const heading=String(section.heading||"").trim().slice(0,120);
+     const body=String(section.body||"").trim().slice(0,500);
+     const example=String(section.example||"").trim().slice(0,180);
+     if(heading||body)parts.push((heading?heading+": ":"")+body+(example?" مثال: "+example:""));
+    });
+    if(!parts.length)throw new Error("لم يُنتج المحرك ملخصاً مفيداً للجزء "+(index+1)+".");
+    notes[index]="الجزء "+(index+1)+":\n"+parts.join("\n");
+    done++;
+    if(onProgress)onProgress(done,chunks.length,pass+1);
+   }
+  }
+  await Promise.all(Array.from({length:Math.min(2,chunks.length)},()=>summarizeWorker()));
+  working=notes.join("\n\n");
+  pass++;
+ }
+ if(working.length>safeLimit)throw new Error("المصدر ما زال أطول من الحد الآمن بعد ثلاث مراحل تلخيص. قسّمه إلى ملفات أصغر حتى لا نفقد محتواه.");
+ return {content:working,summarized:pass>0,passes:pass};
+}
 window.generateTaskFromSource=async function(e){
  if(e?.preventDefault)e.preventDefault();
  const banner=document.querySelector("#taskCreateForm .task-form-banner strong")?.textContent||"",kind=banner.includes("بحث")?"بحث":banner.includes("اختبار")?"اختبار":banner.includes("امتحان")?"امتحان":"واجب منزلي";
@@ -51,17 +111,26 @@ window.generateTaskFromSource=async function(e){
  if(content.trim().length<80){toast("أدخل نصاً لا يقل عن 80 حرفاً.");return false}
  if(type==="video"&&!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(sourceUrl)){toast("أدخل رابط YouTube صحيحاً يبدأ بـ HTTPS.");return false}
  if(!db?.aiEndpoint){toast("لم يُضبط رابط الذكاء الاصطناعي.");return false}
- if(button){button.disabled=true;button.textContent="يجري إعداد النشاط والملفات..."}
+ const originalButtonText=button?.textContent||("إنشاء "+kind+" بالذكاء الاصطناعي");
+ if(button){button.disabled=true;button.textContent="يجري تحليل المصدر..."}
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),300000);
  try{
-  const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"task",taskCategory:kind,category:kind,lessonTitle,title:lessonTitle,subject,level,maxScore,questionCount,content,sourceUrl,sourceType:type})});
-  const payload=await response.json();if(!response.ok)throw Error(payload.error||"تعذر إنشاء النشاط.");
+  const prepared=await summarizeTaskSource(content,{lessonTitle,subject,level},controller.signal,(done,total,pass)=>{
+   if(button)button.textContent="تلخيص المصدر — المرحلة "+pass+" ("+done+"/"+total+")";
+  });
+  if(button)button.textContent="يجري إنشاء "+kind+"...";
+  const response=await fetch(db.aiEndpoint,{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({kind:"task",taskCategory:kind,category:kind,lessonTitle,title:lessonTitle,subject,level,maxScore,questionCount,content:prepared.content,sourceUrl,sourceType:type})});
+  const raw=await response.text();let payload={};
+  try{payload=raw?JSON.parse(raw):{}}catch(_){throw Error("أعاد محرك الذكاء الاصطناعي استجابة غير مفهومة. أعد المحاولة.")}
+  if(!response.ok)throw Error(payload.error||"تعذر إنشاء النشاط.");
   const result=payload.result||payload;
   if(kind==="بحث"&&(!Array.isArray(result.suggestions)||!result.suggestions.length))throw Error("لم يتم استخراج عناوين بحث. أعد المحاولة.");
   if(kind!=="بحث"&&(!Array.isArray(result.questions)||!result.questions.length))throw Error("لم يتم إنشاء أسئلة صالحة.");
   const number=numberFor(kind),title=kind==="بحث"?"عناوين بحوث مقترحة — "+subject:kind+" رقم "+number;
-  const item={id:taskId(),kind:"task",category:kind,number,title,lessonTitle,subject,level,maxScore:kind==="بحث"?null:maxScore,dueDate:kind==="واجب منزلي"?dueDate:"",assignment:kind==="بحث"?null:{scope:targetType,classId:targetClassId,studentId:targetStudentId},generatedData:result,sourceType:type,sourceUrl,created:new Date().toISOString()};
-  db.activities=db.activities||[];db.activities.push(item);save();closeModal();render();toast(kind==="بحث"?"تم استخراج عناوين البحوث.":"تم إنشاء النشاط وملفا الأسئلة والإجابات.");
- }catch(err){toast(err.message||"تعذر إنشاء النشاط.");if(button){button.disabled=false;button.textContent="إنشاء "+kind+" بالذكاء الاصطناعي"}}
+  const item={id:taskId(),kind:"task",category:kind,number,title,lessonTitle,subject,level,maxScore:kind==="بحث"?null:maxScore,dueDate:kind==="واجب منزلي"?dueDate:"",assignment:kind==="بحث"?null:{scope:targetType,classId:targetClassId,studentId:targetStudentId},generatedData:result,sourceType:type,sourceUrl,sourceOriginalLength:content.trim().length,sourceSummarized:prepared.summarized,sourceSummaryPasses:prepared.passes,created:new Date().toISOString()};
+  db.activities=db.activities||[];db.activities.push(item);save();closeModal();render();toast(prepared.summarized?"تم تلخيص المصدر الطويل مرحلياً ثم إنشاء النشاط.":kind==="بحث"?"تم استخراج عناوين البحوث.":"تم إنشاء النشاط وملفا الأسئلة والإجابات.");
+ }catch(err){toast(err.name==="AbortError"?"انتهت مهلة تحليل المصدر أو إنشاء النشاط. أعد المحاولة أو قسّم الملف.":(err.message||"تعذر إنشاء النشاط."))}
+ finally{clearTimeout(timer);if(button?.isConnected){button.disabled=false;button.textContent=originalButtonText}}
  return false;
 };
 window.viewTask=function(id){
