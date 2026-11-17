@@ -125,18 +125,18 @@
 
   function featurePage(){
     const lessons=db.experiences.filter(x=>x.mode==="lessonpdf").slice().reverse();
-    return pageHead("مِداد · إنتاج الدروس","أنشئ درساً تعليمياً بصيغة PDF","اكتب اسم الدرس والمادة والمستوى الدراسي، وسيُعدّ مِداد درساً منظماً وجاهزاً للطباعة.")+
-      '<section class="lesson-maker-hero"><div class="lesson-maker-copy"><span class="lesson-maker-kicker">استوديو إعداد الدروس</span><h2>من عنوان الدرس إلى ملف PDF متكامل</h2><p>محتوى تربوي واضح، أمثلة مناسبة، أهداف تعليمية، وصور توضيحية مرتبطة بالموضوع.</p></div><div class="lesson-maker-mark" aria-hidden="true"><span>PDF</span><i></i></div></section>'+
+    return pageHead("مِداد · إنتاج الدروس","أنشئ درساً تعليمياً متكاملاً","اكتب اسم الدرس والمادة والمستوى الدراسي، وسيُعدّ مِداد محتوى منظماً ثم ملفات عرض ووثيقة وصوراً تعليمية.")+
+      '<section class="lesson-maker-hero"><div class="lesson-maker-copy"><span class="lesson-maker-kicker">استوديو إعداد الدروس</span><h2>من عنوان الدرس إلى ملفات تعليمية متكاملة</h2><p>محتوى تربوي واضح، أمثلة مناسبة، أهداف تعليمية، وصور توضيحية مرتبطة بالموضوع.</p></div><div class="lesson-maker-mark" aria-hidden="true"><span>ملفات</span><i></i></div></section>'+
       '<section class="card lesson-maker-card"><form novalidate id="midadLessonForm" onsubmit="return window.generateExperience(event)">'+
       '<div class="form-grid">'+
       '<div class="form-field full"><label for="expLessonTitle">اسم الدرس</label><input id="expLessonTitle" maxlength="180" required placeholder="مثال: دورة الماء في الطبيعة"></div>'+
       '<div class="form-field full"><label for="expSubject">المادة الدراسية</label><input id="expSubject" maxlength="120" required placeholder="مثال: علوم الطبيعة والحياة"></div>'+
       '<div class="form-field full"><label for="expLevel">المستوى الدراسي</label><select id="expLevel" required><option value="">اختر المستوى الدراسي</option><optgroup label="المرحلة الابتدائية">'+["الأولى ابتدائي","الثانية ابتدائي","الثالثة ابتدائي","الرابعة ابتدائي","الخامسة ابتدائي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة المتوسطة">'+["الأولى متوسط","الثانية متوسط","الثالثة متوسط","الرابعة متوسط"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة الثانوية">'+["الأولى ثانوي","الثانية ثانوي","الثالثة ثانوي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><option value="مستوى آخر">مستوى آخر</option></select></div>'+
       '</div><div class="lesson-maker-note"><span class="lesson-maker-note-icon">✓</span><span>لا تحتاج إلى رفع مصدر أو كتابة محتوى الدرس؛ سيُنشئ الذكاء الاصطناعي المحتوى انطلاقاً من عنوان الدرس والمادة والمستوى.</span></div>'+
-      '<button class="btn primary lesson-create-button" id="midadLessonCreate" type="submit">إنشاء الدرس بصيغة PDF <span>←</span></button></form></section>'+
-      '<section class="lesson-maker-steps"><div><b>01</b><span>اكتب اسم الدرس</span></div><div><b>02</b><span>حدد المادة</span></div><div><b>03</b><span>حدد المستوى</span></div><div><b>04</b><span>استلم ملف PDF</span></div></section>'+
+      '<button class="btn primary lesson-create-button" id="midadLessonCreate" type="submit">إنشاء الدرس والملفات تلقائياً <span>←</span></button></form></section>'+
+      '<section class="lesson-maker-steps"><div><b>01</b><span>اكتب اسم الدرس</span></div><div><b>02</b><span>حدد المادة</span></div><div><b>03</b><span>حدد المستوى</span></div><div><b>04</b><span>استلم ملفات الدرس</span></div></section>'+
       '<section class="lesson-library"><div class="section-title"><div><h3>الدروس التي أنشأتها</h3><p>تظهر هنا الدروس التي تم إنشاؤها من هذا الجهاز.</p></div><span class="pill green">'+lessons.length+' درس</span></div>'+
-      (lessons.length?'<div class="cards">'+lessons.map(x=>'<article class="item-card"><div class="item-top"><span class="pill green">درس PDF</span><span class="pill">'+safe(x.level||"")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(new Date(x.created||Date.now()).toLocaleDateString("ar-DZ"))+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح الدرس</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لم تنشئ أي درس بعد</strong><span>سيظهر أول درس PDF هنا بعد إنشائه.</span></div>')+'</section>';
+      (lessons.length?'<div class="cards">'+lessons.map(x=>'<article class="item-card"><div class="item-top"><span class="pill green">درس تعليمي</span><span class="pill">'+safe(x.level||"")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(new Date(x.created||Date.now()).toLocaleDateString("ar-DZ"))+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح الدرس</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لم تنشئ أي درس بعد</strong><span>سيظهر أول درس هنا مع ملفاته بعد إنشائه.</span></div>')+'</section>';
   }
   window.midadExperienceSourceTypeChanged=function(){
     const type=document.getElementById("expSourceType")?.value||"text";
@@ -343,7 +343,7 @@
       if(host)host.innerHTML='<button class="btn primary small" onclick="retryExperienceFiles(\''+safe(item.id)+'\')">إعادة إنشاء الملفات</button>';
     }
   }
-  window.retryExperienceFiles=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(item){if(item.mode==="lessonpdf")generateLessonPdf(item);else generateExperienceFiles(item)}};
+  window.retryExperienceFiles=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(item)generateExperienceFiles(item)};
 
   async function generateLessonPdf(item){
     const status=document.getElementById("lesson-pdf-status");
@@ -389,7 +389,7 @@
     const sections=arr(item.data?.sections);
     return header+
       '<section class="lesson-result-banner"><span>مِداد · درس تعليمي</span><h2>'+safe(item.title)+'</h2><p>'+safe(item.level)+'</p></section>'+
-      '<section class="card lesson-pdf-card"><div class="section-title"><div><h3>ملف الدرس PDF</h3><p id="lesson-pdf-status" aria-live="polite">جارٍ تجهيز الملف...</p></div><span class="pill green">جاهز للطباعة</span></div><div id="lesson-pdf-links" class="item-actions"><span class="muted">سيظهر رابط الملف هنا بعد اكتمال التنسيق.</span></div></section>'+
+      experienceExportPanel(item)+'<div id="experience-infographic-preview">'+experienceInfographicPreview(item)+'</div>'+
       '<section class="card lesson-content-preview"><h3>معاينة محتوى الدرس</h3><p>'+safe(item.data?.intro||"")+'</p>'+
       sections.map((s,i)=>'<article><span class="pill green">المحور '+(i+1)+'</span><h4>'+safe(s.heading)+'</h4><p>'+safe(s.body)+'</p>'+(s.example?'<div><b>مثال تطبيقي</b><p>'+safe(s.example)+'</p></div>':'')+'</article>').join("")+
       (item.data?.conclusion?'<article><h4>خلاصة الدرس</h4><p>'+safe(item.data.conclusion)+'</p></article>':'')+'</section>';
@@ -621,14 +621,14 @@
       if(!Array.isArray(data.sections)||data.sections.length<3)throw new Error("المحتوى الذي عاد من المحرك غير مكتمل. أعد المحاولة.");
       const item={id:id(),title:data.title||title,subject,level,source:"",sourceOriginalLength:0,sourceSummarized:false,sourceType:"generated",mode:"lessonpdf",data,created:new Date().toISOString()};
       db.experiences.push(item);save();succeeded=true;currentExperienceId=item.id;experienceStep=0;experienceAnswers={};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});
-      generateLessonPdf(item);
-      toast("اكتمل تأليف الدرس، ويجري الآن تصميم ملف PDF.");
+      generateExperienceFiles(item);
+      toast("اكتمل تأليف الدرس، ويجري الآن تجهيز ملفات العرض والوثيقة والصور.");
     }catch(error){message=error.name==="AbortError"?"انتهت مهلة إنشاء الدرس. حاول مجدداً.":(error.message||message);toast(message)}
     finally{clearTimeout(timer);if(button){button.disabled=false;button.innerHTML=button.dataset.label||"إنشاء الدرس بصيغة PDF"}if(window.midadTaskFinish)window.midadTaskFinish(taskId,succeeded,succeeded?"تم إنشاء محتوى الدرس":"تعذر إنشاء الدرس")}
     return false;
   };
 
-  window.openExperience=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(!item)return;currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});if(item.mode==="lessonpdf")generateLessonPdf(item);else generateExperienceFiles(item)};
+  window.openExperience=function(idValue){const item=db.experiences.find(x=>x.id===idValue);if(!item)return;currentExperienceId=idValue;experienceStep=0;experienceSceneStep=0;experienceAnswers={};matchState={left:null,right:null,matched:[]};page="experience-result";render();window.scrollTo({top:0,behavior:"smooth"});generateExperienceFiles(item)};
   window.goExperienceStep=function(i){experienceStep=i;render()};
   window.goExperienceSceneStep=function(i){experienceSceneStep=i;render()};
   window.selectMatchCard=function(side,index){
@@ -661,7 +661,7 @@
   window.navigate=function(p){if(p==="experience"){page=p;render();window.scrollTo({top:0,behavior:"smooth"})}else baseNavigate(p)};
   const originalHome=window.homePage;
   if(typeof originalHome==="function"){
-    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>أنشئ درساً تعليمياً بصيغة PDF</h3><p>درس متكامل ومنسق انطلاقاً من اسم الدرس والمستوى الدراسي.</p></div><button class="btn primary" onclick="navigate(\'experience\')">ابدأ الآن ←</button></section><section class="stats">')};
+    window.homePage=function(){return originalHome().replace('<section class="stats">','<section class="experience-home-card"><div><span>أداة الذكاء الاصطناعي</span><h3>أنشئ درساً تعليمياً متكاملاً</h3><p>محتوى منظم وشرائح وصور وملفات جاهزة انطلاقاً من عنوان الدرس والمادة والمستوى.</p></div><button class="btn primary" onclick="navigate(\'experience\')">ابدأ الآن ←</button></section><section class="stats">')};
   }
   document.querySelectorAll(".nav button").forEach(b=>{});
   const nav=[...document.querySelectorAll(".nav")].find(n=>n.querySelector('[data-page="lessons"]'));
@@ -671,7 +671,7 @@
   }
   const mobile=document.querySelector(".mobile-nav");
   if(mobile&&!mobile.querySelector('[data-page="experience"]')){
-    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>▤</span>دروس PDF";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
+    const item=document.createElement("button");item.dataset.page="experience";item.innerHTML="<span>▤</span>إنتاج الدروس";item.onclick=()=>navigate("experience");mobile.insertBefore(item,mobile.querySelector('[data-page="activities"]'));
   }
 
 
