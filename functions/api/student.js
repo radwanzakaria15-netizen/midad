@@ -6,7 +6,12 @@ export async function onRequestGet({request,env}){
   try{
     const row=await env.DB.prepare('SELECT payload_json FROM midad_students WHERE student_code=?').bind(code).first();
     if(!row)return json({error:'لم نعثر على هذا المعرّف. تحقق منه أو اطلب من الأستاذ نشر بيانات القسم.'},404);
-    const payload=JSON.parse(row.payload_json);
-    return json(payload);
-  }catch{return json({error:'تعذر تحميل فضاء المتعلم حالياً.'},500);}
+    const workspace=JSON.parse(row.payload_json);
+    const student=Array.isArray(workspace.students)?workspace.students.find(item=>String(item.studentCode||'')===code):null;
+    if(!student)return json({error:'بيانات المتعلم غير مكتملة.'},500);
+    return json({student,workspace});
+  }catch(error){
+    console.error('Midad student lookup failed:',error);
+    return json({error:'تعذر تحميل فضاء المتعلم حالياً.'},500);
+  }
 }
