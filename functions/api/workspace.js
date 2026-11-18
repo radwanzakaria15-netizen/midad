@@ -35,11 +35,16 @@ export async function onRequest(context){
   try{owner=await teacherId(request,env);}catch(e){return json({error:e.message},500);}
   if(!owner)return json({error:'يلزم تسجيل دخول الأستاذ أو أن الجلسة انتهت.'},401);
   if(request.method==='GET'){
-    const row=await env.DB.prepare('SELECT workspace_json, updated_at FROM midad_workspaces WHERE owner_id=?').bind(owner).first();
-    if(!row)return json({error:'لا توجد مساحة سحابية بعد.'},404);
-    let workspace;
-    try{workspace=JSON.parse(row.workspace_json);}catch{return json({error:'تعذر قراءة بيانات مساحة العمل.'},500);}
-    return json({workspace,updatedAt:row.updated_at});
+    try{
+      const row=await env.DB.prepare('SELECT workspace_json, updated_at FROM midad_workspaces WHERE owner_id=?').bind(owner).first();
+      if(!row)return json({error:'لا توجد مساحة سحابية بعد.'},404);
+      let workspace;
+      try{workspace=JSON.parse(row.workspace_json);}catch{return json({error:'تعذر قراءة بيانات مساحة العمل.'},500);}
+      return json({workspace,updatedAt:row.updated_at});
+    }catch(error){
+      console.error('Midad workspace GET failed:',error);
+      return json({error:'تعذر تحميل مساحة العمل من قاعدة البيانات. تحقق من سجل وظائف Cloudflare.'},500);
+    }
   }
   let body;
   try{body=await request.json();}catch{return json({error:'صيغة البيانات غير صحيحة.'},400);}
