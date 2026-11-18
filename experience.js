@@ -293,7 +293,7 @@
   async function generateExperienceFiles(item){
     const cachedRecord=await loadArtifactBlobs(item),cached=cachedRecord?.files;
     const needsImages=item.mode==="slides"||item.mode==="lessonpdf";
-    const cachedImagesComplete=!needsImages||(cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item));
+    const cachedImagesComplete=!needsImages||cachedRecord?.imagesComplete===undefined||(cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item));
     if(cached&&cached.infographic&&cached.pptx&&cached.pdf&&cached.png&&cached.docx&&cachedImagesComplete){
       attachArtifactBlobs(item,cached);
       const cachedStatus=document.getElementById("experience-export-status");
@@ -375,7 +375,7 @@
     const links=document.getElementById("lesson-pdf-links");
     const setStatus=t=>{const el=document.getElementById("lesson-pdf-status");if(el)el.textContent=t};
     const cachedRecord=await loadArtifactBlobs(item),cached=cachedRecord?.files;
-    const cachedImagesComplete=cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item);
+    const cachedImagesComplete=cachedRecord?.imagesComplete===undefined||(cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item));
     if(cached?.pdf&&cachedImagesComplete){attachArtifactBlobs(item,{pdf:cached.pdf});setStatus("ملف PDF محفوظ على هذا الجهاز وجاهز للفتح.");return}
     try{
       setStatus("جارٍ إعداد الصور التوضيحية الخاصة بالدرس...");
