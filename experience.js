@@ -166,12 +166,16 @@
       }catch(_){resolve(null)}
     });
   }
-  async function saveArtifactBlobs(item,blobs){
+  async function saveArtifactBlobs(item,blobs,images=[]){
     const db=await openArtifactDb();if(!db)return false;
+    const slides=(item.mode==="slides"||item.mode==="lessonpdf")?experienceSlides(item):[];
+    const imageSignature=slides.length?experienceImageSignature(item,slides):"";
+    const imageList=Array.isArray(images)?images:[];
+    const imagesComplete=!slides.length||(imageList.length===slides.length&&imageList.every(Boolean));
     return new Promise(resolve=>{
       try{
         const tx=db.transaction("exports","readwrite");
-        tx.objectStore("exports").put({id:item.id,signature:artifactSignature(item),files:blobs,savedAt:new Date().toISOString()});
+        tx.objectStore("exports").put({id:item.id,signature:artifactSignature(item),files:blobs,imageSignature,imagesComplete,savedAt:new Date().toISOString()});
         tx.oncomplete=()=>{db.close();resolve(true)};
         tx.onerror=tx.onabort=()=>{db.close();resolve(false)};
       }catch(_){db.close();resolve(false)}
@@ -182,7 +186,7 @@
     return new Promise(resolve=>{
       try{
         const request=db.transaction("exports","readonly").objectStore("exports").get(item.id);
-        request.onsuccess=()=>{const row=request.result;db.close();resolve(row&&row.signature===artifactSignature(item)&&row.files?row.files:null)};
+        request.onsuccess=()=>{const row=request.result;db.close();resolve(row&&row.signature===artifactSignature(item)&&row.files?row:null)};
         request.onerror=()=>{db.close();resolve(null)};
       }catch(_){db.close();resolve(null)}
     });
@@ -217,6 +221,13 @@
       cover:!!x.cover
     }));
   }
+  function experienceImageSignature(item,slides=experienceSlides(item)){
+    return JSON.stringify({title:item.title,subject:item.subject,level:item.level,mode:item.mode,slides:slides.map(s=>[s.heading,s.body,s.example])});
+  }
+  function experienceImageList(item){
+    const cached=experienceImageData[item.id],slides=experienceSlides(item);
+    return cached&&cached.signature===experienceImageSignature(item,slides)&&Array.isArray(cached.images)?cached.images:[];
+  }
   function experienceExportPanel(item){
     const ready=experienceExportOwnerId===item.id&&Object.keys(experienceExportUrls).length>0;
     return '<section class="card" id="experience-export-panel" style="margin:16px 0;border:1px solid #d9e5d9;background:#fbfdfb">'+
@@ -229,26 +240,38 @@
   }
   async function generateSlideImages(item,setStatus){
     if(item.mode!=="slides"&&item.mode!=="lessonpdf")return [];
-    const slides=experienceSlides(item);
-    const old=experienceImageData[item.id]||[];
-    if(old.length===slides.length&&old.every(Boolean))return old;
-    const images=new Array(slides.length);let next=0,done=0,failed=0;
+    const slides=experienceSlides(item),signature=experienceImageSignature(item,slides);
+    const cached=experienceImageData[item.id];
+    const images=cached&&cached.signature===signature&&Array.isArray(cached.images)?cached.images.slice(0,slides.length):[];
+    images.length=slides.length;
+    let next=0,done=images.filter(Boolean).length,failed=0;
+    const saveCache=()=>{experienceImageData[item.id]={signature,images:images.slice()}};
+    saveCache();
     async function oneWorker(){
       while(next<slides.length){
-        const index=next++;const s=slides[index];
-        try{
-          const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-            subject:item.subject||"",level:item.level||"",title:s.heading,content:s.body,example:s.example||""
-          })});
-          const payload=await response.json().catch(()=>({}));
-          if(!response.ok||!payload.image)throw new Error(payload.error||"تعذر توليد الصورة");
-          images[index]=payload.image;done++;
-        }catch(error){failed++;console.warn("Midad slide image failed",index,error);}
+        const index=next++;if(images[index])continue;
+        const s=slides[index];let lastError=null;
+        for(let attempt=1;attempt<=2&&!images[index];attempt++){
+          const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
+          try{
+            const response=await fetch(notebookBase()+"/experience-image",{method:"POST",headers:{"Content-Type":"application/json"},signal:controller.signal,body:JSON.stringify({
+              subject:item.subject||"",level:item.level||"",title:s.heading,content:s.body,example:s.example||""
+            })});
+            const payload=await response.json().catch(()=>({}));
+            if(!response.ok||typeof payload.image!=="string"||!payload.image.startsWith("data:image/"))throw new Error(payload.error||"تعذر توليد صورة صالحة للشريحة.");
+            images[index]=payload.image;done++;
+          }catch(error){
+            lastError=error;
+            if(attempt<2)await new Promise(resolve=>setTimeout(resolve,500));
+          }finally{clearTimeout(timer)}
+        }
+        if(!images[index]){failed++;console.warn("Midad slide image failed",index,lastError);}
+        saveCache();
         if(setStatus)setStatus("تم توليد "+done+" من "+slides.length+" صورة توضيحية"+(failed?"، تعذر "+failed:"")+"...");
       }
     }
     await Promise.all(Array.from({length:Math.min(3,slides.length)},oneWorker));
-    experienceImageData[item.id]=images;
+    saveCache();
     if(currentExperienceId===item.id&&page==="experience-result")render();
     return images;
   }
@@ -268,8 +291,10 @@
     try{const canvas=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#edf3ed",useCORS:true});const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw new Error("تعذر تحويل الملخص البصري إلى صورة PNG.");return blob;}finally{host.remove()}
   }
   async function generateExperienceFiles(item){
-    const cached=await loadArtifactBlobs(item);
-    if(cached&&cached.infographic&&cached.pptx&&cached.pdf&&cached.png&&cached.docx){
+    const cachedRecord=await loadArtifactBlobs(item),cached=cachedRecord?.files;
+    const needsImages=item.mode==="slides"||item.mode==="lessonpdf";
+    const cachedImagesComplete=!needsImages||(cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item));
+    if(cached&&cached.infographic&&cached.pptx&&cached.pdf&&cached.png&&cached.docx&&cachedImagesComplete){
       attachArtifactBlobs(item,cached);
       const cachedStatus=document.getElementById("experience-export-status");
       if(cachedStatus)cachedStatus.textContent="تم استعادة الملفات المحفوظة على هذا الجهاز دون إعادة توليدها.";
@@ -331,7 +356,7 @@
       const pdfBlob=pdf.output("blob"),pngBlob=await zip.generateAsync({type:"blob"});
       const blobs={infographic:infographicBlob,pptx:pptxBlob,pdf:pdfBlob,png:pngBlob,docx:docxBlob};
       attachArtifactBlobs(item,blobs);
-      const persisted=await saveArtifactBlobs(item,blobs);
+      const persisted=await saveArtifactBlobs(item,blobs,images);
       const failedImages=images.filter(x=>!x).length;
       setStatus("اكتمل إنشاء صورة الملخص والملفات الأربعة. صور الشرائح مجمّعة في ZIP."+(failedImages?" تعذر توليد "+failedImages+" صور؛ يمكنك إعادة المحاولة لاحقاً.":" وتم إدراج الصور التوضيحية في العرض.")+(persisted?" حُفظت الملفات محلياً لاستعادتها عند فتح التجربة لاحقاً.":" تعذر حفظ نسخة محلية دائمة؛ ستظل الملفات متاحة في هذه الجلسة فقط."));
       const preview=document.getElementById("experience-infographic-preview");if(preview)preview.innerHTML=experienceInfographicPreview(item);
@@ -349,8 +374,9 @@
     const status=document.getElementById("lesson-pdf-status");
     const links=document.getElementById("lesson-pdf-links");
     const setStatus=t=>{const el=document.getElementById("lesson-pdf-status");if(el)el.textContent=t};
-    const cached=await loadArtifactBlobs(item);
-    if(cached?.pdf){attachArtifactBlobs(item,{pdf:cached.pdf});setStatus("ملف PDF محفوظ على هذا الجهاز وجاهز للفتح.");return}
+    const cachedRecord=await loadArtifactBlobs(item),cached=cachedRecord?.files;
+    const cachedImagesComplete=cachedRecord?.imagesComplete===true&&cachedRecord?.imageSignature===experienceImageSignature(item);
+    if(cached?.pdf&&cachedImagesComplete){attachArtifactBlobs(item,{pdf:cached.pdf});setStatus("ملف PDF محفوظ على هذا الجهاز وجاهز للفتح.");return}
     try{
       setStatus("جارٍ إعداد الصور التوضيحية الخاصة بالدرس...");
       const images=await generateSlideImages(item,setStatus);
@@ -375,7 +401,7 @@
       }finally{host.remove()}
       const pdfBlob=pdf.output("blob");
       attachArtifactBlobs(item,{pdf:pdfBlob});
-      const persisted=await saveArtifactBlobs(item,{pdf:pdfBlob});
+      const persisted=await saveArtifactBlobs(item,{pdf:pdfBlob},images);
       setStatus("اكتمل ملف PDF المكوّن من "+slides.length+" صفحات."+(persisted?" حُفظ محلياً على هذا الجهاز.":" الملف متاح في هذه الجلسة."));
     }catch(error){
       console.error("Midad lesson PDF error",error);
@@ -428,7 +454,7 @@
         '<div class="slide-kicker">'+(isCover?'ملخص الدرس':'الفكرة '+experienceStep)+'</div>'+
         '<h2>'+safe(s.heading||"")+'</h2>'+
         '<p>'+safe(s.body||"")+'</p>'+
-        (experienceImageData[item.id]?.[experienceStep]?'<img class="lesson-slide-generated-image" alt="صورة توضيحية مولدة عن '+safe(s.heading||item.title)+'" src="'+experienceImageData[item.id][experienceStep]+'">' : '<div class="lesson-slide-image-pending">سيتم إنشاء صورة توضيحية لهذه الشريحة تلقائياً</div>')+
+        (experienceImageList(item)[experienceStep]?'<img class="lesson-slide-generated-image" alt="صورة توضيحية مولدة عن '+safe(s.heading||item.title)+'" src="'+experienceImageList(item)[experienceStep]+'">' : '<div class="lesson-slide-image-pending">سيتم إنشاء صورة توضيحية لهذه الشريحة تلقائياً</div>')+
         (!isCover&&s.example?'<div class="slide-example"><b>مثال توضيحي</b><span>'+safe(s.example)+'</span></div>':'')+
         (!isCover?renderVisual(s.visual):'')+
       '</article>'+
