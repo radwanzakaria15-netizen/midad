@@ -9,7 +9,7 @@
     if(local?.teacher&&local.teacher!=='الأستاذ')merged.teacher=local.teacher;
     if(local?.school)merged.school=local.school;
     if(local?.year&&local.year!=='2026 / 2027')merged.year=local.year;
-    const keys=['classes','students','lessons','activities','assessments','attendance','resources','grades','experiences','schedule','classNotes'];
+    const keys=['classes','students','lessons','activities','assessments','attendance','resources','grades','experiences','schedule','classNotes','announcements'];
     for(const key of keys){const a=Array.isArray(remote?.[key])?remote[key]:[],b=Array.isArray(local?.[key])?local[key]:[],map=new Map();a.forEach((v,i)=>map.set(v?.id||'remote-'+key+'-'+i,v));b.forEach((v,i)=>map.set(v?.id||'local-'+key+'-'+i,v));merged[key]=Array.from(map.values())}
     return merged;
   };
