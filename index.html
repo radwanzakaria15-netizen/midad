@@ -370,8 +370,191 @@ function alphabetToggleAuto(){
 function alphabetStop(){alphabetAuto=false;if('speechSynthesis' in window)speechSynthesis.cancel();if(alphabetTimer)clearInterval(alphabetTimer);alphabetTimer=null}
 
 function lessonsPage(){let files=db.lessons.filter(l=>Array.isArray(l.files)&&l.files.length);return pageHead('ملفات الأستاذ','التحضير','ارفع ملفات تحضيرك واحتفظ بها في مكتبتك.',btn('＋ رفع ملفات',"openLesson()"))+'<section class="card" style="margin-bottom:18px"><div class="section-title"><div><h3>رفع ملفات التحضير</h3><p>اختر ملفات الدروس والعروض والوثائق والصور من جهازك.</p></div></div><div class="form-field full"><input type="file" id="lessonQuickFiles" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.odt,.odp,.txt,.rtf,.jpg,.jpeg,.png,.webp"></div><div class="modal-actions"><button class="btn primary" onclick="uploadLessonFiles()">رفع الملفات المختارة</button></div><p class="muted" style="font-size:11px;margin-bottom:0">تُحفظ الملفات محلياً في هذا المتصفح على جهازك.</p></section><div class="toolbar"><input class="field-search" placeholder="ابحث باسم الملف..." oninput="filterCards(\'lessonCards\',this.value)"></div><div class="cards" id="lessonCards">'+(files.length?files.slice().reverse().map(l=>l.files.map((f,i)=>'<article class="item-card" data-search="'+esc((f.name||'').toLowerCase())+'"><div class="item-top"><div class="item-symbol">▣</div><span class="pill">'+esc((f.name||'ملف').split('.').pop().toUpperCase())+'</span></div><h3>'+esc(f.name)+'</h3><p>تاريخ الرفع: '+dateLabel(l.created)+'</p><div class="item-actions"><a class="btn light small" href="'+f.data+'" download="'+esc(f.name)+'">تنزيل الملف</a><button class="btn danger small" onclick="deleteLessonFile(\''+l.id+'\','+i+')">حذف</button></div></article>').join('')).join(''):empty('لا توجد ملفات مرفوعة بعد','اضغط على رفع ملفات لاختيار ملفات التحضير من هاتفك أو حاسوبك.',btn('رفع أول ملف',"openLesson()")) )+'</div>'}
+/* ===== مِداد: واجب · بحث · اختبار · امتحان (قوالب جاهزة / رفع / توليد) ===== */
+const MIDAD_DOC_TYPES={
+ homework:{label:'واجب',glyph:'✎',hint:'تمارين وتطبيقات للمنزل'},
+ research:{label:'بحث',glyph:'⌕',hint:'بحث مدرسي بعناصره ومراجعه'},
+ quiz:{label:'اختبار',glyph:'▧',hint:'اختبار قصير للمراقبة'},
+ exam:{label:'امتحان',glyph:'▦',hint:'امتحان فصلي بوضعيات وسلّم تنقيط'}
+};
+const MIDAD_DOC_TEMPLATES={
+ homework:[
+  {name:'واجب منزلي — تمارين تطبيقية',desc:'خمسة تمارين متدرجة مع وضعية قصيرة.',marks:10,instructions:'أنجز الواجب على كراس الأقسام بخط واضح، وأعد تسليمه في الموعد المحدد.',body:'## أولاً: تمارين تطبيقية\n1. ................................................\n2. ................................................\n3. ................................................\n4. ................................................\n5. ................................................\n## ثانياً: وضعية للتفكير\n................................................'},
+  {name:'واجب مراجعة الدرس',desc:'أسئلة استرجاع ثم تطبيق.',marks:10,instructions:'راجع الدرس في كراسك قبل الإجابة.',body:'## استرجاع\n1. اذكر أهم ما تعلمته في الدرس.\n2. عرّف المفاهيم الجديدة بأسلوبك.\n## تطبيق\n3. ................................................\n4. ................................................\n## تقييم ذاتي\nما الذي وجدته صعباً؟ ................................'},
+  {name:'واجب كتابي — إنتاج',desc:'نشاط تعبير وإنتاج كتابي موجّه.',marks:10,instructions:'اكتب فقرة من خمسة أسطر على الأقل.',body:'## الموضوع\n................................................\n## التعليمة\nاكتب فقرة تراعي فيها: وضوح الفكرة، سلامة اللغة، حسن الخط.\n## مكان الإنجاز\n................................................'}
+ ],
+ research:[
+  {name:'بحث مدرسي كامل',desc:'مقدمة وعناصر وخاتمة ومراجع.',marks:20,instructions:'يُسلَّم البحث مكتوباً أو مطبوعاً، ويُراعى فيه التنظيم والتوثيق.',body:'## الغلاف\nعنوان البحث: ........................  اسم التلميذ: ........................  القسم: ........\n## المقدمة\nعرّف بالموضوع وبيّن أهميته.\n## عناصر البحث\n1. العنصر الأول: ................................\n2. العنصر الثاني: ................................\n3. العنصر الثالث: ................................\n## الخاتمة\nلخّص أهم النتائج وأبدِ رأيك.\n## المراجع\n1. ................................\n2. ................................'},
+  {name:'بطاقة بحث مبسّطة',desc:'مناسبة للابتدائي: أسئلة موجّهة وصورة.',marks:10,instructions:'اجمع المعلومات بمساعدة الأسرة واكتبها بأسلوبك.',body:'## موضوع البحث\n................................\n## ماذا عرفت؟\n1. ................................\n2. ................................\n3. ................................\n## أرسم أو ألصق صورة\n(مكان الصورة)\n## من أين جمعت معلوماتي؟\n................................'},
+  {name:'مشروع بحث جماعي',desc:'توزيع المهام على فريق.',marks:20,instructions:'يتقاسم أفراد الفوج المهام ويقدّمون العرض في الحصة.',body:'## أفراد الفوج\n1. ........................  2. ........................\n3. ........................  4. ........................\n## توزيع المهام\n- جمع المعلومات: ................\n- كتابة التقرير: ................\n- إعداد العرض: ................\n## سلّم التنقيط\nالمحتوى /8 — التنظيم /4 — العرض /4 — العمل الجماعي /4'}
+ ],
+ quiz:[
+  {name:'اختبار قصير — اختيار وصح/خطأ',desc:'ثلاثة أنواع من الأسئلة في ورقة واحدة.',marks:10,duration:20,instructions:'اقرأ الأسئلة جيداً قبل الإجابة.',body:'## أولاً: اختر الإجابة الصحيحة (3 ن)\n1. ................................  ( أ ) ....  ( ب ) ....  ( ج ) ....\n2. ................................  ( أ ) ....  ( ب ) ....  ( ج ) ....\n3. ................................  ( أ ) ....  ( ب ) ....  ( ج ) ....\n## ثانياً: صح أم خطأ (3 ن)\n4. ................................ ( )\n5. ................................ ( )\n6. ................................ ( )\n## ثالثاً: أجب باختصار (4 ن)\n7. ................................'},
+  {name:'اختبار شفوي / مراقبة سريعة',desc:'أسئلة قصيرة لتقويم المكتسبات.',marks:5,duration:10,instructions:'أجب في أسطر قليلة.',body:'## أسئلة\n1. ................................\n2. ................................\n3. ................................\n4. ................................\n5. ................................'}
+ ],
+ exam:[
+  {name:'امتحان فصلي — ثلاثة أجزاء',desc:'جزء معرفي، جزء تطبيقي، ووضعية إدماجية.',marks:20,duration:60,instructions:'اقرأ الموضوع كاملاً، وأجب في الورقة نفسها بخط واضح.',body:'## الجزء الأول: المعارف (6 ن)\n1. ................................\n2. ................................\n3. ................................\n## الجزء الثاني: التطبيقات (8 ن)\n4. ................................\n5. ................................\n6. ................................\n## الوضعية الإدماجية (6 ن)\nالسياق: ................................\nالتعليمة: ................................\n## سلّم التنقيط\nالمعارف /6 — التطبيقات /8 — الوضعية /6'},
+  {name:'امتحان نهاية السنة',desc:'موضوع شامل مع سلّم تنقيط.',marks:20,duration:90,instructions:'يحتوي الموضوع على أربعة تمارين مستقلة. أجب عن جميعها.',body:'## التمرين الأول (5 ن)\n................................\n## التمرين الثاني (5 ن)\n................................\n## التمرين الثالث (5 ن)\n................................\n## التمرين الرابع — وضعية مركبة (5 ن)\n................................'}
+ ]
+};
+const MIDAD_DOC_MAX_ATTACH=1200000;
+function midadDocTiles(){
+ return '<section class="card" style="margin-bottom:18px"><div class="section-title"><div><h3>واجب · بحث · اختبار · امتحان</h3><p>اختر النوع ثم ابدأ من قالب جاهز، أو ارفع قالبك، أو ولّد قالباً ثم عدّل عليه.</p></div></div><div class="quick-grid">'+
+ Object.keys(MIDAD_DOC_TYPES).map(k=>'<button class="quick" type="button" onclick="midadDocStart(\''+k+'\')"><div class="qico" style="font-size:20px;display:grid;place-items:center">'+MIDAD_DOC_TYPES[k].glyph+'</div><b>'+MIDAD_DOC_TYPES[k].label+'</b><small>'+MIDAD_DOC_TYPES[k].hint+'</small></button>').join('')+
+ '</div></section>';
+}
+function midadDocStart(type){
+ const T=MIDAD_DOC_TYPES[type];if(!T)return;
+ const opt=(fn,glyph,title,desc)=>'<button class="quick" type="button" onclick="'+fn+'" style="width:100%;text-align:right"><div class="qico" style="font-size:20px;display:grid;place-items:center">'+glyph+'</div><b>'+title+'</b><small>'+desc+'</small></button>';
+ openModal('إنجاز '+T.label,'اختر طريقة البدء، وبعدها يمكنك تعديل المحتوى كاملاً.','<div class="quick-grid" style="grid-template-columns:1fr">'+
+  opt("midadDocReady('"+type+"')",'▤','قوالب جاهزة','نماذج مُعدّة مسبقاً لـ'+T.label+' يمكنك اختيار أحدها وتعديله.')+
+  opt("midadDocUploadForm('"+type+"')",'↑','رفع قالب','ارفع ملفاً (نص، Word، PDF، صورة) واعمل عليه.')+
+  opt("midadDocGenerateForm('"+type+"')",'✦','توليد قالب','أدخل عنوان الدرس ليُولَّد قالب مناسب للمستوى.')+
+  '</div><div class="modal-actions">'+btn('إغلاق','closeModal()','light')+'</div>');
+}
+function midadDocReady(type){
+ const T=MIDAD_DOC_TYPES[type];
+ openModal('قوالب جاهزة — '+T.label,'اختر قالباً لفتحه في المحرّر وتعديله.','<div class="list">'+MIDAD_DOC_TEMPLATES[type].map((t,i)=>'<div class="list-row"><div class="list-main"><div class="mini-icon">'+T.glyph+'</div><div><b>'+esc(t.name)+'</b><small>'+esc(t.desc)+'</small></div></div><button class="text-link" type="button" onclick="midadDocUseTemplate(\''+type+'\','+i+')">استخدام ←</button></div>').join('')+'</div><div class="modal-actions">'+btn('رجوع',"midadDocStart('"+type+"')",'light')+'</div>');
+}
+function midadDocUseTemplate(type,i){
+ const t=MIDAD_DOC_TEMPLATES[type][i];if(!t)return;
+ midadDocEditor(type,{title:t.name.split('—')[0].trim(),subject:'',level:'',date:dateNow(),duration:t.duration||'',marks:t.marks||'',instructions:t.instructions||'',body:t.body||'',answers:''});
+}
+function midadDocUploadForm(type){
+ const T=MIDAD_DOC_TYPES[type];
+ openModal('رفع قالب — '+T.label,'الملفات النصية وWord تُحوَّل إلى نص قابل للتعديل. PDF والصور تُرفق للمعاينة والطباعة.','<div class="form-field full"><label>اختر الملف</label><input id="docUploadFile" type="file" accept=".txt,.md,.csv,.docx,.pdf,.png,.jpg,.jpeg,.webp"></div><p class="muted" style="font-size:11px;line-height:1.8">الحد الأقصى للمرفقات حوالي 1.2 ميغابايت.</p><div class="modal-actions">'+btn('فتح في المحرّر',"midadDocUploadGo('"+type+"')")+btn('رجوع',"midadDocStart('"+type+"')",'light')+'</div>');
+}
+async function midadReadDocx(file){
+ const buf=new Uint8Array(await file.arrayBuffer());const dv=new DataView(buf.buffer);
+ let eocd=-1;for(let i=buf.length-22;i>=0;i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}}
+ if(eocd<0)throw new Error('zip');
+ const cnt=dv.getUint16(eocd+10,true);let p=dv.getUint32(eocd+16,true);
+ for(let n=0;n<cnt;n++){
+  if(dv.getUint32(p,true)!==0x02014b50)break;
+  const method=dv.getUint16(p+10,true),csize=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);
+  const name=new TextDecoder().decode(buf.subarray(p+46,p+46+nl));
+  if(name==='word/document.xml'){
+   const start=off+30+dv.getUint16(off+26,true)+dv.getUint16(off+28,true);
+   let data=buf.subarray(start,start+csize);
+   if(method===8){const ds=new DecompressionStream('deflate-raw');const w=ds.writable.getWriter();w.write(data);w.close();data=new Uint8Array(await new Response(ds.readable).arrayBuffer())}
+   return new TextDecoder().decode(data).replace(/<\/w:p>/g,'\n').replace(/<w:tab\/>/g,'\t').replace(/<w:br[^>]*\/>/g,'\n').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&').replace(/\n{3,}/g,'\n\n').trim();
+  }
+  p+=46+nl+el+cl;
+ }
+ throw new Error('nodoc');
+}
+function midadReadDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file)})}
+async function midadDocUploadGo(type){
+ const f=document.getElementById('docUploadFile')?.files?.[0];
+ if(!f){toast('اختر ملفاً أولاً');return}
+ const ext=(f.name.split('.').pop()||'').toLowerCase();
+ const draft={title:f.name.replace(/\.[^.]+$/,''),subject:'',level:'',date:dateNow(),duration:'',marks:'',instructions:'',body:'',answers:''};
+ try{
+  if(['txt','md','csv'].includes(ext)){draft.body=(await f.text()).trim()}
+  else if(ext==='docx'){
+   try{draft.body=await midadReadDocx(f)}
+   catch(e){toast('تعذّر قراءة نص ملف Word، سيُرفق الملف للمعاينة فقط');if(f.size>MIDAD_DOC_MAX_ATTACH){toast('الملف كبير. اختر ملفاً أصغر من 1.2 ميغابايت');return}draft.attachment={name:f.name,type:f.type,data:await midadReadDataUrl(f)}}
+  }else{
+   if(f.size>MIDAD_DOC_MAX_ATTACH){toast('الملف كبير. اختر ملفاً أصغر من 1.2 ميغابايت');return}
+   draft.attachment={name:f.name,type:f.type,data:await midadReadDataUrl(f)};
+  }
+ }catch(e){toast('تعذّرت قراءة الملف');return}
+ midadDocEditor(type,draft);
+}
+function midadDocGenerateForm(type){
+ const T=MIDAD_DOC_TYPES[type];
+ openModal('توليد قالب — '+T.label,'أدخل بيانات الدرس ليُنشئ مِداد قالباً قابلاً للتعديل.','<div class="form-grid"><div class="form-field full"><label>عنوان الدرس أو الموضوع</label><input id="docGenTitle" placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label>المادة</label><input id="docGenSubject" placeholder="علوم"></div><div class="form-field"><label>المستوى</label><input id="docGenLevel" placeholder="السنة الرابعة ابتدائي"></div><div class="form-field"><label>عدد الأسئلة</label><select id="docGenCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></div><div class="form-field"><label>الصعوبة</label><select id="docGenDiff"><option>سهل</option><option selected>متوسط</option><option>متقدم</option></select></div></div><div class="modal-actions"><button class="btn primary" id="docGenBtn" type="button" onclick="midadDocGenerate(\''+type+'\')">توليد القالب</button>'+btn('رجوع',"midadDocStart('"+type+"')",'light')+'</div>');
+}
+function midadDocLocalSkeleton(type,title,count){
+ const n=Math.max(2,parseInt(count)||6),lines=k=>Array.from({length:k},(_,i)=>(i+1)+'. ................................................').join('\n');
+ if(type==='homework')return '## أولاً: تمارين حول «'+title+'»\n'+lines(n)+'\n## ثانياً: وضعية للتفكير\n................................................';
+ if(type==='research')return '## المقدمة\nعرّف بموضوع «'+title+'» وبيّن أهميته.\n## عناصر البحث\n'+Array.from({length:Math.min(n,5)},(_,i)=>(i+1)+'. العنصر '+(i+1)+': ................................').join('\n')+'\n## الخاتمة\nلخّص أهم النتائج.\n## المراجع\n1. ................................';
+ if(type==='quiz'){const a=Math.ceil(n/2);return '## أولاً: اختر الإجابة الصحيحة\n'+lines(a)+'\n## ثانياً: صح أم خطأ\n'+Array.from({length:n-a},(_,i)=>(a+i+1)+'. ................................ ( )').join('\n')}
+ const a=Math.ceil(n/2);return '## الجزء الأول: المعارف\n'+lines(a)+'\n## الجزء الثاني: التطبيقات\n'+Array.from({length:n-a},(_,i)=>(a+i+1)+'. ................................').join('\n')+'\n## الوضعية الإدماجية\nالسياق حول «'+title+'»: ................................\nالتعليمة: ................................';
+}
+async function midadDocGenerate(type){
+ const T=MIDAD_DOC_TYPES[type];
+ const title=document.getElementById('docGenTitle')?.value.trim();
+ const subject=document.getElementById('docGenSubject')?.value.trim()||'';
+ const level=document.getElementById('docGenLevel')?.value.trim()||'';
+ const count=document.getElementById('docGenCount')?.value||'6';
+ const difficulty=document.getElementById('docGenDiff')?.value||'متوسط';
+ if(!title){toast('اكتب عنوان الدرس أو الموضوع أولاً');return}
+ const defaults={homework:{marks:10},research:{marks:20},quiz:{marks:10,duration:20},exam:{marks:20,duration:60}}[type]||{};
+ const draft={title:T.label+': '+title,subject,level,date:dateNow(),duration:defaults.duration||'',marks:defaults.marks||'',instructions:'',body:'',answers:''};
+ const btnEl=document.getElementById('docGenBtn');
+ let usedAI=false;
+ if(db.aiEndpoint){
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='جارٍ التوليد...'}
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),90000);
+  try{
+   const response=await fetch(db.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'assessment',outputType:'assessment',templateRequest:true,docType:type,docTypeLabel:T.label,lessonTitle:title,title,subject,level,difficulty,activityType:'متنوع',questionCount:Number(count)})});
+   const raw=await response.text();let payload={};try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error('bad')}
+   if(!response.ok)throw new Error(payload.error||'fail');
+   const data=payload.result||payload;
+   if(!Array.isArray(data.questions)||!data.questions.length)throw new Error('empty');
+   const qs=data.questions.map(x=>({q:String(x.q||'').trim(),a:String(x.a||'').trim()})).filter(x=>x.q);
+   draft.body='## الأسئلة\n'+qs.map((x,i)=>(i+1)+'. '+x.q).join('\n');
+   draft.answers=qs.map((x,i)=>(i+1)+'. '+x.a).join('\n');
+   if(data.duration&&!draft.duration)draft.duration=data.duration;
+   usedAI=true;
+  }catch(err){toast('تعذّر التوليد بالذكاء الاصطناعي، سيُنشأ قالب مبدئي بدلاً منه')}
+  finally{clearTimeout(timer)}
+ }
+ if(!usedAI)draft.body=midadDocLocalSkeleton(type,title,count);
+ draft.instructions='اقرأ التعليمات جيداً، وأجب بخط واضح ومنظّم.';
+ if(usedAI)toast('تم توليد القالب. عدّل عليه ثم احفظه.');
+ else if(!db.aiEndpoint)toast('أُنشئ قالب مبدئي. اربط Gemini من الإعدادات للتوليد الذكي.');
+ midadDocEditor(type,draft);
+}
+function midadDocEditor(type,d,editId){
+ const T=MIDAD_DOC_TYPES[type];window.__midadDocDraft=d;
+ const att=d.attachment?'<div class="form-field full"><label>المرفق</label><div class="pill blue" style="display:inline-block">'+esc(d.attachment.name)+'</div> <button type="button" class="text-link" onclick="midadDocRemoveAttachment()">إزالة</button></div>':'';
+ openModal((editId?'تعديل ':'تحرير ')+T.label,'عدّل كل ما تريد ثم احفظ. يمكنك استعمال سطر يبدأ بـ ## لعنوان قسم.','<div class="form-grid"><div class="form-field full"><label>العنوان</label><input id="docTitle" value="'+esc(d.title)+'"></div><div class="form-field"><label>المادة</label><input id="docSubject" value="'+esc(d.subject)+'"></div><div class="form-field"><label>المستوى</label><input id="docLevel" value="'+esc(d.level)+'"></div><div class="form-field"><label>التاريخ</label><input id="docDate" type="date" value="'+esc(d.date||'')+'"></div><div class="form-field"><label>المدة بالدقائق</label><input id="docDuration" type="number" min="0" value="'+esc(d.duration)+'"></div><div class="form-field"><label>العلامة الكلية</label><input id="docMarks" type="number" min="0" value="'+esc(d.marks)+'"></div>'+att+'<div class="form-field full"><label>التعليمات</label><textarea id="docInstructions" style="min-height:60px">'+esc(d.instructions)+'</textarea></div><div class="form-field full"><label>المحتوى والأسئلة</label><textarea id="docBody" style="min-height:230px">'+esc(d.body)+'</textarea></div><div class="form-field full"><label>الإجابة النموذجية / سلّم التصحيح (اختياري، لا تُطبع مع الورقة)</label><textarea id="docAnswers" style="min-height:80px">'+esc(d.answers)+'</textarea></div></div><div class="modal-actions"><button class="btn primary" type="button" onclick="midadDocSave(\''+type+'\',\''+(editId||'')+'\')">حفظ</button><button class="btn secondary" type="button" onclick="midadDocSave(\''+type+'\',\''+(editId||'')+'\',true)">حفظ ومعاينة</button><button class="btn light" type="button" onclick="closeModal()">إلغاء</button></div>',true);
+}
+function midadDocRemoveAttachment(){
+ const d=window.__midadDocDraft;if(!d)return;
+ const type=d.docType||Object.keys(MIDAD_DOC_TYPES).find(k=>MIDAD_DOC_TYPES[k].label===d.type)||'homework';
+ midadDocCollect(d);delete d.attachment;midadDocEditor(type,d,d.__editId);
+}
+function midadDocCollect(d){
+ const g=i=>document.getElementById(i)?.value??'';
+ d.title=g('docTitle').trim();d.subject=g('docSubject').trim();d.level=g('docLevel').trim();d.date=g('docDate');d.duration=g('docDuration');d.marks=g('docMarks');d.instructions=g('docInstructions').trim();d.body=g('docBody');d.answers=g('docAnswers');
+ return d;
+}
+function midadDocSave(type,editId,preview){
+ const d=midadDocCollect(Object.assign({},window.__midadDocDraft||{}));
+ if(!d.title){toast('اكتب عنوان '+MIDAD_DOC_TYPES[type].label);return}
+ d.items=d.body.split('\n').map(x=>x.trim()).filter(x=>x&&!x.startsWith('##')).map(x=>({q:x,a:''}));
+ d.kind='doc';d.docType=type;d.type=MIDAD_DOC_TYPES[type].label;delete d.__editId;
+ let savedId=editId;
+ if(editId){const a=db.activities.find(x=>x.id===editId);if(!a)return;Object.assign(a,d)}
+ else{savedId=id();db.activities.push(Object.assign({id:savedId,created:dateNow()},d))}
+ if(!save())return;
+ closeModal();render();toast('تم حفظ '+MIDAD_DOC_TYPES[type].label);
+ if(preview)midadDocView(savedId);
+}
+function midadDocEdit(aid){
+ const a=db.activities.find(x=>x.id===aid);if(!a)return;
+ const d=Object.assign({},a);d.__editId=aid;
+ midadDocEditor(a.docType||'homework',d,aid);
+}
+function midadDocView(aid){
+ const a=db.activities.find(x=>x.id===aid);if(!a)return;
+ const blocks=String(a.body||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>l.startsWith('##')?'<h3 style="margin:16px 0 6px">'+esc(l.replace(/^#+\s*/,''))+'</h3>':'<p style="margin:4px 0;line-height:2">'+esc(l)+'</p>').join('');
+ let attach='';
+ if(a.attachment&&a.attachment.data){
+  if(/^image\//.test(a.attachment.type))attach='<img src="'+a.attachment.data+'" alt="" style="max-width:100%;border-radius:10px;margin:10px 0">';
+  else if(/pdf/.test(a.attachment.type))attach='<iframe src="'+a.attachment.data+'" style="width:100%;height:60vh;border:1px solid #ddd;border-radius:10px;margin:10px 0"></iframe>';
+  else attach='<p><a class="btn light small" download="'+esc(a.attachment.name)+'" href="'+a.attachment.data+'">تنزيل المرفق: '+esc(a.attachment.name)+'</a></p>';
+ }
+ const meta=[a.duration?'المدة: '+esc(a.duration)+' دقيقة':'',a.marks?'العلامة: '+esc(a.marks):'',a.date?'التاريخ: '+dateLabel(a.date):''].filter(Boolean).join(' · ');
+ openModal(esc(a.title),esc(a.type)+(a.subject?' — '+esc(a.subject):''),'<div class="lesson-preview"><h3>'+esc(a.type)+' — '+esc(a.subject||'')+(a.level?' — '+esc(a.level):'')+'</h3><p>الاسم: .............................................　القسم: ................　التاريخ: ................</p>'+(meta?'<p class="muted">'+meta+'</p>':'')+(a.instructions?'<p><b>التعليمات:</b> '+esc(a.instructions)+'</p>':'')+blocks+attach+'</div>'+(a.answers?'<details style="margin-top:12px"><summary>الإجابة النموذجية (لا تُطبع)</summary><div style="white-space:pre-wrap;line-height:2;margin-top:8px">'+esc(a.answers)+'</div></details>':'')+'<div class="modal-actions">'+btn('طباعة','window.print()')+' '+btn('تعديل',"closeModal();midadDocEdit('"+aid+"')",'secondary')+' '+btn('إغلاق','closeModal()','light')+'</div>',true);
+}
+
 function activitiesPage(){return pageHead('صناعة المحتوى','ركن النشاط التعليمي','اكتب عنوان الدرس وسيقترح Gemini أنشطة مناسبة وتقويماً قصيراً قابلاً للتعديل والحفظ.',btn('＋ نشاط يدوي',"openActivity()"))+
 '<section class="card" style="margin-bottom:18px"><div class="section-title"><div><h3>مساعد مِداد الذكي</h3><p>أنشطة وتقويمات مصممة وفق عنوان الدرس والمستوى الدراسي</p></div><span class="pill blue">Gemini</span></div><div class="form-grid"><div class="form-field full"><label>عنوان الدرس</label><input id="aiLessonTitle" placeholder="مثال: الحروف الأبجدية" required></div><div class="form-field"><label>المادة</label><input id="aiSubject" placeholder="اللغة العربية"></div><div class="form-field"><label>المستوى الدراسي</label><input id="aiLevel" placeholder="السنة الأولى ابتدائي"></div><div class="form-field"><label>نوع النشاط</label><select id="aiActivityType"><option>متنوع</option><option>إكمال الفراغات</option><option>توصيل ومطابقة</option><option>ترتيب</option><option>بطاقات سؤال وجواب</option><option>اختيار من متعدد</option></select></div><div class="form-field"><label>مستوى الصعوبة</label><select id="aiDifficulty"><option>سهل</option><option>متوسط</option><option>متدرج</option></select></div></div><div class="modal-actions" style="justify-content:flex-start;flex-wrap:wrap">'+btn('توليد نشاط تعليمي',"generateTeachingResource('activity')")+' '+btn('إنشاء تقويم قصير',"generateTeachingResource('assessment')",'secondary')+'</div><p class="muted" style="font-size:11px;line-height:1.8;margin-bottom:0">تحتاج الميزة إلى ربط خدمة Gemini الآمنة من الإعدادات. لا تضع مفتاح API في هذه الصفحة.</p></section>'+
+midadDocTiles()+
 '<div class="section-title"><div><h3>الأنشطة المحفوظة</h3><p>يمكنك فتحها وتعديلها وطباعتها</p></div></div><div class="cards">'+(db.activities.length?db.activities.slice().reverse().map(a=>'<article class="item-card"><div class="item-top"><div class="item-symbol">◇</div><span class="pill blue">'+esc(a.type)+'</span></div><h3>'+esc(a.title)+'</h3><p>'+esc(a.subject||'')+' · '+esc(a.level||'')+'</p><div class="item-meta"><span class="pill">'+(a.items||[]).length+' عناصر</span></div><div class="item-actions">'+btn('فتح',"viewActivity('"+a.id+"')",'light small')+(a.kind==='task'&&a.assignment?btn('تصحيح وإرسال النقاط',"window.midadOpenGradePublisher('"+a.id+"')",'primary small'):'')+btn('تعديل',"editActivity('"+a.id+"')",'secondary small')+btn('حذف',"deleteItem('activities','"+a.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد أنشطة بعد','ولّد نشاطاً من عنوان الدرس أو أنشئه يدوياً.',btn('إنشاء نشاط',"openActivity()")) )+'</div>'}
 function assessmentsPage(){return pageHead('متابعة التعلم','تقويم الطلاب','أنشئ تقويماً بالذكاء الاصطناعي أو أعدّه بنفسك.')+'<div class="toolbar">'+btn('توليد تقويم بالذكاء الاصطناعي',"openAIAssessment()",'primary')+btn('إعداد تقويم',"openAssessment()",'secondary')+'</div><div class="cards">'+(db.assessments.length?db.assessments.slice().reverse().map(a=>'<article class="item-card"><div class="item-top"><div class="item-symbol">▧</div><span class="pill rose">'+esc(a.kind||'تقويم')+'</span></div><h3>'+esc(a.title)+'</h3><p>'+esc(a.subject||'')+' · '+esc(a.level||'')+'</p><div class="item-meta"><span class="pill">'+(a.questions||[]).length+' أسئلة</span><span class="pill">'+esc(a.duration||'—')+' دقيقة</span></div><div class="item-actions">'+btn('عرض / طباعة',"viewAssessment('"+a.id+"')",'light small')+btn('تعديل',"editAssessment('"+a.id+"')",'secondary small')+btn('حذف',"deleteItem('assessments','"+a.id+"')",'danger small')+'</div></article>').join(''):empty('لا توجد تقويمات بعد','أنشئ تقويماً بالذكاء الاصطناعي أو أعدّه بنفسك.',btn('إعداد أول تقويم',"openAssessment()")) )+'</div>'}
 window.schedulePage=function(){const cid=window.scheduleFocusClass||db.classes[0]?.id||'',chosen=db.classes.find(c=>c.id===cid)||db.classes[0];if(!chosen)return pageHead('تنظيم القسم','التوقيت والبرنامج','أنشئ قسماً أولاً لإضافة التوقيت والبرنامج.')+empty('لا توجد أقسام','أنشئ قسماً أولاً.');window.scheduleFocusClass=chosen.id;const rows=chosen.timetableRows||[];return pageHead('تنظيم القسم','التوقيت والبرنامج','أنشئ جدول التوقيت أو ارفع ملفاً جاهزاً، وارفع برنامج القسم.')+'<div class="toolbar"><label class="muted" for="scheduleClass">القسم</label><select class="filter" id="scheduleClass" onchange="window.scheduleFocusClass=this.value;render()">'+db.classes.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===chosen.id?'selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div><div class="schedule-grid"><section class="card"><div class="section-title"><div><h3>التوقيت</h3><p>إنشاء جدول أسبوعي أو رفع ملف صورة أو PDF أو Word.</p></div></div><button class="btn primary" onclick="openScheduleBuilder()">＋ إنشاء جدول توقيت</button><div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المادة</th></tr></thead><tbody>'+(rows.length?rows.map(x=>'<tr><td>'+esc(x.day)+'</td><td>'+esc(x.from)+'</td><td>'+esc(x.to)+'</td><td>'+esc(x.subject)+'</td></tr>').join(''):'<tr><td colspan="4" class="muted">لم يُنشأ جدول توقيت بعد.</td></tr>')+'</tbody></table></div><div class="schedule-publish-row"><label><input type="checkbox" '+(chosen.timetablePublished?'checked':'')+' onchange="midadSetScheduleVisibility(\'timetable\',this.checked)"> نشر توقيت القسم للطلاب</label><span>إلغاء التحديد يخفيه عن الطلاب.</span></div><div class="schedule-file-line"><label class="btn light small" for="timetableUpload">↑ رفع ملف التوقيت</label><input id="timetableUpload" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" hidden onchange="midadScheduleUpload(\'timetable\',this)">'+(chosen.timetableFile?'<b>'+esc(chosen.timetableFile.name)+'</b>'+btn('فتح الملف',"midadOpenStoredFile('"+chosen.timetableFile.key+"','"+esc(chosen.timetableFile.name)+"')",'secondary small'):'')+'</div></section><section class="card"><div class="section-title"><div><h3>البرنامج</h3><p>ارفع ملف البرنامج الخاص بالقسم.</p></div></div><div class="schedule-file-line">'+(chosen.programFile?'<b>'+esc(chosen.programFile.name)+'</b>'+btn('فتح الملف',"midadOpenStoredFile('"+chosen.programFile.key+"','"+esc(chosen.programFile.name)+"')",'secondary small'):'<span class="muted">لم يُرفع ملف البرنامج بعد</span>')+'<label class="btn light small" for="programUpload">↑ رفع ملف البرنامج</label><input id="programUpload" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" hidden onchange="midadScheduleUpload(\'program\',this)"></div><div class="schedule-publish-row"><label><input type="checkbox" '+(chosen.programPublished?'checked':'')+' onchange="midadSetScheduleVisibility(\'program\',this.checked)"> نشر برنامج القسم للطلاب</label><span>إلغاء التحديد يخفيه عن الطلاب.</span></div></section></div>'};
@@ -445,8 +628,8 @@ async function generateTeachingResource(kind){
 }
 function openActivity(edit){let a=edit?db.activities.find(x=>x.id===edit):{};openModal(edit?'تعديل النشاط':'إنشاء نشاط تفاعلي','أنشئ لعبة تعليمية قابلة للعب: طابق الأسئلة أو العناصر مع الإجابات الصحيحة.','<form novalidate onsubmit="saveActivity(event,\''+(edit||'')+'\')"><div class="form-grid">'+formField('عنوان النشاط','title',a.title,'text','required')+formField('المادة','subject',a.subject)+formField('المستوى','level',a.level)+'<div class="form-field"><label>نوع النشاط</label><select name="type"><option '+(a.type==='بطاقات سؤال وجواب'?'selected':'')+'>بطاقات سؤال وجواب</option><option '+(a.type==='مراجعة سريعة'?'selected':'')+'>مراجعة سريعة</option><option '+(a.type==='مفردات ومعانٍ'?'selected':'')+'>مفردات ومعانٍ</option><option '+(a.type==='توصيل ومطابقة'?'selected':'')+'>توصيل ومطابقة</option></select></div><div class="form-field full"><label>العناصر — اكتب سؤالاً ثم الإجابة في كل سطر بهذا الشكل: السؤال | الإجابة</label><textarea name="itemsText" style="min-height:150px" placeholder="ما عاصمة الجزائر؟ | الجزائر&#10;كم عدد أيام الأسبوع؟ | سبعة">'+esc((a.items||[]).map(x=>x.q+' | '+x.a).join('\\n'))+'</textarea></div></div><div class="modal-actions"><button class="btn primary">حفظ النشاط</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')}
 function saveActivity(e,edit){e.preventDefault();let v=Object.fromEntries(new FormData(e.target).entries());v.items=v.itemsText.split('\\n').map(x=>x.split('|')).filter(x=>x[0]?.trim()).map(x=>({q:x[0].trim(),a:(x[1]||'').trim()}));delete v.itemsText;if(edit)Object.assign(db.activities.find(x=>x.id===edit),v);else db.activities.push({id:id(),...v});save();closeModal();render();toast('تم حفظ النشاط')}
-function editActivity(x){openActivity(x)}
-function viewActivity(x){let a=db.activities.find(v=>v.id===x);if(!a)return;openModal(esc(a.title),'بطاقات النشاط — '+esc(a.type),'<div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+(a.items||[]).map((it,i)=>'<div class="item-card"><span class="pill">بطاقة '+(i+1)+'</span><h3>'+esc(it.q)+'</h3><p>الإجابة: '+esc(it.a||'لم تُحدّد')+'</p></div>').join('')+'</div><div class="modal-actions">'+btn('طباعة',"window.print()")+' '+btn('إغلاق','closeModal()','light')+'</div>',true)}
+function editActivity(x){const a=db.activities.find(v=>v.id===x);if(a&&a.kind==='doc')return midadDocEdit(x);openActivity(x)}
+function viewActivity(x){let a=db.activities.find(v=>v.id===x);if(!a)return;if(a.kind==='doc')return midadDocView(x);openModal(esc(a.title),'بطاقات النشاط — '+esc(a.type),'<div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+(a.items||[]).map((it,i)=>'<div class="item-card"><span class="pill">بطاقة '+(i+1)+'</span><h3>'+esc(it.q)+'</h3><p>الإجابة: '+esc(it.a||'لم تُحدّد')+'</p></div>').join('')+'</div><div class="modal-actions">'+btn('طباعة',"window.print()")+' '+btn('إغلاق','closeModal()','light')+'</div>',true)}
 function openAIAssessment(){openModal('توليد تقويم بالذكاء الاصطناعي','أدخل عنوان الدرس والمادة والمستوى ليُنشئ مِداد أسئلة تقويمية.','<div class="form-grid"><div class="form-field full"><label>عنوان الدرس</label><input id="aiLessonTitle" required placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label>المادة</label><input id="aiSubject" placeholder="علوم"></div><div class="form-field"><label>المستوى</label><input id="aiLevel" placeholder="السنة الرابعة ابتدائي"></div><div class="form-field"><label>نوع الأسئلة</label><select id="aiActivityType"><option>متنوع</option><option>اختيار من متعدد</option><option>صح أو خطأ</option><option>أسئلة قصيرة</option></select></div><div class="form-field"><label>الصعوبة</label><select id="aiDifficulty"><option>سهل</option><option>متوسط</option><option>متقدم</option></select></div></div><div class="modal-actions"><button class="btn primary" onclick="generateTeachingResource(\'assessment\')">توليد التقويم</button><button class="btn light" onclick="closeModal()">إلغاء</button></div>')}
 function openAssessment(edit){let a=edit?db.assessments.find(x=>x.id===edit):{};openModal(edit?'تعديل التقويم':'إعداد تقويم أو اختبار','أضف الأسئلة والإجابات النموذجية ثم احفظها للطباعة.', '<form novalidate onsubmit="saveAssessment(event,\''+(edit||'')+'\')"><div class="form-grid">'+formField('عنوان التقويم','title',a.title,'text','required')+formField('المادة','subject',a.subject)+formField('المستوى','level',a.level)+'<div class="form-field"><label>النوع</label><select name="kind"><option>تقويم تشخيصي</option><option>تقويم تكويني</option><option>اختبار قصير</option><option>واجب منزلي</option></select></div>'+formField('المدة بالدقائق','duration',a.duration,'number')+'<div class="form-field full"><label>الأسئلة — سؤال في كل سطر، ويمكن وضع الإجابة بعد |</label><textarea name="questionsText" style="min-height:170px" placeholder="السؤال الأول | الإجابة النموذجية&#10;السؤال الثاني | الإجابة النموذجية">'+esc((a.questions||[]).map(q=>q.q+' | '+q.a).join('\\n'))+'</textarea></div></div><div class="modal-actions"><button class="btn primary">حفظ التقويم</button><button type="button" class="btn light" onclick="closeModal()">إلغاء</button></div></form>')}
 function saveAssessment(e,edit){e.preventDefault();let v=Object.fromEntries(new FormData(e.target).entries());v.questions=v.questionsText.split('\\n').map(x=>x.split('|')).filter(x=>x[0]?.trim()).map(x=>({q:x[0].trim(),a:(x[1]||'').trim()}));delete v.questionsText;if(edit)Object.assign(db.assessments.find(x=>x.id===edit),v);else db.assessments.push({id:id(),...v});save();closeModal();render();toast('تم حفظ التقويم')}
