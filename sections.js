@@ -19,7 +19,7 @@ window.activitiesPage=function(){
  const tasks=(db.activities||[]).filter(x=>x.kind==="task"),games=(db.activities||[]).filter(x=>x.kind!=="task");
  const cards=taskKinds.map((k,i)=>'<article class="task-kind-card" style="--task-accent:'+accents[k]+'"><div class="task-kind-top"><span class="task-kind-symbol">'+taskIcon(k)+'</span><span class="task-kind-count">'+tasks.filter(t=>t.category===k).length+' محفوظ</span></div><h3>'+k+'</h3><p>'+["تمارين للتدريب مع ملف إجابات مستقل.","أسئلة قصيرة لقياس الفهم.","امتحان منظم مع سلم تنقيط وتصحيح.","استخرج عناوين بحوث مقترحة من الدرس أو الملف."][i]+'</p><button class="btn task-kind-button" onclick="openTask(\''+k+'\')">إنشاء '+k+' ←</button><button class="btn light small" style="width:100%;margin-top:8px" onclick="openTaskTemplates(\''+k+'\')">قوالب جاهزة</button></article>').join("");
  return pageHead("تنظيم التعلمات","الأنشطة والمهام التعليمية","أنشئ نشاطاً بالذكاء الاصطناعي أو ارفع ملفاً جاهزاً وحدد الفئة المستهدفة.",'<button class="btn light" onclick="openTaskUpload()">↑ رفع نشاط</button><button class="btn primary" onclick="openTask()">＋ إنشاء نشاط</button>')+
- '<section class="task-kind-grid">'+cards+'</section><div class="section-title" style="margin-top:25px"><div><h3>الأنشطة المحفوظة</h3><p>افتح النشاط لتنزيل ملف الأسئلة وملف الإجابات.</p></div><span class="pill">'+tasks.length+' نشاط</span></div>'+
+ '<section class="task-kind-grid">'+cards+'</section>'+window.midadDesignStrip()+'<div class="section-title" style="margin-top:25px"><div><h3>الأنشطة المحفوظة</h3><p>افتح النشاط لتنزيل ملف الأسئلة وملف الإجابات.</p></div><span class="pill">'+tasks.length+' نشاط</span></div>'+
  (tasks.length?'<div class="task-saved-grid">'+tasks.slice().reverse().map(t=>'<article class="task-saved-card"><div class="task-saved-head" style="--task-accent:'+(accents[t.category]||"#66836d")+'"><i class="task-saved-icon">'+taskIcon(t.category)+'</i><span>'+escTask(t.category)+'</span><b>'+(t.category==="بحث"?"عناوين مقترحة":"رقم "+(t.number||"—"))+'</b></div><div class="task-saved-body"><h3>'+escTask(t.title)+'</h3>'+(t.lessonTitle?'<p><b>الدرس:</b> '+escTask(t.lessonTitle)+'</p>':'')+'<p><b>المادة:</b> '+escTask(t.subject||"—")+'</p><p><b>المستوى:</b> '+escTask(t.level||"—")+'</p>'+(t.uploadedFile?'<span class="task-score-chip">ملف مرفق</span>':t.category!=="بحث"?'<span class="task-score-chip">التنقيط على '+escTask(t.maxScore||20)+'</span>':'')+(t.dueDate?'<p><b>التسليم:</b> '+escTask(t.dueDate)+'</p>':'')+'<div class="item-actions"><button class="btn primary small" onclick="viewTask(\''+t.id+'\')">عرض الملفات</button><button class="btn light small" onclick="deleteTask(\''+t.id+'\')">حذف</button></div></div></article>').join("")+'</div>':empty("لا توجد أنشطة محفوظة بعد","اختر نوع النشاط من البطاقات أعلاه."))+
  (games.length?'<div class="section-title" style="margin-top:28px"><div><h3>الأنشطة التفاعلية السابقة</h3><p>احتفظنا بالأنشطة القديمة.</p></div></div><div class="cards">'+games.slice().reverse().map(a=>'<article class="item-card"><h3>'+escTask(a.title)+'</h3><p>'+escTask(a.subject||"")+' · '+escTask(a.level||"")+'</p><div class="item-actions">'+btn("فتح","viewActivity('"+a.id+"')","light small")+btn("تعديل","editActivity('"+a.id+"')","secondary small")+btn("حذف","deleteItem('activities','"+a.id+"')","danger small")+'</div></article>').join("")+'</div>':"");
 };
@@ -41,6 +41,135 @@ const TASK_TEMPLATES={
  {name:"عناوين بحوث عامة",instructions:"اختر عنواناً واحداً وأنجز بحثاً من صفحتين.",suggestions:["بحث حول موضوع الدرس: التعريف والأهمية","شخصيات أو أحداث مرتبطة بموضوع الدرس","تطبيقات الدرس في الحياة اليومية","مقارنة بين مفهومين وردا في الدرس","مشكلة مرتبطة بالدرس واقتراح حلول لها"]},
  {name:"بطاقة بحث مبسّطة",instructions:"اجمع المعلومات بمساعدة أسرتك واكتبها بأسلوبك.",suggestions:["ماذا أعرف عن موضوع الدرس؟","أرسم أو ألصق صورة عن الموضوع","ثلاث معلومات جديدة تعلمتها","من أين جمعت معلوماتي؟"]}
 ]};
+/* ===== تصاميم ورقية جاهزة (A4) ===== */
+const DZ_CSS=`
+.dz-wrap{overflow:auto;background:#e6ebe6;padding:14px;border-radius:14px;max-height:68vh}
+.dz-page{width:794px;min-height:1123px;box-sizing:border-box;margin:0 auto;background:#fff;color:#1d2a24;padding:46px 52px;font-family:Tajawal,Arial,sans-serif;font-size:15px;line-height:1.9;direction:rtl;box-shadow:0 6px 24px rgba(0,0,0,.14);position:relative}
+.dz-page[contenteditable=true]:focus,.dz-page [contenteditable=true]:focus{outline:2px dashed #7f9a86;outline-offset:3px}
+.dz-gov{text-align:center}.dz-gov b{display:block;font-size:17px}.dz-gov span{font-size:15px;font-weight:700}
+.dz-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin:14px 0 8px;font-size:14px}
+.dz-titlebar{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:2px solid var(--ac);border-bottom:2px solid var(--ac);padding:8px 4px;margin:8px 0 22px;font-weight:800}
+.dz-titlebar h1{font-size:19px;margin:0;flex:1;text-align:center}
+.dz-ex{position:relative;margin:0 0 20px;break-inside:avoid}
+.dz-ex-head{display:flex;justify-content:space-between;align-items:center}
+.dz-ex-head h3{margin:0;font-size:17px;text-decoration:underline;text-underline-offset:5px}
+.dz-pill{border:1.5px solid var(--ac);border-radius:999px;padding:0 14px;font-size:13px;font-weight:700}
+.dz-instr{font-size:14px;margin:4px 0}
+.dz-qs{counter-reset:q}
+.dz-q{display:flex;gap:8px;align-items:flex-start;counter-increment:q;margin:3px 0}
+.dz-q:before{content:counter(q);font-weight:900;flex:none;min-width:18px}
+.dz-q>div{flex:1}
+.dz-mark{flex:none;font-size:12px;color:#444;min-width:38px;text-align:left;direction:ltr}
+.dz-del{position:absolute;left:0;top:-8px;border:0;background:#f5e4e1;color:#994f49;border-radius:8px;font:inherit;font-size:11px;padding:2px 9px;cursor:pointer}
+.dz-foot{text-align:center;color:#778;font-size:13px;margin-top:26px}
+.dz-box{border:1.5px solid var(--ac);border-radius:8px;padding:10px 16px;margin-bottom:14px}
+.dz-box-top{display:flex;justify-content:space-between;font-size:13px;color:#555}
+.dz-box-title{display:block;font-size:20px;margin:6px 0 2px}
+.dz-part{background:#f2f1f8;border-right:4px solid var(--ac);padding:6px 14px;font-weight:800;margin:18px 0 12px;font-size:17px}
+.dz-d2 .dz-pill{color:var(--ac)}
+.dz-namerow{display:flex;justify-content:space-between;gap:14px;font-size:14px;margin-bottom:12px}
+.dz-cbox{border:2px solid var(--ac);border-radius:18px;text-align:center;padding:10px;margin-bottom:12px}
+.dz-cbox h1{margin:0;font-size:22px;color:var(--ac)}.dz-cbox div{font-size:13px;color:#555}
+.dz-score{width:100%;border-collapse:collapse;margin-bottom:18px;text-align:center}
+.dz-score th,.dz-score td{border:1.5px solid var(--ac);padding:4px}.dz-score th{background:#e7f2ec}
+.dz-obs{border-top:1px dashed #999;margin-top:16px;padding-top:8px;color:#555}
+.dz-hero{display:flex;justify-content:space-between;gap:16px;color:#fff;background:linear-gradient(120deg,#d9822b,#f2b04c);border-radius:20px;padding:20px 24px;margin-bottom:14px}
+.dz-hero h1{margin:4px 0;font-size:25px}.dz-hero small{opacity:.9;font-weight:700}.dz-hero p{margin:0}
+.dz-hero-side{display:grid;gap:4px;font-size:13px;align-content:center}
+.dz-note{background:#fff3e3;border-radius:12px;padding:9px 14px;margin-bottom:16px;font-size:14px;color:#7a4a14}
+.dz-d4 .dz-ex{border:1.5px solid #f1d6b4;border-radius:16px;padding:12px 16px;background:#fffaf4}
+.dz-d4 .dz-pill{background:var(--ac);color:#fff}
+.dz-cover{text-align:center}
+.dz-frame{border:3px double var(--ac);border-radius:10px;margin:46px 0 36px;padding:38px 20px}
+.dz-frame h2{margin:6px 0;color:var(--ac);font-size:22px}.dz-frame h1{font-size:32px;margin:14px 0}
+.dz-cover-info{display:grid;gap:10px;text-align:right;font-size:16px;max-width:440px;margin:0 auto 26px}
+.dz-plan h3{color:var(--ac);font-size:18px;margin:6px 0}.dz-plan li{margin:4px 0}
+.dz-strip{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px}
+.dz-card{flex:none;width:250px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:10px;box-shadow:var(--shadow-sm)}
+.dz-thumb{position:relative;width:228px;height:322px;overflow:hidden;border:1px solid #e3e9e3;border-radius:10px;background:#fff;margin:0 auto 10px}
+.dz-thumb .dz-page{position:absolute;top:0;right:0;transform:scale(.287);transform-origin:top right;pointer-events:none;box-shadow:none;min-height:1123px;height:1123px;overflow:hidden}
+.dz-thumb .dz-ui{display:none}
+.dz-card b{display:block}.dz-card small{display:block;color:var(--muted);font-size:11px;margin:3px 0 10px;line-height:1.7}
+.dz-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.dz-bar select,.dz-bar input{height:40px;border:1px solid var(--line);border-radius:11px;padding:0 10px;background:#fff}
+@media print{.dz-ui{display:none!important}}
+`;
+(function(){const s=document.createElement("style");s.textContent=DZ_CSS;document.head.appendChild(s)})();
+const DZ_SAMPLE=[
+ ["التمرين الأول",5,"التعليمات:",[["اكتب هنا نص السؤال الأول.",2],["اكتب هنا نص السؤال الثاني.",2],["اكتب هنا نص السؤال الثالث.",1]]],
+ ["التمرين الثاني",7,"السند:",[["اكتب هنا نص السؤال الأول.",3],["اكتب هنا نص السؤال الثاني.",2],["اكتب هنا نص السؤال الثالث.",2]]],
+ ["الوضعية الإدماجية",8,"السياق:",[["المهمة الأولى.",3],["المهمة الثانية.",3],["المهمة الثالثة.",2]]]
+];
+function dzExercise(title,pts,instr,qs){
+ return '<section class="dz-ex"><div class="dz-ex-head"><h3>'+title+'</h3><span class="dz-pill">('+pts+' ن)</span></div>'+(instr?'<div class="dz-instr">'+instr+'</div>':'')+'<div class="dz-qs">'+qs.map(q=>'<div class="dz-q"><div>'+q[0]+'</div><span class="dz-mark">['+q[1]+']</span></div>').join('')+'</div></section>';
+}
+const dzEx=(a,b)=>DZ_SAMPLE.slice(a,b).map(e=>dzExercise(...e)).join('');
+const dzGov='<header class="dz-gov"><b>الجمهورية الجزائرية الديمقراطية الشعبية</b><span>وزارة التربية الوطنية</span></header>';
+const DZ_DESIGNS=[
+ {name:"الاختبار الرسمي",desc:"ترويسة الجمهورية ووزارة التربية، تمارين بنقاط جانبية.",ac:"#222",kind:"اختبار",title:"اختبار الفصل الأول",build:d=>dzGov+'<div class="dz-meta"><div><b>مديرية التربية لولاية:</b> '+d.directorate+'</div><div><b>السنة الدراسية:</b> '+d.year+'</div><div><b>المؤسسة:</b> '+d.institution+'</div><div><b>المستوى:</b> '+d.level+'</div></div><div class="dz-titlebar"><h1>'+d.title+' في مادة '+d.subject+'</h1><span><b>المدة:</b> '+d.duration+'</span></div><div class="dz-body">'+dzEx(0,3)+'</div><div class="dz-foot">بالتوفيق والنجاح</div>'},
+ {name:"الأجزاء والوضعية الإدماجية",desc:"إطار عنوان وأشرطة أجزاء ملوّنة مثل الاختبارات الفصلية.",ac:"#6b63b5",kind:"امتحان",title:"اختبار الفصل الأول",build:d=>'<div class="dz-box"><div class="dz-box-top"><span><b>المؤسسة:</b> '+d.institution+'</span><span>التاريخ: ..........</span></div><b class="dz-box-title">'+d.title+'</b><div>'+d.subject+' — '+d.level+'</div><small>'+d.year+' · المدة: '+d.duration+'</small></div><div class="dz-body"><div class="dz-part">الجزء الأول (12 نقطة)</div>'+dzEx(0,2)+'<div class="dz-part">الوضعية الإدماجية (08 نقاط)</div>'+dzEx(2,3)+'</div>'},
+ {name:"فرض محروس مدمج",desc:"سطر الاسم وجدول النقاط وخانة الملاحظة، مناسب لصفحة واحدة.",ac:"#2f7d5b",kind:"اختبار",title:"الفرض المحروس الأول",build:d=>'<div class="dz-namerow"><span>الاسم واللقب: ........................</span><span>القسم: ..........</span><span>الرقم: ......</span></div><div class="dz-cbox"><h1>'+d.title+'</h1><div>'+d.subject+' · '+d.level+' · المدة: '+d.duration+'</div><div>'+d.institution+' · '+d.year+'</div></div><table class="dz-score"><tr><th>التمرين 1</th><th>التمرين 2</th><th>التمرين 3</th><th>المجموع</th></tr><tr><td>/ 5</td><td>/ 7</td><td>/ 8</td><td>/ 20</td></tr></table><div class="dz-body">'+dzEx(0,3)+'</div><div class="dz-obs">الملاحظة: ......................................................</div>'},
+ {name:"واجب منزلي ملوّن",desc:"ترويسة بألوان دافئة وبطاقات تمارين للتلاميذ الصغار.",ac:"#d9822b",kind:"واجب منزلي",title:"واجب منزلي",build:d=>'<div class="dz-hero"><div><small>'+d.subject+' · '+d.level+'</small><h1>'+d.title+'</h1><p>'+d.institution+'</p></div><div class="dz-hero-side"><span>التاريخ: ..........</span><span>الاسم: ..............</span></div></div><div class="dz-note">عزيزي التلميذ: أنجز الواجب بخط واضح على كراس الأقسام، وسلّمه في الموعد المحدد.</div><div class="dz-body">'+dzEx(0,2)+'</div><div class="dz-foot">أحسنت، واصل اجتهادك</div>'},
+ {name:"غلاف بحث مدرسي",desc:"صفحة غلاف مؤطرة مع خطة بحث جاهزة.",ac:"#3b6ea8",kind:"بحث",title:"عنوان البحث",build:d=>'<div class="dz-cover">'+dzGov+'<div class="dz-frame"><small>بحث في مادة</small><h2>'+d.subject+'</h2><h1>'+d.title+'</h1></div><div class="dz-cover-info"><div><b>إعداد التلميذ(ة):</b> ........................</div><div><b>القسم:</b> '+d.level+'</div><div><b>تحت إشراف الأستاذ(ة):</b> '+d.teacher+'</div></div><div>'+d.institution+' — '+d.year+'</div></div><section class="dz-ex dz-plan" style="margin-top:34px"><h3>خطة البحث</h3><ol><li>المقدمة: التعريف بالموضوع وأهميته.</li><li>العنصر الأول: ................</li><li>العنصر الثاني: ................</li><li>العنصر الثالث: ................</li><li>الخاتمة: أهم النتائج.</li><li>قائمة المراجع.</li></ol></section>'}
+];
+function dzPageHtml(i,d){return '<div class="dz-page dz-d'+(i+1)+'" style="--ac:'+DZ_DESIGNS[i].ac+'">'+DZ_DESIGNS[i].build(d)+'</div>'}
+function dzDefaults(i){return {institution:db.school||"..............",directorate:"..............",level:(db.classes&&db.classes[0]?.level)||"..............",subject:"..............",year:db.year||"2026 / 2027",duration:"ساعة واحدة",title:DZ_DESIGNS[i].title,teacher:db.teacher||".............."}}
+window.midadDesignStrip=function(){
+ return '<div class="section-title" style="margin-top:25px"><div><h3>تصاميم جاهزة</h3><p>اختر ورقة جاهزة، عدّل نصوصها مباشرة، ثم اطبعها أو أرسلها لقسمك.</p></div></div><div class="dz-strip">'+DZ_DESIGNS.map((d,i)=>'<article class="dz-card"><div class="dz-thumb">'+dzPageHtml(i,dzDefaults(i))+'</div><b>'+escTask(d.name)+'</b><small>'+escTask(d.desc)+'</small><button class="btn primary small" style="width:100%" onclick="openDesignForm('+i+')">استخدام التصميم</button></article>').join("")+'</div>';
+};
+window.openDesignForm=function(i){
+ const D=DZ_DESIGNS[i],d=dzDefaults(i),f=(id,l,v,full)=>'<div class="form-field'+(full?' full':'')+'"><label>'+l+'</label><input id="dzf_'+id+'" value="'+escTask(v)+'"></div>';
+ openModal(D.name,"أدخل بيانات الورقة، وستظهر في المحرّر قابلة للتعديل.",'<div class="form-grid">'+f("title","عنوان الورقة",d.title,true)+f("institution","المؤسسة",d.institution)+f("directorate","مديرية التربية لولاية",d.directorate)+f("level","المستوى",d.level)+f("subject","المادة",d.subject)+f("year","السنة الدراسية",d.year)+f("duration","المدة",d.duration)+'<div class="form-field"><label>النوع</label><select id="dzf_kind">'+taskKinds.map(k=>'<option'+(k===D.kind?' selected':'')+'>'+k+'</option>').join("")+'</select></div></div><div class="modal-actions"><button class="btn primary" onclick="dzOpenFromForm('+i+')">فتح في المحرّر</button><button class="btn light" onclick="closeModal()">إلغاء</button></div>');
+};
+window.dzOpenFromForm=function(i){
+ const g=id=>escTask(($("dzf_"+id)?.value||"").trim()||".............."),d={teacher:db.teacher||".............."};
+ ["title","institution","directorate","level","subject","year","duration"].forEach(k=>d[k]=g(k));
+ const kind=$("dzf_kind")?.value||DZ_DESIGNS[i].kind;
+ window.midadDesignEditor(i,d,kind,null,null);
+};
+function dzFit(root){const p=root?.querySelector(".dz-page");if(p)p.style.zoom=Math.min(1,(Math.min(window.innerWidth,1100)-80)/794)}
+function dzCleanHtml(page){const c=page.cloneNode(true);c.querySelectorAll(".dz-ui").forEach(e=>e.remove());c.removeAttribute("contenteditable");c.style.zoom="";return c.outerHTML}
+window.midadDesignEditor=function(i,d,kind,html,existingId){
+ window.__dz={i,d,kind,existingId};
+ const cls=(db.classes||[]).map(c=>'<option value="'+escTask(c.id)+'">'+escTask(c.name)+'</option>').join("");
+ const ex=existingId?(db.activities||[]).find(a=>a.id===existingId):null;
+ openModal("محرّر الورقة","انقر على أي نص لتعديله مباشرة. يمكنك إضافة تمرين أو حذفه.",'<div class="dz-bar"><select id="dzClass"><option value="">حفظ بدون إرسال للطلبة</option>'+cls+'</select>'+(kind==="واجب منزلي"?'<input id="dzDue" type="date" title="موعد التسليم" value="'+escTask(ex?.dueDate||"")+'">':'')+'<button class="btn light small" type="button" onclick="dzAddExercise()">＋ تمرين</button><button class="btn light small" type="button" onclick="dzPrint()">طباعة / PDF</button><button class="btn primary small" type="button" onclick="dzSave()">حفظ</button></div><div class="dz-wrap" id="dzWrap">'+(html||dzPageHtml(i,d))+'</div>',true);
+ const wrap=$("dzWrap"),page=wrap.querySelector(".dz-page");
+ page.setAttribute("contenteditable","true");
+ page.querySelectorAll(".dz-ex").forEach(e=>{if(!e.querySelector(".dz-del"))dzAddDel(e)});
+ if(ex?.assignment?.classId&&$("dzClass"))$("dzClass").value=ex.assignment.classId;
+ dzFit(wrap);
+};
+function dzAddDel(e){const b=document.createElement("button");b.type="button";b.className="dz-ui dz-del";b.setAttribute("contenteditable","false");b.textContent="حذف التمرين";b.onclick=()=>e.remove();e.appendChild(b)}
+window.dzAddExercise=function(){
+ const body=document.querySelector("#dzPage, #dzWrap .dz-page .dz-body")||document.querySelector("#dzWrap .dz-page");if(!body)return;
+ const t=document.createElement("div");t.innerHTML=dzExercise("تمرين جديد",0,"التعليمات:",[["اكتب هنا نص السؤال.",0]]);
+ const el=t.firstElementChild;dzAddDel(el);(document.querySelector("#dzWrap .dz-body")||body).appendChild(el);
+};
+window.dzPrint=function(){const p=document.querySelector("#dzWrap .dz-page");if(p)window.dzPrintHtml(dzCleanHtml(p))};
+window.dzPrintHtml=function(html){
+ const w=window.open("","_blank");if(!w){toast("اسمح بفتح نافذة الطباعة من المتصفح.");return}
+ w.document.write('<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>مِداد</title><link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"><style>body{margin:0;background:#fff}'+DZ_CSS+'.dz-page{box-shadow:none!important;margin:0!important;zoom:1!important}@page{size:A4;margin:0}</style>'+html+'</html>');
+ w.document.close();w.focus();setTimeout(()=>w.print(),700);
+};
+window.dzSave=function(){
+ const st=window.__dz,page=document.querySelector("#dzWrap .dz-page");if(!st||!page)return;
+ const html=dzCleanHtml(page),classId=$("dzClass")?.value||"",dueDate=$("dzDue")?.value||"";
+ const assignment=classId?{scope:"class",classId,studentId:""}:null;
+ const subject=(page.textContent.match(/مادة\s+([^\n·—]+)/)||[])[1]||st.d.subject||"";
+ db.activities=db.activities||[];
+ if(st.existingId){const a=db.activities.find(x=>x.id===st.existingId);if(!a)return;Object.assign(a,{designHtml:html,assignment,dueDate:st.kind==="واجب منزلي"?dueDate:""})}
+ else{const number=numberFor(st.kind);db.activities.push({id:taskId(),kind:"task",category:st.kind,number,title:(st.d.title||DZ_DESIGNS[st.i].title)+" — "+(st.d.subject||""),subject:st.d.subject||subject,level:st.d.level||"",maxScore:20,dueDate:st.kind==="واجب منزلي"?dueDate:"",assignment,designHtml:html,designIndex:st.i,generatedData:{},created:new Date().toISOString()})}
+ if(!save())return;
+ closeModal();render();toast(classId?"تم حفظ الورقة وأُرسلت لطلبة القسم.":"تم حفظ الورقة. اختر قسماً عند التعديل لإرسالها للطلبة.");
+};
+window.midadViewDesign=function(id,readonly){
+ const t=(db.activities||[]).find(x=>x.id===id&&x.designHtml);if(!t)return;
+ const target=t.assignment?"موجه لقسم: "+((db.classes||[]).find(c=>c.id===t.assignment.classId)?.name||"غير محدد"):"غير مرسل للطلبة";
+ openModal(escTask(t.title),readonly?(t.dueDate?"آخر أجل: "+escTask(t.dueDate):"ورقة النشاط"):escTask(target),'<div class="dz-bar"><button class="btn light small" type="button" onclick="dzPrintHtml(document.querySelector(\'#dzView .dz-page\').outerHTML)">طباعة / PDF</button>'+(readonly?'':'<button class="btn secondary small" type="button" onclick="midadEditDesign(\''+t.id+'\')">تعديل الورقة</button>')+'<button class="btn light small" type="button" onclick="closeModal()">إغلاق</button></div><div class="dz-wrap" id="dzView">'+t.designHtml+'</div>',true);
+ dzFit($("dzView"));
+};
+window.midadEditDesign=function(id){const t=(db.activities||[]).find(x=>x.id===id&&x.designHtml);if(!t)return;window.midadDesignEditor(t.designIndex||0,{},t.category,t.designHtml,id)};
 function midadScaleTemplatePoints(questions,total){
  const w=questions.map(q=>Math.max(.1,Number(q[2])||1)),sum=w.reduce((a,b)=>a+b,0);
  const pts=w.map(x=>Math.round(total*x/sum*2)/2);
@@ -182,7 +311,7 @@ window.generateTaskFromSource=async function(e){
  finally{clearTimeout(timer);if(button?.isConnected){button.disabled=false;button.textContent=originalButtonText}}
  return false;
 };
-window.viewTask=function(id){
+window.viewTask=function(id){if((db.activities||[]).some(x=>x.id===id&&x.designHtml))return window.midadViewDesign(id);
  const t=(db.activities||[]).find(x=>x.id===id&&x.kind==="task");if(!t)return;const d=t.generatedData||{},research=t.category==="بحث";
  const body=t.uploadedFile?'<div class="task-file-heading questions"><span>↑</span><div><small>نشاط مرفوع · '+escTask(t.category)+'</small><h3>'+escTask(t.uploadedFile.name)+'</h3><p>'+escTask(t.subject)+' · '+escTask(t.level)+'</p></div></div><a class="btn primary" target="_blank" rel="noopener" href="'+(t.uploadedFile.url||t.uploadedFile.data)+'" download="'+escTask(t.uploadedFile.name)+'">تنزيل الملف المرفوع</a>':research?'<div class="task-file-heading research"><span>⌕</span><div><small>عناوين بحوث مقترحة</small><h3>'+escTask(t.subject)+'</h3></div></div><ol class="task-research-list">'+(d.suggestions||[]).map(x=>'<li>'+escTask(x)+'</li>').join("")+'</ol>':
  '<div class="task-file-heading questions"><span>01</span><div><small>'+escTask(t.category)+' رقم '+escTask(t.number)+'</small><h3>'+escTask(t.subject)+'</h3><p>'+escTask(t.level)+' · العلامة على '+escTask(t.maxScore)+'</p></div></div><h4>معاينة الأسئلة</h4><ol class="task-question-list">'+(d.questions||[]).map(q=>'<li>'+escTask(q.question)+' <b>('+escTask(q.points)+' ن)</b></li>').join("")+'</ol><div class="task-file-heading answers"><span>✓</span><div><small>ملف التصحيح</small><h3>الإجابات النموذجية وسلم التنقيط</h3></div></div><ol class="task-answer-list">'+(d.questions||[]).map(q=>'<li><b>'+escTask(q.question)+'</b><p>'+escTask(q.answer)+'</p><span>'+escTask(q.points)+' / '+escTask(t.maxScore)+' ن</span></li>').join("")+'</ol><p class="task-total-score">المجموع: '+escTask(t.maxScore)+' / '+escTask(t.maxScore)+'</p>';
