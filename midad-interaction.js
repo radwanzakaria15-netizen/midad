@@ -72,7 +72,7 @@ function attHtml(at,small){
 /* ===== واجهة الطالب ===== */
 const tile='<button class="student-home-tile tile-announce" onclick="window.midadStudentTab(\'announcements\')"><span class="student-tile-icon"><svg viewBox="0 0 48 48"><path d="M8 20v8a2 2 0 0 0 2 2h6l14 8V10l-14 8h-6a2 2 0 0 0-2 2z"/><path d="M37 17a9 9 0 0 1 0 14"/></svg></span><strong>الإعلانات</strong><small>إعلانات الأستاذ والتصويت</small></button>';
 const css=document.createElement("style");
-css.textContent="body.student-mode .tile-announce .student-tile-icon{background:#f3e8e4;color:#a46e65}.mdvote{justify-content:space-between!important;width:100%}.mobile-nav button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}@media(max-width:760px){.mobile-nav{grid-auto-flow:column!important;grid-template-columns:none!important;grid-auto-columns:minmax(0,1fr)!important}.mobile-nav button{font-size:9px!important}}";
+css.textContent="@keyframes mdIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}@keyframes mdFade{from{opacity:0}to{opacity:1}}.mdreveal{animation:mdIn .7s cubic-bezier(.2,.8,.2,1) both}@media(prefers-reduced-motion:reduce){.mdreveal{animation:none}}body.student-mode .tile-announce .student-tile-icon{background:#f3e8e4;color:#a46e65}.mdvote{justify-content:space-between!important;width:100%}.mobile-nav button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}@media(max-width:760px){.mobile-nav{grid-auto-flow:column!important;grid-template-columns:none!important;grid-auto-columns:minmax(0,1fr)!important}.mobile-nav button{font-size:9px!important}}";
 document.head.appendChild(css);
 const annsFor=st=>{
  const base=srvOk?srvAnn:(db.announcements||[]).filter(a=>a.classId===st.classId);
@@ -84,7 +84,7 @@ function annHtml(st){
  return list.map(a=>{
   const votes=of("vote",a.id),mine=votes.find(v=>v.studentId===st.id),cm=of("comment",a.id);
   const poll=a.kind==="poll"?'<div style="display:grid;gap:8px;margin:12px 0">'+(a.options||[]).map(o=>{const n=votes.filter(v=>v.data.optionId===o.id).length,p=votes.length?Math.round(n*100/votes.length):0;return '<button class="btn mdvote '+(mine&&mine.data.optionId===o.id?"primary":"light")+'" onclick="midadVote(\''+a.id+'\',\''+o.id+'\')"><span>'+E(o.text)+'</span><b>'+n+' · '+p+'%</b></button>'}).join("")+'<small class="muted">'+votes.length+' صوت'+(mine?" · يمكنك تغيير صوتك":"")+'</small></div>':"";
-  const cbox=a.commentsOpen===false?'<p class="muted" style="font-size:12px;margin:8px 0 0">التعليقات مغلقة لهذا الإعلان.</p>':'<div style="display:flex;gap:8px;margin-top:8px"><input class="field-search" id="cm_'+a.id+'" maxlength="500" placeholder="اكتب تعليقاً..."><button class="btn primary small" onclick="midadComment(\''+a.id+'\')">إرسال</button></div>';
+  const cbox=a.commentsOpen===false?'<p class="muted" style="font-size:12px;margin:8px 0 0">التعليقات مغلقة لهذا الإعلان.</p>':'<div style="display:flex;gap:8px;margin-top:8px;align-items:center;max-width:100%"><input class="field-search" style="flex:1 1 auto;min-width:0;width:auto" id="cm_'+a.id+'" maxlength="500" placeholder="اكتب تعليقاً..."><button class="btn primary small" style="flex:none" onclick="midadComment(\''+a.id+'\')">إرسال</button></div>';
   return '<article class="card" style="margin-bottom:14px"><span class="pill '+(a.kind==="poll"?"blue":"")+'">'+(a.kind==="poll"?"تصويت":"إعلان")+'</span> <small class="muted">'+day(a.created)+'</small><h3 style="margin:8px 0">'+E(a.title)+'</h3>'+(a.body?'<p style="white-space:pre-wrap;line-height:1.9">'+E(a.body)+'</p>':"")+attHtml(a.attachment)+poll+cm.map(c=>'<p style="padding:8px 0;border-top:1px solid var(--line);margin:0"><b>'+E(c.studentName)+':</b> '+E(c.data.text)+'</p>').join("")+cbox+'</article>';
  }).join("");
 }
@@ -175,12 +175,28 @@ async function syncOne(c,quiet,force){
  if(!await pushSched(b,quiet))return false;
  sg[c.id]=h;try{localStorage.setItem(SIG,JSON.stringify(sg))}catch(e){}return true;
 }
+const tried=new Set();
+const readURL=f=>new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>ok("");r.readAsDataURL(f)});
+async function healFiles(){ /* ملفات رُفعت سابقاً وبقيت في جهاز الأستاذ فقط: نرفعها الآن للسحابة */
+ if(typeof midadGetFile!=="function")return false;let ch=false;
+ for(const f of allSched()){
+  if(f.url||f.data||f.link||!f.key||tried.has(f.key))continue;tried.add(f.key);
+  let bl=null;try{bl=await midadGetFile(f.key)}catch(e){}
+  if(!bl)continue;
+  const file=new File([bl],f.name||"file",{type:f.type||bl.type||""});let up=null;
+  try{if(window.midadUploadToCloud)up=await midadUploadToCloud(file,"schedule")}catch(e){console.error(e)}
+  if(up){f.url=up.url;ch=true}
+  else if(file.size<=600000){const d=await readURL(file);if(d){f.data=d;ch=true}}
+  else toast("تعذر رفع «"+(f.name||"ملف")+"» للسحابة فلن يراه الطلبة. أعد رفعه بعد التحقق من الحاوية midad-files.");
+ }
+ return ch;
+}
 let schedBusy=false,stm=0;
 async function syncSchedules(){
  if(stu()||schedBusy||!window.midadSupabase||!(db.classes||[]).length)return;
  schedBusy=true;
  try{
-  let changed=false;
+  let changed=await healFiles();
   for(const c of db.classes){ /* وجود محتوى ولم يُضبط خيار النشر قط = ننشره (الأستاذ يستطيع إخفاءه بإلغاء التحديد) */
    if(c.timetablePublished===undefined&&((c.timetableRows||[]).length||filesOf(c,"timetable").length)){c.timetablePublished=true;changed=true}
    if(c.programPublished===undefined&&filesOf(c,"program").length){c.programPublished=true;changed=true}
@@ -219,11 +235,17 @@ if(SU)window.midadScheduleUpload=async function(kind,input){
 /* عرض التوقيت/البرنامج عند الطالب من الخادم */
 function fileHtml(f){
  const src=f.url||f.data||"",nm=E(f.name||"ملف");let h="";
- if(src&&isImg(f))h+='<a href="'+E(src)+'" target="_blank" rel="noopener"><img src="'+E(src)+'" alt="'+nm+'" style="width:100%;border-radius:14px;border:1px solid var(--line);margin:8px 0"></a>';
+ if(src&&isImg(f))h+='<img class="mdreveal" src="'+E(src)+'" alt="'+nm+'" loading="lazy" onclick="midadZoom(this.src)" style="display:block;width:100%;border-radius:14px;border:1px solid var(--line);margin:8px 0;cursor:zoom-in">';
  else if(src)h+='<div class="schedule-entry"><b>'+nm+'</b><a class="btn primary small" href="'+E(src)+'" download="'+nm+'" target="_blank" rel="noopener">تحميل</a></div>';
  if(f.link)h+='<a class="btn light small" target="_blank" rel="noopener" href="'+E(f.link)+'">فتح الرابط ↗</a>';
  return h;
 }
+window.midadZoom=function(src){
+ const o=document.createElement("div");
+ o.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(10,18,24,.9);display:flex;align-items:center;justify-content:center;padding:12px;animation:mdFade .25s ease both";
+ o.innerHTML='<img src="'+E(src)+'" style="max-width:100%;max-height:100%;border-radius:12px;animation:mdIn .4s ease both">';
+ o.onclick=()=>o.remove();document.body.appendChild(o);
+};
 function secHtml(title,sec){
  if(!sec)return"";
  const rows=sec.rows&&sec.rows.length?'<div class="table-wrap"><table><thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المادة</th></tr></thead><tbody>'+sec.rows.map(r=>'<tr><td>'+E(r.day)+'</td><td>'+E(r.from)+'</td><td>'+E(r.to)+'</td><td>'+E(r.subject)+'</td></tr>').join("")+'</tbody></table></div>':"";
