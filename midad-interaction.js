@@ -6,12 +6,23 @@ const $=s=>document.querySelector(s),E=v=>esc(v==null?"":String(v)),stu=()=>docu
 const day=d=>d?new Date(d).toLocaleDateString("ar-DZ"):"";
 const isImg=f=>/^image\//.test(f.type||"")||/\.(png|jpe?g|webp|gif)$/i.test(f.name||"");
 const ICON='<svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h3l7 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M17.5 8.5a5 5 0 0 1 0 7"/></svg>';
-let code="",remote=[],srvAnn=[],srvOk=false;
+let code="",remote=[],srvAnn=[],srvOk=false,srvSched=null,srvErr="";
+/* رمز الطالب: قد يضيع عند استعادة الجلسة أو الدخول بالبصمة/Google فيبقى كل شيء فارغاً، لذا نستنتجه من أكثر من مصدر */
+const guessCode=()=>{
+ const i=$("#studentLoginCode"),v=i&&String(i.value||"").replace(/\D/g,"");if(/^\d{6}$/.test(v||""))return v;
+ for(const S of [sessionStorage,localStorage]){try{for(let n=0;n<S.length;n++){const k=S.key(n)||"";
+  if(!/student|portal|code/i.test(k)||/^midad_(local_actions|pk|sched)/.test(k))continue;
+  const raw=S.getItem(k)||"",m=raw.match(/^\s*"?(\d{6})"?\s*$/)||raw.match(/"studentCode"\s*:\s*"(\d{6})"/)||raw.match(/"code"\s*:\s*"(\d{6})"/);if(m)return m[1]}}catch(e){}}
+ return"";
+};
+const getCode=()=>code||(stu()?(code=guessCode()):"");
+window.midadSetStudentCode=c=>{code=String(c||"").replace(/\D/g,"");srvOk=false};
+window.midadGetStudentCode=getCode;
 const loc=()=>{try{return JSON.parse(localStorage.getItem(LK)||"[]")}catch(e){return[]}};
 const kOf=a=>a.type==="comment"?a.id:a.type+":"+a.studentId+":"+a.refId;
 const all=()=>{const m=new Map();remote.concat(loc()).forEach(a=>m.set(a.k,a));return[...m.values()].sort((a,b)=>(a.created||"").localeCompare(b.created||""))};
 const of=(t,r)=>all().filter(a=>a.type===t&&a.refId===r);
-const me=()=>(db.students||[]).find(s=>s.studentCode===code);
+const me=()=>{const c=getCode();return c?(db.students||[]).find(s=>String(s.studentCode)===c):null};
 const tasksOf=st=>(db.activities||[]).filter(x=>x.kind==="task"&&x.assignment&&((x.assignment.scope==="student"&&x.assignment.studentId===st.id)||(x.assignment.scope!=="student"&&x.assignment.classId===st.classId))).sort((a,b)=>(b.created||"").localeCompare(a.created||""));
 const tok=async()=>(await window.midadSupabase.auth.getSession()).data.session.access_token;
 
@@ -19,15 +30,16 @@ const tok=async()=>(await window.midadSupabase.auth.getSession()).data.session.a
 async function pull(){
  try{
   let r;
-  if(stu()){if(!code)return;r=await fetch(API+"?code="+code,{cache:"no-store"})}
+  if(stu()){const c=getCode();if(!c)return;r=await fetch(API+"?code="+c,{cache:"no-store"})}
   else r=await fetch(API,{headers:{Authorization:"Bearer "+await tok()},cache:"no-store"});
-  if(r.ok){const j=await r.json();remote=j.actions||[];if(stu()){srvAnn=j.announcements||[];srvOk=true}}
- }catch(e){}
+  if(r.ok){const j=await r.json();remote=j.actions||[];if(stu()){srvAnn=j.announcements||[];srvSched=j.schedule||null;srvOk=true;srvErr=""}}
+  else if(stu()){const p=await r.json().catch(()=>({}));srvErr=p.error||("خطأ "+r.status)}
+ }catch(e){if(stu())srvErr="تعذر الاتصال بالخادم"}
 }
 async function send(a){
  a.k=kOf(a);
  try{
-  const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code,action:a})});
+  const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:getCode(),action:a})});
   if(r.ok){const j=await r.json(),x=j.action||a;remote=remote.filter(y=>y.k!==x.k);remote.push(x);return true}
   if(r.status!==404&&r.status<500){const p=await r.json().catch(()=>({}));toast(p.error||"رُفض الطلب.");return false}
  }catch(e){}
@@ -68,7 +80,7 @@ const annsFor=st=>{
 };
 function annHtml(st){
  const list=annsFor(st);
- if(!list.length)return empty("لا توجد إعلانات","ستظهر هنا إعلانات الأستاذ وصناديق التصويت.");
+ if(!list.length)return(srvErr?'<p class="muted" style="font-size:12px;text-align:center">تعذر تحميل الإعلانات: '+E(srvErr)+'</p>':"")+empty("لا توجد إعلانات","ستظهر هنا إعلانات الأستاذ وصناديق التصويت.");
  return list.map(a=>{
   const votes=of("vote",a.id),mine=votes.find(v=>v.studentId===st.id),cm=of("comment",a.id);
   const poll=a.kind==="poll"?'<div style="display:grid;gap:8px;margin:12px 0">'+(a.options||[]).map(o=>{const n=votes.filter(v=>v.data.optionId===o.id).length,p=votes.length?Math.round(n*100/votes.length):0;return '<button class="btn mdvote '+(mine&&mine.data.optionId===o.id?"primary":"light")+'" onclick="midadVote(\''+a.id+'\',\''+o.id+'\')"><span>'+E(o.text)+'</span><b>'+n+' · '+p+'%</b></button>'}).join("")+'<small class="muted">'+votes.length+' صوت'+(mine?" · يمكنك تغيير صوتك":"")+'</small></div>':"";
@@ -78,10 +90,13 @@ function annHtml(st){
 }
 function draw(){const b=$("#annBox"),st=me();if(b&&st)b.innerHTML=annHtml(st)}
 async function annView(){
- const st=me(),shell=$(".student-detail-shell");if(!st||!shell)return;
+ const st=me();let shell=$(".student-detail-shell");
+ if(!shell&&$("#main")){shell=document.createElement("div");shell.className="student-detail-shell";$("#main").appendChild(shell)}
+ if(!st||!shell)return;
+ if($("#annBox"))$("#annBox").remove();
  const h=$("#main .page-head h1");if(h)h.textContent="الإعلانات";
  const box=document.createElement("div");box.id="annBox";
- shell.querySelector(".student-detail-actions").after(box);
+ const act=shell.querySelector(".student-detail-actions");if(act)act.after(box);else shell.appendChild(box);
  box.innerHTML=annHtml(st);await pull();draw();
 }
 window.midadVote=async function(aid,oid){const st=me();if(!st)return;if(await send({type:"vote",studentId:st.id,studentName:st.name,classId:st.classId,refId:aid,data:{optionId:oid},created:new Date().toISOString()}))draw()};
@@ -132,19 +147,100 @@ async function fixSchedule(){
   if(sib.some(n=>n.classList.contains("mdfile")))sib.filter(n=>n.classList.contains("empty")).forEach(n=>n.remove());
  });
 }
+/* ===== نشر التوقيت والبرنامج للطلبة =====
+   كان الملف يُحفظ في متصفح الأستاذ فقط (IndexedDB) ولا يصل للطلبة. الآن يُرفع للسحابة ويُنشر عبر الخادم لقسمه. */
+const SIG="midad_sched_sig",SV=window.save;
+const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return String(h)};
+const sigs=()=>{try{return JSON.parse(localStorage.getItem(SIG)||"{}")}catch(e){return{}}};
+const allSched=()=>{const sa=db.scheduleAssets||{};return[...(sa.timetableFiles||[]),...(sa.programFiles||[]),...(db.classes||[]).flatMap(c=>[c.timetableFile,c.programFile,...(c.timetableFiles||[]),...(c.programFiles||[])])].filter(Boolean)};
+const filesOf=(c,kind)=>{
+ const sa=db.scheduleAssets||{},seen=new Set();
+ return[c[kind+"File"],...(c[kind+"Files"]||[]),...(sa[kind+"Files"]||[]).filter(x=>x&&(x.classId===c.id||(x.classIds||[]).includes(c.id)))]
+  .filter(x=>x&&!seen.has(x.key||x.name)&&seen.add(x.key||x.name));
+};
+const pubFile=f=>({name:f.name,type:f.type||"",url:f.url||"",link:f.link||"",data:f.data||""});
+const schedBody=c=>({classId:c.id,
+ timetable:c.timetablePublished?{rows:c.timetableRows||[],files:filesOf(c,"timetable").map(pubFile)}:null,
+ program:c.programPublished?{rows:[],files:filesOf(c,"program").map(pubFile)}:null});
+async function pushSched(body,quiet){
+ try{
+  const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json",Authorization:"Bearer "+await tok()},body:JSON.stringify({schedule:body})});
+  if(r.ok)return true;
+  const p=await r.json().catch(()=>({}));if(!quiet)toast((p.error||"تعذر نشر التوقيت")+" — لم يصل إلى الطلبة.");return false;
+ }catch(e){if(!quiet)toast("تعذر الاتصال بالخادم: لم يصل التوقيت إلى الطلبة بعد.");return false}
+}
+async function syncOne(c,quiet,force){
+ const b=schedBody(c),h=hash(JSON.stringify(b)),sg=sigs();
+ if(!force&&sg[c.id]===h)return true;
+ if(!await pushSched(b,quiet))return false;
+ sg[c.id]=h;try{localStorage.setItem(SIG,JSON.stringify(sg))}catch(e){}return true;
+}
+let schedBusy=false,stm=0;
+async function syncSchedules(){
+ if(stu()||schedBusy||!window.midadSupabase||!(db.classes||[]).length)return;
+ schedBusy=true;
+ try{
+  let changed=false;
+  for(const c of db.classes){ /* وجود محتوى ولم يُضبط خيار النشر قط = ننشره (الأستاذ يستطيع إخفاءه بإلغاء التحديد) */
+   if(c.timetablePublished===undefined&&((c.timetableRows||[]).length||filesOf(c,"timetable").length)){c.timetablePublished=true;changed=true}
+   if(c.programPublished===undefined&&filesOf(c,"program").length){c.programPublished=true;changed=true}
+  }
+  if(changed&&SV)SV();
+  const sg=sigs();
+  for(const c of db.classes){
+   const b=schedBody(c);if(!b.timetable&&!b.program&&sg[c.id]===undefined)continue;
+   await syncOne(c,true,false);
+  }
+ }finally{schedBusy=false}
+}
+if(typeof SV==="function")window.save=function(){const r=SV.apply(this,arguments);clearTimeout(stm);stm=setTimeout(syncSchedules,1800);return r};
+
 /* رفع ملف التوقيت/البرنامج إلى التخزين السحابي ليصل إلى هواتف الطلبة */
 const SU=window.midadScheduleUpload;
 if(SU)window.midadScheduleUpload=async function(kind,input){
- const file=input.files&&input.files[0];
+ const file=input.files&&input.files[0],cid=window.scheduleFocusClass;
  await SU.apply(this,arguments);
- if(!file||!window.midadUploadToCloud)return;
- try{
-  const up=await midadUploadToCloud(file,"schedule");if(!up)return;
-  const sa=db.scheduleAssets||{},c=(db.classes||[]).find(x=>x.id===window.scheduleFocusClass);
-  [...(sa.timetableFiles||[]),...(sa.programFiles||[]),c&&c.timetableFile,c&&c.programFile].filter(x=>x&&x.name===file.name&&!x.url).forEach(x=>x.url=up.url);
-  save();
- }catch(e){console.error(e)}
+ if(!file)return;
+ const mine=()=>allSched().filter(x=>x.name===file.name&&!x.url&&!x.data);
+ if(!mine().length)return;
+ let up=null,err="";
+ try{if(window.midadUploadToCloud)up=await midadUploadToCloud(file,"schedule")}catch(e){err=(e&&e.message)||"";console.error(e)}
+ if(up)mine().forEach(x=>{x.url=up.url;x.classId=x.classId||cid});
+ else if(file.size<=600000){
+  const d=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>ok("");r.readAsDataURL(file)});
+  if(!d){toast("تعذرت قراءة الملف.");return}
+  mine().forEach(x=>{x.data=d;x.classId=x.classId||cid});
+ }else{toast("تعذر رفع الملف إلى التخزين السحابي"+(err?" ("+err+")":"")+" فلن يراه الطلبة. تحقق من الحاوية midad-files وصلاحيات الرفع، أو استخدم ملفاً أصغر من 600 كيلوبايت.");return}
+ const c=(db.classes||[]).find(x=>x.id===cid);if(!c){if(SV)SV();return}
+ c[kind+"Published"]=true;if(SV)SV();render();
+ if(await syncOne(c,false,true))toast("رُفع الملف ونُشر لطلبة القسم.");
 };
+
+/* عرض التوقيت/البرنامج عند الطالب من الخادم */
+function fileHtml(f){
+ const src=f.url||f.data||"",nm=E(f.name||"ملف");let h="";
+ if(src&&isImg(f))h+='<a href="'+E(src)+'" target="_blank" rel="noopener"><img src="'+E(src)+'" alt="'+nm+'" style="width:100%;border-radius:14px;border:1px solid var(--line);margin:8px 0"></a>';
+ else if(src)h+='<div class="schedule-entry"><b>'+nm+'</b><a class="btn primary small" href="'+E(src)+'" download="'+nm+'" target="_blank" rel="noopener">تحميل</a></div>';
+ if(f.link)h+='<a class="btn light small" target="_blank" rel="noopener" href="'+E(f.link)+'">فتح الرابط ↗</a>';
+ return h;
+}
+function secHtml(title,sec){
+ if(!sec)return"";
+ const rows=sec.rows&&sec.rows.length?'<div class="table-wrap"><table><thead><tr><th>اليوم</th><th>من</th><th>إلى</th><th>المادة</th></tr></thead><tbody>'+sec.rows.map(r=>'<tr><td>'+E(r.day)+'</td><td>'+E(r.from)+'</td><td>'+E(r.to)+'</td><td>'+E(r.subject)+'</td></tr>').join("")+'</tbody></table></div>':"";
+ const files=(sec.files||[]).map(fileHtml).join("");
+ return(rows||files)?'<section class="card" style="margin-bottom:14px"><h3 style="margin:0 0 8px">'+title+'</h3>'+rows+files+'</section>':"";
+}
+async function schedView(){
+ const shell=$(".student-detail-shell");if(!shell||shell.dataset.mdsched)return"skip";shell.dataset.mdsched="1";
+ await pull();
+ if(!srvSched)return false;
+ const act=shell.querySelector(".student-detail-actions");
+ let box=$("#schedBox");if(!box){box=document.createElement("div");box.id="schedBox"}
+ box.innerHTML=secHtml("التوقيت",srvSched.timetable)+secHtml("البرنامج",srvSched.program)||empty("لا يوجد توقيت أو برنامج منشور","سيظهر هنا عندما ينشره الأستاذ.");
+ [...shell.children].forEach(n=>{if(n!==box&&n!==act)n.style.display="none"});
+ act?act.after(box):shell.appendChild(box);
+ return true;
+}
 
 /* ===== واجهة الأستاذ ===== */
 function tPage(){
@@ -181,7 +277,7 @@ window.midadAnnSave=async function(kind,editId){
   at={name:f.name,type:f.type||""};
   let up=null;try{up=await midadUploadToCloud(f,"announcements")}catch(e){console.error(e)}
   if(up)at.url=up.url;
-  else if(f.size<=250000)at.data=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(f)});
+  else if(f.size<=600000)at.data=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(f)});
   else{toast("تعذر رفع الملف إلى التخزين السحابي (حاوية midad-files). استخدم رابط Drive بدلاً منه.");go.disabled=false;go.textContent="نشر";return}
  }
  if(link)at.link=link;else delete at.link;
@@ -226,13 +322,16 @@ const OM=window.midadOpenMore;
 if(OM)window.midadOpenMore=function(){OM.apply(this,arguments);const l=$("#modal .list");if(l)l.insertAdjacentHTML("afterbegin",'<button class="btn light" style="width:100%;justify-content:flex-start" onclick="closeModal();navigate(\'announce\')">الإعلانات والتصويت</button>')};
 
 const main=$("#main");
+const boot=()=>{if(!stu()){syncPending();syncSchedules()}};
+setTimeout(boot,5000);
+try{window.midadSupabase&&window.midadSupabase.auth.onAuthStateChange((ev,ss)=>{if(ss)setTimeout(boot,4000)})}catch(e){}
 new MutationObserver(()=>{
  if(stu()){
   const g=main.querySelector(".student-home-grid");
   if(g&&!g.querySelector(".tile-announce"))g.insertAdjacentHTML("beforeend",tile);
   const st=me(),cards=main.querySelectorAll(".student-task-card");
   if(st&&cards.length){const ts=tasksOf(st);cards.forEach((c,i)=>{const box=c.querySelector(".item-actions");if(ts[i]&&box&&!box.querySelector(".mdsub"))box.insertAdjacentHTML("beforeend",'<button class="btn secondary small mdsub" onclick="midadSubmitOpen(\''+ts[i].id+'\')">تسليم</button>')})}
-  if(($("#main .page-head h1")||{}).textContent==="البرنامج")fixSchedule();
+  if(/البرنامج|التوقيت|الجدول/.test(($("#main .page-head h1")||{}).textContent||"")){const sh=$(".student-detail-shell");const done=schedView();if(sh)Promise.resolve(done).then(ok=>{if(ok===false){sh.dataset.mdfix="";fixSchedule()}})}
  }else{
   const q=main.querySelector("#midadQuickGrid");
   if(q&&!q.querySelector(".mdq"))q.insertAdjacentHTML("beforeend",'<button class="quick mdq" onclick="navigate(\'announce\')"><div class="qico">'+ICON+'</div><b>الإعلانات والتصويت</b><small>انشر للطلبة وتابع التفاعل</small></button>');
