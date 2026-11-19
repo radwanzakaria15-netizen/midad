@@ -463,7 +463,7 @@ async function midadDocUploadGo(type){
 }
 function midadDocGenerateForm(type){
  const T=MIDAD_DOC_TYPES[type];
- openModal('توليد قالب — '+T.label,'أدخل بيانات الدرس ليُنشئ مِداد قالباً قابلاً للتعديل.','<div class="form-grid"><div class="form-field full"><label>عنوان الدرس أو الموضوع</label><input id="docGenTitle" placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label>المادة</label><input id="docGenSubject" placeholder="علوم"></div><div class="form-field"><label>المستوى</label><input id="docGenLevel" placeholder="السنة الرابعة ابتدائي"></div><div class="form-field"><label>عدد الأسئلة</label><select id="docGenCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></div><div class="form-field"><label>الصعوبة</label><select id="docGenDiff"><option>سهل</option><option selected>متوسط</option><option>متقدم</option></select></div></div><div class="modal-actions"><button class="btn primary" id="docGenBtn" type="button" onclick="midadDocGenerate(\''+type+'\')">توليد القالب</button>'+btn('رجوع',"midadDocStart('"+type+"')",'light')+'</div>');
+ openModal('توليد قالب — '+T.label,'أدخل بيانات الدرس ليُنشئ مِداد قالباً قابلاً للتعديل.','<div class="form-grid"><div class="form-field full"><label>عنوان الدرس أو الموضوع</label><input id="docGenTitle" required maxlength="180" placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label>المادة</label><input id="docGenSubject" required maxlength="100" placeholder="علوم"></div><div class="form-field"><label>المستوى الدراسي</label><input id="docGenLevel" required maxlength="100" placeholder="السنة الرابعة ابتدائي"></div><div class="form-field"><label>عدد الأسئلة</label><select id="docGenCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></div><div class="form-field"><label>الصعوبة</label><select id="docGenDiff"><option>سهل</option><option selected>متوسط</option><option>متقدم</option></select></div></div><div class="modal-actions"><button class="btn primary" id="docGenBtn" type="button" onclick="midadDocGenerate(\''+type+'\')">توليد القالب</button>'+btn('رجوع',"midadDocStart('"+type+"')",'light')+'</div>');
 }
 function midadDocLocalSkeleton(type,title,count){
  const n=Math.max(2,parseInt(count)||6),lines=k=>Array.from({length:k},(_,i)=>(i+1)+'. ................................................').join('\n');
@@ -479,7 +479,9 @@ async function midadDocGenerate(type){
  const level=document.getElementById('docGenLevel')?.value.trim()||'';
  const count=document.getElementById('docGenCount')?.value||'6';
  const difficulty=document.getElementById('docGenDiff')?.value||'متوسط';
- if(!title){toast('اكتب عنوان الدرس أو الموضوع أولاً');return}
+ if(!title){toast('اكتب عنوان الدرس أو الموضوع أولاً');document.getElementById('docGenTitle')?.focus();return}
+ if(!subject){toast('أدخل المادة الدراسية أولاً');document.getElementById('docGenSubject')?.focus();return}
+ if(!level){toast('أدخل المستوى الدراسي أولاً');document.getElementById('docGenLevel')?.focus();return}
  const defaults={homework:{marks:10},research:{marks:20},quiz:{marks:10,duration:20},exam:{marks:20,duration:60}}[type]||{};
  const draft={title:T.label+': '+title,subject,level,date:dateNow(),duration:defaults.duration||'',marks:defaults.marks||'',instructions:'',body:'',answers:''};
  const btnEl=document.getElementById('docGenBtn');
