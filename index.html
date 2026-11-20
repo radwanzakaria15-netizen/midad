@@ -505,7 +505,7 @@ async function midadDocGenerate(type){
   finally{clearTimeout(timer)}
  }
  if(!usedAI)draft.body=midadDocLocalSkeleton(type,title,count);
- draft.instructions='اقرأ التعليمات جيداً، وأجب بخط واضح ومنظّم.';
+ draft.instructions=usedAI&&data.instructions?String(data.instructions).trim().slice(0,1000):'اقرأ التعليمات جيداً، وأجب بخط واضح ومنظّم.';
  if(usedAI)toast('تم توليد القالب. عدّل عليه ثم احفظه.');
  else if(!db.aiEndpoint)toast('أُنشئ قالب مبدئي. اربط Gemini من الإعدادات للتوليد الذكي.');
  midadDocEditor(type,draft);
