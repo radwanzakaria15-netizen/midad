@@ -179,8 +179,8 @@ async function tick(){
 /* ===== ملف الإنجاز (الطالب) ===== */
 let viewMode="stream";
 const redraw=()=>{const b=$("#annBox"),st=me();if(b&&st)b.innerHTML=annHtml(st)};
-window.midadView=function(m){viewMode=m;const h=$("#main .page-head h1");if(h)h.textContent=m==="portfolio"?"ملف إنجازي":"ساحة القسم";redraw()};
-window.midadOpenAnn=function(m){viewMode=m||"stream";window.midadStudentTab("announcements")};
+window.midadView=function(m){viewMode=m;const h=$("#main .page-head h1");if(h)h.textContent="الإعلانات";redraw()};
+window.midadOpenAnn=function(m){viewMode="stream";window.midadStudentTab("announcements")};
 const favKey=()=>"midad_fav_"+((me()||{}).id||"");
 const favs=()=>{try{return JSON.parse(localStorage.getItem(favKey())||"[]")}catch(e){return[]}};
 window.midadFav=function(k){let f=favs();f=f.includes(k)?f.filter(x=>x!==k):f.concat(k);try{localStorage.setItem(favKey(),JSON.stringify(f))}catch(e){}redraw()};
@@ -253,7 +253,7 @@ function gardenHtml(){
  const g=srvGarden;if(!g||!g.students)return"";
  const goal=Math.max(3,g.students*2),pct=Math.min(1,g.week/goal),stage=Math.min(GARDEN.length-1,Math.floor(pct*(GARDEN.length-1)+(pct>=1?1:0))),[ic,tx]=GARDEN[stage];
  const left=Math.max(0,goal-g.week);
- return '<section class="card" style="margin-bottom:14px;text-align:center"><div style="font-size:64px;line-height:1.2" aria-hidden="true">'+ic+'</div><h3 style="margin:4px 0">حديقة القسم: '+tx+'</h3><div style="height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px auto;max-width:360px"><div style="height:100%;width:'+Math.round(pct*100)+'%;background:var(--green);border-radius:9px;transition:width .6s"></div></div><p class="muted" style="margin:0;font-size:13px;line-height:1.8">'+(left?"كل واجب أو اختبار يسلّمه أحدنا يسقي الحديقة. بقي "+left+" إنجازاً هذا الأسبوع لتزهر.":"أزهرت الحديقة هذا الأسبوع بجهدنا جميعاً. شكراً لكم!")+'</p></section>';
+ return '<section class="card" style="margin-bottom:14px;text-align:center"><div style="font-size:64px;line-height:1.2" aria-hidden="true">'+ic+'</div><h3 style="margin:4px 0">حديقة القسم: '+tx+'</h3><div style="height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px auto;max-width:360px"><div style="height:100%;width:'+Math.round(pct*100)+'%;background:var(--green);border-radius:9px;transition:width .6s"></div></div><p class="muted" style="margin:0;font-size:13px;line-height:1.8">'+(left?"كل واجب أو اختبار يسلّمه أحدنا يسقي الحديقة. بقي "+(left===1?"إنجاز واحد":left===2?"إنجازان":left<=10?left+" إنجازات":left+" إنجازاً")+" هذا الأسبوع لتزهر.":"أزهرت الحديقة هذا الأسبوع بجهدنا جميعاً. شكراً لكم!")+'</p></section>';
 }
 function motiveHtml(st,L){
  const sk=streakOf(st),bs=badgesOf(st,L),got=bs.filter(b=>b.on).length;
@@ -275,10 +275,7 @@ function portHtml(st){
  const fav=L.filter(x=>fv.includes(x.key)),rest=L.filter(x=>!fv.includes(x.key));
  return head+motiveHtml(st,L)+prog+(fav.length?'<h3 style="margin:16px 0 8px">★ أعمال أفخر بها</h3>'+fav.map(x=>workCard(x,true)).join(""):"")+'<h3 style="margin:16px 0 8px">أعمالي</h3>'+(rest.length?rest.map(x=>workCard(x,false)).join(""):'<p class="muted">كل أعمالك ضمن المفضلة.</p>');
 }
-function annHtml(st){
- const seg='<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn '+(viewMode==="stream"?"primary":"light")+' small" onclick="midadView(\'stream\')">الساحة</button><button class="btn '+(viewMode==="portfolio"?"primary":"light")+' small" onclick="midadView(\'portfolio\')">ملف إنجازي</button></div>';
- return seg+(viewMode==="portfolio"?portHtml(st):streamHtml(st));
-}
+function annHtml(st){return streamHtml(st)}
 function streamHtml(st){
  const anns=annsFor(st),tasks=tasksOf(st);
  let items=anns.map(a=>({t:when(a),topic:a.topic||"",h:()=>postHtml(st,a)})).concat(tasks.map(t=>({t:t.created||"",topic:"",h:()=>taskCard(st,t)})));
@@ -296,7 +293,7 @@ async function annView(){
  if(!shell&&$("#main")){shell=document.createElement("div");shell.className="student-detail-shell";$("#main").appendChild(shell)}
  if(!st||!shell)return;
  if($("#annBox"))$("#annBox").remove();
- const h=$("#main .page-head h1");if(h)h.textContent=viewMode==="portfolio"?"ملف إنجازي":"ساحة القسم";
+ const h=$("#main .page-head h1");if(h)h.textContent="الإعلانات";
  const box=document.createElement("div");box.id="annBox";
  const act=shell.querySelector(".student-detail-actions");if(act)act.after(box);else shell.appendChild(box);
  box.innerHTML=annHtml(st);await pull();draw();markSeen();badge(0);
