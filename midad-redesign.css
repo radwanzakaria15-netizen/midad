@@ -1,0 +1,266 @@
+/* مِداد — إعادة تصميم الواجهة: ألوان، ظلال، أيقونات، حركات وانتقالات.
+   طبقة فوق التصميم الحالي دون المساس بالمنطق. تُحمَّل آخر شيء في <head>. */
+
+/* ===== الألوان والمتغيرات ===== */
+html body{
+ --mq-grad:linear-gradient(135deg,#0f766e 0%,#14a394 100%);
+ --mq-grad-2:linear-gradient(135deg,#f59e0b 0%,#f97316 100%);
+ --mq-glass:rgba(255,255,255,.78);
+ --mq-ring:0 0 0 4px rgba(20,163,148,.18);
+ --mq-sh1:0 1px 2px rgba(13,59,54,.06),0 8px 24px -12px rgba(13,59,54,.18);
+ --mq-sh2:0 2px 4px rgba(13,59,54,.06),0 22px 44px -20px rgba(13,59,54,.30);
+ --bg:#eef5f3;--paper:#fbfefd;--white:#ffffff;--cream:#f3f9f7;--latte:#d7ebe6;--sand:#9fcfc6;
+ --cocoa:#0f766e;--deep:#0d3b36;--ink:#12302c;--muted:#6b8480;--line:#dbe8e4;
+ --green:#2f9e7a;--blue:#4a8fb5;--rose:#d9707a;--gold:#e0a030;
+ --shadow:var(--mq-sh2);--shadow-sm:var(--mq-sh1);--r:22px;
+}
+html body.student-mode{
+ --mq-grad:linear-gradient(135deg,#2f6fb0 0%,#4a8fd6 100%);
+ --mq-ring:0 0 0 4px rgba(74,143,214,.2);
+ --bg:#edf3fa;--paper:#fbfdff;--cream:#f2f7fc;--latte:#d9e7f5;--sand:#a9c8e6;
+ --cocoa:#2f6fb0;--deep:#17365c;--ink:#1b3250;--muted:#6a82a0;--line:#dce7f3;
+}
+html body.midad-night{
+ --mq-glass:rgba(24,38,34,.78);
+ --bg:#0e1a18;--paper:#16251f;--white:#1b2c27;--cream:#1a2a25;--latte:#27403a;--sand:#3a5a52;
+ --cocoa:#5fd1be;--deep:#e3f4ef;--ink:#e8f3ef;--muted:#92aaa4;--line:#2b423c;
+ --mq-sh1:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+ --mq-sh2:0 2px 4px rgba(0,0,0,.3),0 22px 44px -20px rgba(0,0,0,.6);
+}
+html body.midad-night.student-mode{
+ --bg:#0e1621;--paper:#162230;--white:#1b2a3b;--cream:#1a2838;--latte:#25384e;--sand:#3a5878;
+ --cocoa:#7db4f0;--deep:#e3eefb;--ink:#e8f0fa;--muted:#93a7bf;--line:#2a3d54;
+}
+
+/* ===== الأساس ===== */
+html body{
+ font-family:Tajawal,Cairo,system-ui,sans-serif;color:var(--ink);
+ background:
+  radial-gradient(60% 45% at 92% -5%,rgba(20,163,148,.16),transparent 70%),
+  radial-gradient(50% 40% at 0% 18%,rgba(245,158,11,.10),transparent 70%),
+  radial-gradient(45% 35% at 60% 100%,rgba(74,143,214,.10),transparent 70%),
+  var(--bg);
+ background-attachment:fixed;
+}
+html body.student-mode{background:
+  radial-gradient(60% 45% at 92% -5%,rgba(74,143,214,.18),transparent 70%),
+  radial-gradient(50% 40% at 0% 20%,rgba(147,112,219,.10),transparent 70%),
+  var(--bg);background-attachment:fixed}
+html body h1,html body h2,html body h3,html body .brand-name,html body .eyebrow,html body .btn{font-family:Cairo,Tajawal,sans-serif}
+html body ::selection{background:rgba(20,163,148,.28)}
+html body{scrollbar-width:thin;scrollbar-color:var(--sand) transparent}
+
+/* ===== الشريط العلوي ===== */
+html body .topbar{height:74px;background:var(--mq-glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border-bottom:1px solid var(--line);box-shadow:0 10px 30px -22px rgba(13,59,54,.5);transition:box-shadow .3s,background .3s}
+html body.md-scrolled .topbar{box-shadow:0 14px 34px -18px rgba(13,59,54,.45)}
+html body .brand-mark{position:relative;overflow:hidden;width:46px;height:46px;border-radius:16px;background:var(--mq-grad);color:#fff;box-shadow:0 10px 22px -8px rgba(15,118,110,.6);transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
+html body .brand-mark:hover{transform:rotate(-8deg) scale(1.08)}
+html body .brand-mark:after{content:"";position:absolute;inset:-60% -30%;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%);transform:translateX(-120%);animation:mdShine 6s ease-in-out infinite}
+html body .brand-name{font-size:25px;font-weight:900;color:var(--deep);letter-spacing:-.3px}
+html body .search{height:44px;border:1px solid var(--line);background:var(--white);border-radius:999px;box-shadow:var(--mq-sh1);transition:box-shadow .25s,border-color .25s,width .3s}
+html body .search:focus-within{border-color:var(--cocoa);box-shadow:var(--mq-ring)}
+html body .icon-btn{border:1px solid var(--line);background:var(--white);border-radius:14px;box-shadow:var(--mq-sh1);color:var(--cocoa);transition:transform .25s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s}
+html body .icon-btn:hover{transform:translateY(-2px)}
+html body .profile-avatar-button .avatar{background:var(--mq-grad);color:#fff;box-shadow:0 8px 18px -8px rgba(15,118,110,.6);transition:transform .5s cubic-bezier(.2,.9,.3,1.2)}
+html body .profile-avatar-button:hover .avatar{transform:rotate(90deg)}
+
+/* ===== القائمة الجانبية ===== */
+html body .sidebar{background:linear-gradient(175deg,#0f4a43 0%,#0b3631 55%,#082a26 100%);color:#d5ece7;border:0;border-radius:28px;box-shadow:0 26px 50px -24px rgba(8,42,38,.7);position:sticky}
+html body .sidebar:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120% 50% at 100% 0%,rgba(255,255,255,.1),transparent 60%)}
+html body .side-heading{border-color:rgba(255,255,255,.12)}
+html body .side-heading b{color:#fff}html body .side-heading p{color:#a6cdc5}
+html body .nav-label{color:#7fb9ae;letter-spacing:.8px}
+html body .nav button{position:relative;color:#cfe8e2;border-radius:14px;padding:9px 10px;gap:11px;transition:background .25s,transform .25s,color .25s}
+html body .nav button:hover{background:rgba(255,255,255,.09);transform:translateX(-4px);color:#fff}
+html body .nav button .ni{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.08);color:#9fe0d2;display:grid;place-items:center;transition:background .3s,color .3s,transform .3s cubic-bezier(.2,.9,.3,1.4)}
+html body .nav button:hover .ni{transform:scale(1.1) rotate(-6deg)}
+html body .nav button .ni svg{width:19px;height:19px}
+html body .nav button.active{background:rgba(255,255,255,.13);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);transform:none}
+html body .nav button.active .ni{background:var(--mq-grad-2);color:#2a1700;box-shadow:0 8px 16px -6px rgba(249,115,22,.6)}
+html body .nav button.active:before{content:"";position:absolute;right:-13px;top:22%;bottom:22%;width:4px;border-radius:4px;background:#f59e0b;animation:mdBar .4s cubic-bezier(.2,.9,.3,1.4) both}
+html body .side-bottom{color:#8fbfb5;border-color:rgba(255,255,255,.12)}
+
+/* ===== العناوين ===== */
+html body .page-head h1{font-size:32px;font-weight:900;color:var(--deep);letter-spacing:-.4px}
+html body .page-head p{color:var(--muted)}
+html body .eyebrow{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;background:color-mix(in srgb,var(--cocoa) 11%,transparent);color:var(--cocoa);font-weight:800;letter-spacing:.4px}
+html body .eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:mdPulse 2.4s ease-in-out infinite}
+
+/* ===== الأزرار ===== */
+html body .btn{position:relative;overflow:hidden;border-radius:14px;font-weight:800;box-shadow:none;transition:transform .22s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s,filter .25s}
+html body .btn:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(130%);transition:transform .7s}
+html body .btn:hover:before{transform:translateX(-130%)}
+html body .btn:hover{transform:translateY(-2px)}
+html body .btn:active{transform:translateY(1px) scale(.97)}
+html body .btn.primary,html body .primary{background:var(--mq-grad);color:#fff;box-shadow:0 12px 22px -12px rgba(15,118,110,.7)}
+html body.student-mode .btn.primary{background:var(--mq-grad);box-shadow:0 12px 22px -12px rgba(47,111,176,.7)}
+html body .btn.primary:hover{box-shadow:0 16px 28px -12px rgba(15,118,110,.8);filter:saturate(1.1)}
+html body .btn.secondary,html body .secondary{background:color-mix(in srgb,var(--cocoa) 14%,var(--white));color:var(--deep)}
+html body .btn.light,html body .light{background:var(--white);border:1px solid var(--line);color:var(--cocoa);box-shadow:var(--mq-sh1)}
+html body .btn.danger,html body .danger{background:color-mix(in srgb,#d9484f 13%,var(--white));color:#b02a31}
+html body .btn:disabled{filter:grayscale(.4)}
+html body .text-link{border:0;padding:6px 8px;border-radius:9px;color:var(--cocoa);font-weight:800;transition:letter-spacing .2s,opacity .2s}
+html body .text-link:hover{opacity:.75}
+
+/* ===== البطاقات ===== */
+html body .card,html body .item-card,html body .stat,html body .quick,html body .board-wrap,html body .table-wrap{
+ background:var(--white);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--mq-sh1)}
+html body .card{padding:22px}
+html body .item-card,html body .stat,html body .quick{transition:transform .3s cubic-bezier(.2,.9,.3,1.2),box-shadow .3s,border-color .3s}
+html body .item-card:hover,html body .stat:hover,html body .quick:hover{transform:translateY(-5px);box-shadow:var(--mq-sh2);border-color:color-mix(in srgb,var(--cocoa) 35%,var(--line))}
+html body .item-card h3,html body .section-title h3,html body .quick b{color:var(--deep);font-family:Cairo,Tajawal,sans-serif}
+html body .item-symbol,html body .mini-icon,html body .stat-icon,html body .quick .qico,html body .student-task-icon,html body .student-notice-icon{
+ display:grid;place-items:center;border-radius:15px;color:var(--cocoa);box-shadow:none;
+ background:linear-gradient(145deg,color-mix(in srgb,var(--cocoa) 16%,var(--white)),color-mix(in srgb,var(--cocoa) 8%,var(--white)));
+ transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
+html body .item-card:hover .item-symbol,html body .quick:hover .qico,html body .stat:hover .stat-icon,html body .list-row:hover .mini-icon{transform:scale(1.12) rotate(-6deg)}
+html body .item-symbol svg,html body .mini-icon svg,html body .stat-icon svg,html body .qico svg,html body .student-task-icon svg,html body .student-notice-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+html body .stat:nth-child(2) .stat-icon{color:#2f9e7a;background:linear-gradient(145deg,#dff5ec,#c8ecdd)}
+html body .stat:nth-child(3) .stat-icon{color:#4a8fb5;background:linear-gradient(145deg,#e0eff8,#cbe3f1)}
+html body .stat:nth-child(4) .stat-icon{color:#e08a30;background:linear-gradient(145deg,#fdeed8,#f9dcb6)}
+html body .stat strong{font-family:Cairo,sans-serif;font-weight:900;color:var(--deep);font-variant-numeric:tabular-nums}
+html body .quick{position:relative;overflow:hidden}
+html body .quick:after{content:"←";position:absolute;left:14px;bottom:12px;color:var(--cocoa);opacity:0;transform:translateX(10px);transition:.3s;font-weight:900}
+html body .quick:hover:after{opacity:1;transform:none}
+html body .list-row{border-color:var(--line);transition:background .2s,padding .25s;border-radius:12px}
+html body .list-row:hover{background:color-mix(in srgb,var(--cocoa) 5%,transparent);padding-inline:8px}
+html body .empty{border:2px dashed color-mix(in srgb,var(--cocoa) 28%,var(--line));border-radius:22px;background:color-mix(in srgb,var(--cocoa) 4%,var(--white))}
+html body .empty strong{color:var(--deep)}
+html body .pill{background:color-mix(in srgb,var(--cocoa) 11%,var(--white));color:var(--cocoa);border:0;font-weight:800;padding:5px 11px}
+html body .pill.green{background:color-mix(in srgb,#2f9e7a 15%,var(--white));color:#1f7a5a}
+html body .pill.blue{background:color-mix(in srgb,#4a8fb5 15%,var(--white));color:#2c6b8f}
+html body .pill.rose{background:color-mix(in srgb,#d9707a 15%,var(--white));color:#b3414d}
+
+/* ===== البطل (hero) ===== */
+html body .hero{position:relative;overflow:hidden;border:0;border-radius:30px;padding:36px 36px;color:#fff;background:linear-gradient(120deg,#0b5750,#0f766e 45%,#13a08f 80%,#1ab7a6);background-size:200% 200%;animation:mdGrad 14s ease-in-out infinite;box-shadow:0 30px 50px -28px rgba(15,118,110,.7)}
+html body .hero:before{content:"";position:absolute;width:240px;height:240px;right:-60px;bottom:-90px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.55),transparent 65%);filter:blur(10px);animation:mdFloat 9s ease-in-out infinite}
+html body .hero:after{border-color:rgba(255,255,255,.2)}
+html body .hero-kicker{color:#bff1e8;font-weight:800}
+html body .hero h2{color:#fff;font-size:32px;font-family:Cairo,sans-serif;font-weight:900}
+html body .hero p{color:#d8f4ee}
+html body .hero .btn.primary{background:#fff;color:#0d3b36;box-shadow:0 12px 24px -10px rgba(0,0,0,.35)}
+html body .hero .btn.secondary{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(6px)}
+html body .paper-stack{animation:mdFloat 7s ease-in-out infinite}
+html body .paper-stack span{background:#fff;border-color:rgba(255,255,255,.6);box-shadow:0 18px 30px -12px rgba(0,0,0,.35)}
+html body .paper-stack span:nth-child(2){background:#bff1e8}
+html body .paper-stack span:nth-child(3){background:var(--mq-grad-2);color:#2a1700;font-weight:900}
+
+/* ===== الحقول ===== */
+html body .field-search,html body .filter,html body .form-field input,html body .form-field select,html body .form-field textarea{
+ background:var(--white);border:1.5px solid var(--line);border-radius:14px;box-shadow:none;transition:border-color .25s,box-shadow .25s,transform .25s}
+html body .field-search:focus,html body .filter:focus,html body .form-field input:focus,html body .form-field select:focus,html body .form-field textarea:focus{border-color:var(--cocoa);box-shadow:var(--mq-ring);outline:0;transform:translateY(-1px)}
+html body .form-field label{color:var(--deep);font-weight:800}
+html body input[type=checkbox],html body input[type=radio]{accent-color:var(--cocoa)}
+
+/* ===== الجداول ===== */
+html body th{background:color-mix(in srgb,var(--cocoa) 9%,var(--white));color:var(--cocoa)}
+html body tbody tr{transition:background .2s}
+html body tbody tr:hover td{background:color-mix(in srgb,var(--cocoa) 5%,transparent)}
+html body .status{background:color-mix(in srgb,#2f9e7a 16%,var(--white));color:#1f7a5a}
+html body .status.absent{background:color-mix(in srgb,#d9484f 14%,var(--white));color:#b02a31}
+
+/* ===== النوافذ والإشعارات ===== */
+html body .modal-backdrop{background:rgba(7,32,29,.55);backdrop-filter:blur(8px) saturate(1.2)}
+html body .modal-backdrop.show{animation:mdFade .25s ease both}
+html body .modal{background:var(--paper);border:1px solid var(--line);border-radius:28px;box-shadow:0 40px 90px -30px rgba(0,0,0,.55)}
+html body .modal-backdrop.show .modal{animation:mdSpring .5s cubic-bezier(.2,1.1,.3,1) both}
+html body .modal-head h2{color:var(--deep);font-family:Cairo,sans-serif;font-weight:900}
+html body .close{background:color-mix(in srgb,var(--cocoa) 10%,var(--white));color:var(--deep);box-shadow:none;border-radius:12px;transition:transform .3s cubic-bezier(.2,.9,.3,1.4),background .2s}
+html body .close:hover{transform:rotate(90deg) scale(1.1);background:color-mix(in srgb,#d9484f 18%,var(--white))}
+html body .toast{background:linear-gradient(135deg,#0d3b36,#0f5a52);color:#fff;border-radius:16px;padding:13px 20px;box-shadow:0 22px 40px -16px rgba(8,42,38,.7);border-right:4px solid #f59e0b;transform:translateY(24px) scale(.96);transition:opacity .3s,transform .45s cubic-bezier(.2,1.1,.3,1)}
+html body .toast.show{transform:none}
+html body .lesson-preview{background:var(--white);border:1px solid var(--line);border-radius:18px}
+
+/* ===== شريط الهاتف السفلي ===== */
+@media(max-width:760px){
+ html body .topbar{height:66px}
+ html body .shell{padding-bottom:110px}
+ html body .mobile-nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));border:1px solid var(--line);border-radius:26px;padding:7px 6px;background:var(--mq-glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);box-shadow:0 18px 40px -16px rgba(8,42,38,.45)}
+ html body .mobile-nav button{position:relative;color:var(--muted);font-weight:700;transition:color .25s}
+ html body .mobile-nav button span{width:42px;height:30px;border-radius:15px;display:grid;place-items:center;transition:background .3s,transform .4s cubic-bezier(.2,1.2,.3,1.3),color .3s,box-shadow .3s}
+ html body .mobile-nav button.active{color:var(--cocoa)}
+ html body .mobile-nav button.active span{background:var(--mq-grad);color:#fff;transform:translateY(-5px) scale(1.08);box-shadow:0 10px 18px -8px rgba(15,118,110,.7)}
+ html body .mobile-nav button:active span{transform:scale(.88)}
+ html body .hero{padding:26px 22px;border-radius:24px}
+ html body .hero h2{font-size:25px}
+ html body .page-head h1{font-size:27px}
+}
+
+/* ===== مساحة الطالب ===== */
+html body.student-mode .student-home-grid{gap:16px}
+html body.student-mode .student-home-tile{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:28px;background:var(--white);box-shadow:var(--mq-sh1);transition:transform .35s cubic-bezier(.2,.9,.3,1.25),box-shadow .35s}
+html body.student-mode .student-home-tile:before{content:"";position:absolute;inset:-40% -20% auto auto;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,var(--tc,rgba(74,143,214,.22)),transparent 70%);transition:transform .5s}
+html body.student-mode .student-home-tile:hover{transform:translateY(-7px);box-shadow:var(--mq-sh2)}
+html body.student-mode .student-home-tile:hover:before{transform:scale(1.5)}
+html body.student-mode .student-home-tile:active{transform:scale(.97)}
+html body.student-mode .student-tile-icon{position:relative;width:74px;height:74px;border-radius:24px;box-shadow:0 14px 24px -14px currentColor;transition:transform .45s cubic-bezier(.2,1.2,.3,1.3)}
+html body.student-mode .student-home-tile:hover .student-tile-icon{transform:scale(1.1) rotate(-7deg)}
+html body.student-mode .student-home-tile:hover .student-tile-icon svg{animation:mdWiggle .6s ease}
+html body.student-mode .student-home-tile strong{font-family:Cairo,sans-serif;font-weight:900;color:var(--deep);position:relative}
+html body.student-mode .student-home-tile small{position:relative}
+html body.student-mode .tile-lessons{--tc:rgba(74,143,214,.25)}
+html body.student-mode .tile-revision{--tc:rgba(120,110,210,.25)}
+html body.student-mode .tile-activities{--tc:rgba(47,158,122,.25)}
+html body.student-mode .tile-grades{--tc:rgba(47,158,122,.25)}
+html body.student-mode .tile-notifications{--tc:rgba(224,160,48,.3)}
+html body.student-mode .tile-schedule{--tc:rgba(120,110,210,.25)}
+html body.student-mode .tile-announce{--tc:rgba(217,112,122,.28)}
+html body.student-mode .tile-fp{--tc:rgba(74,143,214,.25)}
+html body.student-mode .student-tile-count,html body.student-mode .mdbadge{animation:mdPulse 1.8s ease-in-out infinite;box-shadow:0 6px 12px -4px rgba(217,72,79,.6)}
+html body.student-mode .student-detail-shell{border-radius:28px;box-shadow:var(--mq-sh2)}
+html body.student-mode .student-task-card,html body.student-mode .student-notice,html body.student-mode .schedule-entry{border-radius:16px;transition:background .25s,transform .25s}
+html body.student-mode .student-task-card:hover,html body.student-mode .student-notice:hover{background:color-mix(in srgb,var(--cocoa) 5%,transparent);transform:translateX(-3px)}
+html body.student-mode .student-login-card{position:relative;border-radius:32px;box-shadow:var(--mq-sh2)}
+html body.student-mode .student-login-mark{display:inline-grid;place-items:center;padding:12px 26px;border-radius:22px;background:var(--mq-grad);color:#fff;box-shadow:0 18px 30px -14px rgba(47,111,176,.7);animation:mdFloat 6s ease-in-out infinite}
+html body.student-mode .student-code,html body .student-code{background:color-mix(in srgb,var(--cocoa) 12%,var(--white));color:var(--cocoa)}
+html body.student-mode .student-grade-card>strong{background:var(--mq-grad);color:#fff}
+
+/* حديقة القسم والمواظبة */
+[aria-hidden="true"][style*="font-size:64px"]{display:inline-block;transform-origin:50% 100%;animation:mdSway 4.5s ease-in-out infinite}
+[aria-hidden="true"][style*="font-size:34px"]{display:inline-block;animation:mdPulse 1.6s ease-in-out infinite}
+div[style*="transition:width"][style*="var(--green)"]{background-image:linear-gradient(90deg,#2f9e7a,#7fe0b5,#2f9e7a)!important;background-size:200% 100%;animation:mdGrad 3s linear infinite}
+
+/* ===== الدخول والانتقالات بين الصفحات ===== */
+html body.md-ready #main.md-enter .page-head,
+html body.md-ready #main.md-enter .hero,
+html body.md-ready #main.md-enter .card,
+html body.md-ready #main.md-enter .item-card,
+html body.md-ready #main.md-enter .stat,
+html body.md-ready #main.md-enter .quick,
+html body.md-ready #main.md-enter .student-home-tile,
+html body.md-ready #main.md-enter .list-row,
+html body.md-ready #main.md-enter .empty,
+html body.md-ready #main.md-enter .table-wrap,
+html body.md-ready #main.md-enter .student-task-card,
+html body.md-ready #main.md-enter .student-notice,
+html body.md-ready #main.md-enter .student-grade-card,
+html body.md-ready #main.md-enter .toolbar,
+html body.md-ready #main.md-enter article{animation:mdRise .65s cubic-bezier(.2,.9,.25,1) both;animation-delay:calc(var(--i,0)*55ms)}
+html body.md-ready .md-pop{animation:mdSpring .5s cubic-bezier(.2,1.1,.3,1) both}
+
+/* موجة الضغط */
+.md-ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:mdRipple .65s ease-out forwards}
+html body .btn,html body .quick,html body .student-home-tile,html body .nav button,html body .tool,html body .icon-btn,html body .close{position:relative;overflow:hidden}
+html body .student-home-tile .student-tile-count{overflow:visible}
+
+/* ===== الحركات ===== */
+@keyframes mdRise{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes mdFade{from{opacity:0}to{opacity:1}}
+@keyframes mdSpring{0%{opacity:0;transform:translateY(34px) scale(.92)}60%{opacity:1;transform:translateY(-4px) scale(1.01)}100%{opacity:1;transform:none}}
+@keyframes mdFloat{0%,100%{transform:translateY(0) rotate(var(--r0,0deg))}50%{transform:translateY(-12px) rotate(var(--r1,2deg))}}
+@keyframes mdGrad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes mdShine{0%,70%,100%{transform:translateX(-120%)}85%{transform:translateX(120%)}}
+@keyframes mdPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.8}}
+@keyframes mdSway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) scale(1.04)}}
+@keyframes mdWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(10deg)}}
+@keyframes mdBar{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes mdRipple{to{transform:scale(1);opacity:0}}
+html body .paper-stack{--r0:-7deg;--r1:-3deg}
+
+@media(prefers-reduced-motion:reduce){
+ html body *,html body *:before,html body *:after{animation:none!important;transition-duration:.01ms!important}
+ html body.md-ready #main.md-enter *{animation:none!important}
+}
+
+/* شريط الأستاذ والقائمة الجانبية لا يظهران في مساحة الطالب */
+html body.student-mode .mobile-nav,html body.student-mode .sidebar{display:none!important}
