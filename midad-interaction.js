@@ -70,7 +70,7 @@ function attHtml(at,small){
 }
 
 /* ===== واجهة الطالب ===== */
-const tile='<button class="student-home-tile tile-announce" onclick="midadOpenAnn(\'stream\')"><span class="student-tile-icon"><svg viewBox="0 0 48 48"><path d="M8 20v8a2 2 0 0 0 2 2h6l14 8V10l-14 8h-6a2 2 0 0 0-2 2z"/><path d="M37 17a9 9 0 0 1 0 14"/></svg></span><strong>ساحة القسم</strong><small>الإعلانات والواجبات والمواد</small></button>';
+const tile='<button class="student-home-tile tile-announce" onclick="midadOpenAnn(\'stream\')"><span class="student-tile-icon"><svg viewBox="0 0 48 48"><path d="M8 20v8a2 2 0 0 0 2 2h6l14 8V10l-14 8h-6a2 2 0 0 0-2 2z"/><path d="M37 17a9 9 0 0 1 0 14"/></svg></span><strong>الإعلانات</strong><small>إعلانات الأستاذ وأسئلته ومواده</small></button>';
 const tile2='<button class="student-home-tile tile-portfolio" onclick="midadOpenAnn(\'portfolio\')"><span class="student-tile-icon"><svg viewBox="0 0 48 48"><path d="M24 8l4.6 9.4L39 19l-7.5 7.3 1.8 10.4L24 31.6l-9.3 5.1 1.8-10.4L9 19l10.4-1.6z"/></svg></span><strong>ملف إنجازي</strong><small>أعمالي ونقاطي وتطوري</small></button>';
 const css=document.createElement("style");
 css.textContent="@keyframes mdIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}@keyframes mdFade{from{opacity:0}to{opacity:1}}.mdreveal{animation:mdIn .7s cubic-bezier(.2,.8,.2,1) both}@media(prefers-reduced-motion:reduce){.mdreveal{animation:none}}body.student-mode .tile-announce .student-tile-icon{background:#f3e8e4;color:#a46e65}.mdvote{justify-content:space-between!important;width:100%}.mobile-nav button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}@media(max-width:760px){.mobile-nav{grid-auto-flow:column!important;grid-template-columns:none!important;grid-auto-columns:minmax(0,1fr)!important}.mobile-nav button{font-size:9px!important}}";
@@ -809,7 +809,7 @@ try{window.midadSupabase&&window.midadSupabase.auth.onAuthStateChange((ev,ss)=>{
 new MutationObserver(()=>{
  if(stu()){
   const g=main.querySelector(".student-home-grid");
-  if(g&&!g.querySelector(".tile-announce")){g.insertAdjacentHTML("beforeend",tile+tile2);badge(lastBadge)}
+  if(g&&!g.querySelector(".tile-announce")){g.insertAdjacentHTML("beforeend",tile);badge(lastBadge)}
   const st=me(),cards=main.querySelectorAll(".student-task-card");
   if(st&&cards.length){const ts=tasksOf(st);cards.forEach((c,i)=>{const box=c.querySelector(".item-actions");if(ts[i]&&box&&!box.querySelector(".mdsub"))box.insertAdjacentHTML("beforeend",'<button class="btn secondary small mdsub" onclick="midadSubmitOpen(\''+ts[i].id+'\')">تسليم</button>')})}
   if(/البرنامج|التوقيت|الجدول/.test(($("#main .page-head h1")||{}).textContent||"")){const sh=$(".student-detail-shell");const done=schedView();if(sh)Promise.resolve(done).then(ok=>{if(ok===false){sh.dataset.mdfix="";fixSchedule()}})}
