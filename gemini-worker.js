@@ -284,12 +284,16 @@ Example: ${example}`;
     const content = rawContent;
     const sourceUrl = clean(input.sourceUrl, 1000);
     const questionCount = Math.max(1, Math.min(30, Number(input.questionCount) || 10));
+    const templateRequest = kind === "assessment" && input.templateRequest === true;
+    const docType = ["homework","research","quiz","exam"].includes(clean(input.docType, 30)) ? clean(input.docType, 30) : "";
+    const docTypeLabel = clean(input.docTypeLabel, 60);
     const include = input.include && typeof input.include === "object" ? input.include : {};
     const mode = ["board","interactive","summary","slides","video","audio","chart","lessonpdf"].includes(input.mode) ? input.mode : ["board","interactive","summary"].includes(rawKind) ? rawKind : kind === "experience" ? "board" : "";
     const generationMode = ({slides:"summary",video:"interactive",audio:"summary",chart:"summary",lessonpdf:"summary"})[mode] || mode;
     if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
     if (rawContent.length > 18000) return json({ error: "المصدر أطول من الحد الآمن (18 ألف حرف). قسّمه أو استخدم التلخيص المرحلي قبل إرساله حتى لا يُحذف أي جزء." }, 413, origin);
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
+    if (templateRequest && !docType) return json({ error: "نوع القالب غير صالح. اختر واجباً أو بحثاً أو اختباراً أو امتحاناً." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
     if (kind === "task" && content.length < 80) return json({ error: "أرسل نصاً واضحاً لا يقل عن 80 حرفاً لإنشاء المهمة." }, 400, origin);
     if (kind === "experience" && !env.POLLINATIONS_API_KEY) return json({ error: "مفتاح Pollinations غير مضبوط في إعدادات الخادم." }, 503, origin);
@@ -314,6 +318,15 @@ Example: ${example}`;
         format = '{"title":"عنوان النشاط","instructions":"تعليمات موجزة","questions":[{"question":"نص السؤال","answer":"الإجابة النموذجية وخطوات الحل","points":2}]}';
         task = "أنشئ بالضبط " + questionCount + " سؤالاً/تمريناً في " + taskCategory + "، متنوعة ومتدرجة ومناسبة للمستوى، مع تعليمات واضحة. ضع نقاطاً لكل سؤال واجعل مجموعها بالضبط " + maxScore + " نقطة. أرفق إجابة نموذجية دقيقة وسلم تصحيح مختصراً في answer. لا تتجاوز العدد المطلوب ولا تقل عنه.";
       }
+    } else if (templateRequest) {
+      format = '{"title":"عنوان القالب","instructions":"تعليمات مناسبة لنوع الوثيقة","duration":20,"questions":[{"q":"السؤال أو المطلوب","a":"الإجابة النموذجية أو عناصر التصحيح"}]}';
+      const typeGuidance = {
+        homework: "واجب منزلي: تمارين تطبيقية متنوعة، تبدأ بالاستيعاب ثم التطبيق ثم سؤال تفكير، ولا تعتمد على الحفظ فقط.",
+        research: "بحث: اجعل كل q محوراً أو مطلباً بحثياً واضحاً قابلاً للتناول، واكتب في a نقاطاً إرشادية لما ينبغي تناوله دون كتابة البحث كاملاً. رتّب المحاور من مقدمة/تعريف إلى تحليل ثم نتائج وخاتمة ومراجع بحسب الموضوع.",
+        quiz: "اختبار قصير: أسئلة موجزة للتحقق من الفهم، متنوعة بين استرجاع وفهم وتطبيق، مناسبة لاختبار قصير.",
+        exam: "امتحان: أسئلة متدرجة ومتكاملة، تجمع المعارف والفهم والتطبيق والتحليل، مع سؤال مركب أو وضعية مناسبة للمادة والمستوى. تجنب التكرار."
+      };
+      task = "أنشئ قالباً من نوع "+docTypeLabel+" حول الدرس المحدد. أخرج بالضبط "+questionCount+" بنداً في questions. "+typeGuidance[docType]+" أعد لكل بند q نصاً واضحاً قابلاً للتقديم للطالب، وa إجابة نموذجية أو عناصر التصحيح. أعد تعليمات قصيرة خاصة بنوع الوثيقة في instructions. لا تكتب مقدمة طويلة. اجعل الأسئلة مناسبة للمادة والمستوى ولا تكررها. أعد duration بالدقائق: 15 للاختبار القصير، 60 للامتحان، و0 للواجب أو البحث إذا لم تكن المدة مطلوبة. أخرج JSON فقط.";
     } else {
       format = kind === "activity"
         ? '{"title":"عنوان قصير","type":"نوع النشاط","items":[{"q":"تعليمة أو سؤال واضح للتلميذ","a":"الإجابة أو الحل النموذجي"}]}'
@@ -332,6 +345,7 @@ Example: ${example}`;
       content ? "المصدر الذي يجب تحليله والالتزام به:\n" + content : "لم يرفق الأستاذ نص الدرس. استخدم المعرفة الدراسية العامة الموثوقة، وتجنب الادعاءات الدقيقة غير المؤكدة.",
       sourceUrl ? "رابط المصدر الذي أرفقه الأستاذ (لا تدّع أنك شاهدت الفيديو أو استخرجت تفريغه ما لم يكن نصه مرفقاً): " + sourceUrl : "",
       content ? "تعليمات إلزامية: استخرج الأفكار الأساسية من المصدر، لا تحذف فكرة جوهرية، لا تضف معلومة تناقضه، ولا تختلق حقائق. إذا كان المصدر لا يكفي لإثبات معلومة فلا تقدمها كحقيقة." : "",
+      templateRequest ? "نوع القالب المطلوب: " + docTypeLabel + " (" + docType + ") — عدد البنود: " + questionCount : "",
       "النمط المطلوب: " + (kind === "task" ? "تكليف تعليمي من نوع " + taskCategory : mode === "lessonpdf" ? "درس تعليمي متكامل بصياغة تربوية جاهزة للطباعة في PDF" : mode === "slides" ? "ملخص إبداعي على هيئة شرائح عرض متتابعة" : mode === "video" ? "سيناريو ملخص فيديو بمشاهد متتابعة" : mode === "audio" ? "نص ملخص صوتي مترابط صالح للقراءة بصوت عربي" : mode === "chart" ? "مخطط بياني أو مفاهيمي واضح" : generationMode === "board" ? "الشرح بالسبورة" : generationMode === "interactive" ? "الشرح التفاعلي" : "الملخص الممتع"),
       task,
       "أعد JSON صالحاً فقط، دون Markdown أو مقدمة أو نص خارجه، ووفق البنية التالية حرفياً:",
@@ -342,7 +356,7 @@ Example: ${example}`;
       let text = "";
       text = await pollinationsChat(env, prompt, {
         temperature: 0.35,
-        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 4200 : kind === "task" ? 4200 : mode === "lessonpdf" ? 4800 : 3000
+        max_tokens: kind === "activity" ? 1400 : kind === "revision" ? 4200 : kind === "task" || templateRequest ? 4200 : mode === "lessonpdf" ? 4800 : 3000
       });
       let parsed;
       try { parsed = JSON.parse(text); } catch { return json({ error: "تعذر قراءة صيغة النتيجة. أعد المحاولة." }, 502, origin); }
@@ -416,6 +430,15 @@ Example: ${example}`;
         parsed.fillBlanks = Array.isArray(parsed.fillBlanks) ? parsed.fillBlanks.slice(0, 8).map(x => ({ sentence: clean(x.sentence || x.question, 400), answer: clean(x.answer, 180), explanation: clean(x.explanation, 400) })).filter(x => x.sentence && x.answer) : [];
         parsed.topics = Array.isArray(parsed.topics) ? parsed.topics.slice(0, 12).map(t => ({ name: clean(t.name || t.topic, 120), questionCount: Math.max(0, Number(t.questionCount) || 0) })).filter(t => t.name) : [];
         parsed.title = clean(parsed.title || lessonTitle, 180);
+      } else if (templateRequest) {
+        if (!Array.isArray(parsed.questions)) return json({ error: "نتيجة القالب غير مكتملة." }, 502, origin);
+        parsed.title = clean(parsed.title || lessonTitle, 180);
+        parsed.instructions = clean(parsed.instructions, 1000);
+        parsed.questions = parsed.questions.slice(0, questionCount).filter(x => x && clean(x.q, 700)).map(x => ({ q: clean(x.q, 700), a: clean(x.a, 1000) }));
+        if (parsed.questions.length !== questionCount) return json({ error: "لم يُنشأ العدد المطلوب من الأسئلة أو البنود. أعد المحاولة." }, 502, origin);
+        parsed.docType = docType;
+        const defaultDuration = docType === "quiz" ? 15 : docType === "exam" ? 60 : 0;
+        parsed.duration = Math.max(0, Math.min(180, Number(parsed.duration) || defaultDuration));
       } else {
         if (!Array.isArray(parsed.questions)) return json({ error: "نتيجة التقويم غير مكتملة." }, 502, origin);
         parsed.questions = parsed.questions.slice(0, 5).filter(x => x && clean(x.q, 500)).map(x => ({ q: clean(x.q, 500), a: clean(x.a, 500) }));
