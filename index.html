@@ -486,7 +486,7 @@ async function midadDocGenerate(type){
  const defaults={homework:{marks:10},research:{marks:20},quiz:{marks:10,duration:20},exam:{marks:20,duration:60}}[type]||{};
  const draft={title:T.label+': '+title,subject,level,date:dateNow(),duration:defaults.duration||'',marks:defaults.marks||'',instructions:'',body:'',answers:''};
  const btnEl=document.getElementById('docGenBtn');
- let usedAI=false;
+ let usedAI=false,generatedData=null;
  if(db.aiEndpoint){
   if(btnEl){btnEl.disabled=true;btnEl.textContent='جارٍ التوليد...'}
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),90000);
@@ -494,18 +494,18 @@ async function midadDocGenerate(type){
    const response=await fetch(db.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({kind:'assessment',outputType:'assessment',templateRequest:true,docType:type,docTypeLabel:T.label,lessonTitle:title,title,subject,level,difficulty,activityType:'متنوع',questionCount:Number(count)})});
    const raw=await response.text();let payload={};try{payload=raw?JSON.parse(raw):{}}catch(_){throw new Error('bad')}
    if(!response.ok)throw new Error(payload.error||'fail');
-   const data=payload.result||payload;
-   if(!Array.isArray(data.questions)||!data.questions.length)throw new Error('empty');
-   const qs=data.questions.map(x=>({q:String(x.q||'').trim(),a:String(x.a||'').trim()})).filter(x=>x.q);
+   generatedData=payload.result||payload;
+   if(!Array.isArray(generatedData.questions)||!generatedData.questions.length)throw new Error('empty');
+   const qs=generatedData.questions.map(x=>({q:String(x.q||'').trim(),a:String(x.a||'').trim()})).filter(x=>x.q);
    draft.body='## الأسئلة\n'+qs.map((x,i)=>(i+1)+'. '+x.q).join('\n');
    draft.answers=qs.map((x,i)=>(i+1)+'. '+x.a).join('\n');
-   if(data.duration&&!draft.duration)draft.duration=data.duration;
+   if(generatedData.duration&&!draft.duration)draft.duration=generatedData.duration;
    usedAI=true;
   }catch(err){toast('تعذّر التوليد بالذكاء الاصطناعي، سيُنشأ قالب مبدئي بدلاً منه')}
   finally{clearTimeout(timer)}
  }
  if(!usedAI)draft.body=midadDocLocalSkeleton(type,title,count);
- draft.instructions=usedAI&&data.instructions?String(data.instructions).trim().slice(0,1000):'اقرأ التعليمات جيداً، وأجب بخط واضح ومنظّم.';
+ draft.instructions=usedAI&&generatedData?.instructions?String(generatedData.instructions).trim().slice(0,1000):'اقرأ التعليمات جيداً، وأجب بخط واضح ومنظّم.';
  if(usedAI)toast('تم توليد القالب. عدّل عليه ثم احفظه.');
  else if(!db.aiEndpoint)toast('أُنشئ قالب مبدئي. اربط Gemini من الإعدادات للتوليد الذكي.');
  midadDocEditor(type,draft);
