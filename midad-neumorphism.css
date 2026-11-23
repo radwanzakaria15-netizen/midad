@@ -1,0 +1,149 @@
+/* Midad — soft Neumorphism skin (Arabic RTL, teacher + learner) */
+html body{
+  --neo-bg:#e7efec;
+  --neo-shadow:8px 8px 18px rgba(171,188,181,.48),-8px -8px 18px rgba(255,255,255,.88);
+  --neo-inset:inset 4px 4px 9px rgba(171,188,181,.34),inset -4px -4px 9px rgba(255,255,255,.82);
+  --neo-border:rgba(255,255,255,.52);
+}
+html body.student-mode{
+  --neo-bg:#e9f1f8;
+  --neo-shadow:8px 8px 18px rgba(174,190,207,.48),-8px -8px 18px rgba(255,255,255,.9);
+  --neo-inset:inset 4px 4px 9px rgba(174,190,207,.34),inset -4px -4px 9px rgba(255,255,255,.82);
+  --neo-border:rgba(255,255,255,.58);
+}
+html body.midad-night{
+  --neo-bg:#17241f;
+  --neo-shadow:8px 8px 18px rgba(7,14,11,.42),-8px -8px 18px rgba(39,58,49,.52);
+  --neo-inset:inset 4px 4px 9px rgba(7,14,11,.35),inset -4px -4px 9px rgba(39,58,49,.42);
+  --neo-border:rgba(255,255,255,.04);
+}
+html body.midad-night.student-mode{
+  --neo-bg:#172230;
+  --neo-shadow:8px 8px 18px rgba(7,13,20,.42),-8px -8px 18px rgba(35,51,70,.52);
+  --neo-inset:inset 4px 4px 9px rgba(7,13,20,.35),inset -4px -4px 9px rgba(35,51,70,.42);
+}
+html body,html body.student-mode,html body.midad-night{
+  background:var(--neo-bg)!important;
+  background-image:none!important;
+  background-attachment:scroll!important;
+}
+html body .topbar{
+  background:var(--neo-bg)!important;
+  border:0!important;
+  box-shadow:var(--neo-shadow)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+html body .brand-mark{
+  background:var(--neo-bg)!important;
+  color:var(--cocoa)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .brand-mark:after{display:none!important}
+html body .search,html body .icon-btn,html body .profile-avatar-button .avatar{
+  background:var(--neo-bg)!important;
+  border:0!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .sidebar{
+  box-shadow:8px 8px 18px rgba(7,42,38,.22),-5px -5px 14px rgba(255,255,255,.12)!important;
+}
+html body .nav button.active{
+  box-shadow:inset 3px 3px 7px rgba(0,0,0,.16),inset -2px -2px 5px rgba(255,255,255,.07)!important;
+}
+html body .card,html body .item-card,html body .stat,html body .quick,
+html body .board-wrap,html body .table-wrap,html body.student-mode .student-home-tile,
+html body.student-mode .student-login-card,html body.student-mode .student-detail-shell{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .hero{
+  background:var(--neo-bg)!important;
+  color:var(--ink)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+  animation:none!important;
+}
+html body .hero:after{display:none!important}
+html body .hero h2,html body .hero .hero-kicker{color:var(--deep)!important}
+html body .hero p{color:var(--muted)!important}
+html body .paper-stack span{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .quick,html body .item-card,html body .stat{
+  transition:box-shadow .18s,border-color .18s,transform .18s!important;
+}
+html body .quick:hover,html body .item-card:hover,html body .stat:hover{
+  transform:translateY(-1px)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .quick:active,html body .item-card:active,html body .icon-btn:active,
+html body .btn.secondary:active,html body .btn.light:active,html body .mobile-nav button:active span{
+  box-shadow:var(--neo-inset)!important;
+  transform:none!important;
+}
+html body .btn.secondary,html body .btn.light,html body .secondary,html body .light,
+html body .close,html body .customize-trigger,html body .class-note-icon{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .btn.primary,html body .primary{
+  box-shadow:5px 5px 12px rgba(15,118,110,.22),-3px -3px 8px rgba(255,255,255,.25)!important;
+}
+html body .field-search,html body .filter,html body .form-field input,html body .form-field select,
+html body .form-field textarea,html body input:not([type=checkbox]):not([type=radio]):not([type=range]),
+html body select,html body textarea{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-inset)!important;
+}
+html body .field-search:focus,html body .filter:focus,html body .form-field input:focus,
+html body .form-field select:focus,html body .form-field textarea:focus,
+html body input:focus-visible,html body select:focus-visible,html body textarea:focus-visible{
+  box-shadow:var(--neo-inset),0 0 0 2px color-mix(in srgb,var(--cocoa) 28%,transparent)!important;
+  transform:none!important;
+}
+html body .item-symbol,html body .mini-icon,html body .stat-icon,html body .quick .qico,
+html body .student-task-icon,html body .student-notice-icon{
+  background:var(--neo-bg)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .modal{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body .mobile-nav{
+  background:var(--neo-bg)!important;
+  border:1px solid var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+html body.student-mode .student-home-tile,html body.student-mode .student-login-card,
+html body.student-mode .student-detail-shell{
+  box-shadow:var(--neo-shadow)!important;
+}
+html body.midad-night .topbar,html body.midad-night .card,html body.midad-night .item-card,
+html body.midad-night .stat,html body.midad-night .quick,html body.midad-night .board-wrap,
+html body.midad-night .table-wrap,html body.midad-night .modal,html body.midad-night .mobile-nav,
+html body.midad-night .search,html body.midad-night .icon-btn,html body.midad-night .field-search,
+html body.midad-night .filter,html body.midad-night .form-field input,html body.midad-night .form-field select,
+html body.midad-night .form-field textarea,html body.midad-night input,html body.midad-night select,
+html body.midad-night textarea{
+  background:var(--neo-bg)!important;
+  border-color:var(--neo-border)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+html body.midad-night .hero,html body.midad-night .student-home-tile,
+html body.midad-night .student-login-card,html body.midad-night .student-detail-shell{
+  background:var(--neo-bg)!important;
+  box-shadow:var(--neo-shadow)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html body *,html body *:before,html body *:after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
