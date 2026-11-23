@@ -131,13 +131,14 @@
       '<div class="form-grid">'+
       '<div class="form-field full"><label for="expLessonTitle">اسم الدرس</label><input id="expLessonTitle" maxlength="180" required placeholder="مثال: دورة الماء في الطبيعة"></div>'+
       '<div class="form-field full"><label for="expSubject">المادة الدراسية</label><input id="expSubject" maxlength="120" required placeholder="مثال: علوم الطبيعة والحياة"></div>'+
-      '<div class="form-field full"><label for="expLevel">المستوى الدراسي</label><select id="expLevel" required><option value="">اختر المستوى الدراسي</option><optgroup label="المرحلة الابتدائية">'+["الأولى ابتدائي","الثانية ابتدائي","الثالثة ابتدائي","الرابعة ابتدائي","الخامسة ابتدائي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة المتوسطة">'+["الأولى متوسط","الثانية متوسط","الثالثة متوسط","الرابعة متوسط"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة الثانوية">'+["الأولى ثانوي","الثانية ثانوي","الثالثة ثانوي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><option value="مستوى آخر">مستوى آخر</option></select></div>'+
-      '</div><div class="lesson-maker-note"><span class="lesson-maker-note-icon">✓</span><span>لا تحتاج إلى رفع مصدر أو كتابة محتوى الدرس؛ سيُنشئ الذكاء الاصطناعي المحتوى انطلاقاً من عنوان الدرس والمادة والمستوى.</span></div>'+
+      '<div class="form-field full"><label for="expLevel">المستوى الدراسي</label><select id="expLevel" required onchange="window.midadLevelChanged()"><option value="">اختر المستوى الدراسي</option><optgroup label="المرحلة الابتدائية">'+["الأولى ابتدائي","الثانية ابتدائي","الثالثة ابتدائي","الرابعة ابتدائي","الخامسة ابتدائي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة المتوسطة">'+["الأولى متوسط","الثانية متوسط","الثالثة متوسط","الرابعة متوسط"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><optgroup label="المرحلة الثانوية">'+["الأولى ثانوي","الثانية ثانوي","الثالثة ثانوي"].map(x=>'<option>'+x+'</option>').join("")+'</optgroup><option value="مستوى آخر">مستوى آخر</option></select></div>'+
+      '<div class="form-field full" id="expCustomLevelWrap" style="display:none"><label for="expCustomLevel">المستوى الدراسي الآخر</label><input id="expCustomLevel" maxlength="100" placeholder="اكتب المستوى الدراسي بالتحديد"></div></div><div class="lesson-maker-note"><span class="lesson-maker-note-icon">✓</span><span>لا تحتاج إلى رفع مصدر أو كتابة محتوى الدرس؛ سيُنشئ الذكاء الاصطناعي المحتوى انطلاقاً من عنوان الدرس والمادة والمستوى.</span></div>'+
       '<button class="btn primary lesson-create-button" id="midadLessonCreate" type="submit">إنشاء الدرس والملفات تلقائياً <span>←</span></button></form></section>'+
       '<section class="lesson-maker-steps"><div><b>01</b><span>اكتب اسم الدرس</span></div><div><b>02</b><span>حدد المادة</span></div><div><b>03</b><span>حدد المستوى</span></div><div><b>04</b><span>استلم ملفات الدرس</span></div></section>'+
       '<section class="lesson-library"><div class="section-title"><div><h3>الدروس التي أنشأتها</h3><p>تظهر هنا الدروس التي تم إنشاؤها من هذا الجهاز.</p></div><span class="pill green">'+lessons.length+' درس</span></div>'+
       (lessons.length?'<div class="cards">'+lessons.map(x=>'<article class="item-card"><div class="item-top"><span class="pill green">درس تعليمي</span><span class="pill">'+safe(x.level||"")+'</span></div><h3>'+safe(x.title)+'</h3><p>'+safe(new Date(x.created||Date.now()).toLocaleDateString("ar-DZ"))+'</p><div class="item-actions"><button class="btn light small" onclick="openExperience(\''+safe(x.id)+'\')">فتح الدرس</button></div></article>').join("")+'</div>':'<div class="empty"><strong>لم تنشئ أي درس بعد</strong><span>سيظهر أول درس هنا مع ملفاته بعد إنشائه.</span></div>')+'</section>';
   }
+  window.midadLevelChanged=function(){const custom=document.getElementById("expLevel")?.value==="مستوى آخر",wrap=document.getElementById("expCustomLevelWrap"),input=document.getElementById("expCustomLevel");if(wrap)wrap.style.display=custom?"":"none";if(input)input.required=custom};
   window.midadExperienceSourceTypeChanged=function(){
     const type=document.getElementById("expSourceType")?.value||"text";
     ["expTextSource","expVideoSource","expFileSource"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none"});
@@ -628,11 +629,12 @@
     if(event?.preventDefault)event.preventDefault();
     const title=(document.getElementById("expLessonTitle")?.value||"").trim();
     const subject=(document.getElementById("expSubject")?.value||"").trim();
-    const level=(document.getElementById("expLevel")?.value||"").trim();
+    const selectedLevel=(document.getElementById("expLevel")?.value||"").trim();
+    const level=selectedLevel==="مستوى آخر"?(document.getElementById("expCustomLevel")?.value||"").trim():selectedLevel;
     const button=document.getElementById("midadLessonCreate");
     if(!title){toast("اكتب اسم الدرس أولاً.");document.getElementById("expLessonTitle")?.focus();return false}
     if(!subject){toast("اكتب المادة الدراسية أولاً.");document.getElementById("expSubject")?.focus();return false}
-    if(!level){toast("اختر المستوى الدراسي أولاً.");document.getElementById("expLevel")?.focus();return false}
+    if(!level){toast(selectedLevel==="مستوى آخر"?"اكتب المستوى الدراسي المطلوب.":"اختر المستوى الدراسي أولاً.");(selectedLevel==="مستوى آخر"?document.getElementById("expCustomLevel"):document.getElementById("expLevel"))?.focus();return false}
     if(!db.aiEndpoint){toast("رابط محرك الذكاء الاصطناعي غير مضبوط في الإعدادات.");return false}
     if(button){button.disabled=true;button.dataset.label=button.innerHTML;button.innerHTML="يجري إعداد الدرس..."}
     const taskId="lessonpdf-"+id();
