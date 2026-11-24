@@ -108,7 +108,7 @@ window.midadDesignStrip=function(){
  return '<div class="section-title" style="margin-top:25px"><div><h3>تصاميم جاهزة</h3><p>افتح الورقة في المحرّر لتعدّلها بنفسك، أو ولّد نشاطاً من درسك داخل التصميم مباشرة.</p></div></div><div class="dz-strip">'+DZ_DESIGNS.map((d,i)=>'<article class="dz-card"><div class="dz-thumb">'+dzPageHtml(i,dzDefaults(i))+'</div><b>'+escTask(d.name)+'</b><small>'+escTask(d.desc)+'</small><div style="display:grid;gap:6px"><button class="btn light small" onclick="openDesignForm('+i+',\'edit\')">فتح في المحرّر</button><button class="btn primary small" onclick="openDesignForm('+i+',\'gen\')">✦ توليد نشاط بهذا التصميم</button></div></article>').join("")+'</div>';
 };
 window.openDesignForm=function(i,mode){
- const D=DZ_DESIGNS[i],d=dzDefaults(i),gen=mode==="gen",f=(id,l,v,full)=>'<div class="form-field'+(full?' full':'')+'"><label>'+l+'</label><input id="dzf_'+id+'" value="'+escTask(v)+'"></div>';
+ const D=DZ_DESIGNS[i],d=dzDefaults(i),gen=mode==="gen",f=(id,l,v,full)=>'<div class="form-field'+(full?' full':'')+'"><label>'+l+'</label><input id="dzf_'+id+'" value="'+escTask(v)+'"'+(gen&&(id==="subject"||id==="level")?' required maxlength="120"':'')+'></div>';
  const genFields=gen?'<div class="form-field full"><label>عنوان الدرس</label><input id="dzf_lesson" placeholder="مثال: دورة الماء في الطبيعة"></div><div class="form-field"><label>عدد الأسئلة</label><input id="dzf_count" type="number" min="3" max="30" value="8"></div><div class="form-field"><label>العلامة الكلية</label><input id="dzf_max" type="number" min="1" max="100" step="0.5" value="'+(D.kind==="واجب منزلي"?10:20)+'"></div><div class="form-field full"><label>نص الدرس (المصدر)</label><textarea id="dzf_source" rows="6" placeholder="الصق نص الدرس هنا، وسيُبنى النشاط عليه (80 حرفاً على الأقل)..."></textarea></div>':'';
  openModal(D.name+(gen?" — توليد نشاط":" — فتح في المحرّر"),gen?"سيُولَّد النشاط بالذكاء الاصطناعي ويُوضَع داخل هذا التصميم، ثم يمكنك تعديله.":"أدخل بيانات الورقة، وستظهر في المحرّر قابلة للتعديل.",'<div class="form-grid">'+f("title","عنوان الورقة",d.title,true)+f("institution","المؤسسة",d.institution)+f("directorate","مديرية التربية لولاية",d.directorate)+f("level","المستوى",d.level)+f("subject","المادة",d.subject)+f("year","السنة الدراسية",d.year)+f("duration","المدة",d.duration)+'<div class="form-field"><label>النوع</label><select id="dzf_kind">'+taskKinds.map(k=>'<option'+(k===D.kind?' selected':'')+'>'+k+'</option>').join("")+'</select></div>'+genFields+'</div><div class="modal-actions">'+(gen?'<button class="btn primary" id="dzGenBtn" onclick="dzGenerate('+i+')">✦ توليد النشاط</button>':'<button class="btn primary" onclick="dzOpenFromForm('+i+')">فتح في المحرّر</button>')+'<button class="btn light" onclick="closeModal()">إلغاء</button></div>');
 };
@@ -132,7 +132,9 @@ window.dzGenerate=async function(i){
  const c=dzCollect(),kind=c.kind,research=kind==="بحث";
  const lesson=($("dzf_lesson")?.value||"").trim(),content=$("dzf_source")?.value||"";
  const count=Math.max(3,Math.min(30,Number($("dzf_count")?.value)||8)),maxScore=Number($("dzf_max")?.value)||20;
- if(!lesson){toast("اكتب عنوان الدرس.");return}
+ if(!lesson){toast("اكتب عنوان الدرس.");$("dzf_lesson")?.focus();return}
+ if(!c.raw.subject||/^\.+$/.test(c.raw.subject)){toast("حدد المادة الدراسية.");$("dzf_subject")?.focus();return}
+ if(!c.raw.level||/^\.+$/.test(c.raw.level)){toast("حدد المستوى الدراسي.");$("dzf_level")?.focus();return}
  if(content.trim().length<80){toast("ألصق نص الدرس (80 حرفاً على الأقل).");return}
  if(!research&&(maxScore<=0||maxScore>100)){toast("اختر علامة كلية بين 1 و100.");return}
  if(!db?.aiEndpoint){toast("لم يُضبط رابط الذكاء الاصطناعي من الإعدادات.");return}
