@@ -293,6 +293,8 @@ Example: ${example}`;
     if (!kind) return json({ error: "تعذر تحديد نوع المخرج. أعد فتح أداة التوليد وحاول مجدداً." }, 400, origin);
     if (rawContent.length > 18000) return json({ error: "المصدر أطول من الحد الآمن (18 ألف حرف). قسّمه أو استخدم التلخيص المرحلي قبل إرساله حتى لا يُحذف أي جزء." }, 413, origin);
     if (!lessonTitle) return json({ error: "اكتب عنوان الدرس أولاً ثم اضغط إنشاء." }, 400, origin);
+    if (["assessment", "activity", "task"].includes(kind) && !subject) return json({ error: "حدد المادة الدراسية أولاً." }, 400, origin);
+    if (["assessment", "activity", "task"].includes(kind) && !level) return json({ error: "حدد المستوى الدراسي أولاً." }, 400, origin);
     if (templateRequest && !docType) return json({ error: "نوع القالب غير صالح. اختر واجباً أو بحثاً أو اختباراً أو امتحاناً." }, 400, origin);
     if (kind === "experience" && !mode) return json({ error: "حدد نمط التجربة التعليمية." }, 400, origin);
     if (kind === "task" && content.length < 80) return json({ error: "أرسل نصاً واضحاً لا يقل عن 80 حرفاً لإنشاء المهمة." }, 400, origin);
