@@ -9,16 +9,18 @@
     });
     return scriptCache[src];
   }
-  window.midadExtractDocumentText=async function(file){
+  window.midadExtractDocumentText=async function(file,onProgress){
     if(!file)throw new Error("اختر ملفاً أولاً.");
     if(file.size>20*1024*1024)throw new Error("حجم الملف أكبر من 20 ميغابايت.");
     const name=(file.name||"").toLowerCase();
     if(name.endsWith(".docx")||file.type==="application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
       await loadScript("https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js");
       if(!window.mammoth)throw new Error("تعذرت تهيئة قارئ Word.");
+      if(typeof onProgress==="function")onProgress({type:"word",done:0,total:1,message:"جارٍ استخراج نص Word..."});
       const result=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
       const text=(result.value||"").trim();
       if(!text)throw new Error("لم نعثر على نص داخل ملف Word.");
+      if(typeof onProgress==="function")onProgress({type:"word",done:1,total:1,message:"اكتمل استخراج نص Word."});
       return text;
     }
     if(name.endsWith(".pdf")||file.type==="application/pdf"){
@@ -31,6 +33,7 @@
       for(let p=1;p<=pdf.numPages;p++){
         const page=await pdf.getPage(p),content=await page.getTextContent();
         pages.push(content.items.map(x=>x.str||"").join(" "));
+        if(typeof onProgress==="function")onProgress({type:"pdf",done:p,total:pdf.numPages,message:"جارٍ استخراج PDF: الصفحة "+p+" من "+pdf.numPages});
       }
       const text=pages.join("\n\n").trim();
       if(!text)throw new Error("لم يُعثر على نص قابل للاستخراج. إذا كان PDF ممسوحاً ضوئياً، فحوّله إلى PDF قابل للبحث أو استخدم OCR.");
