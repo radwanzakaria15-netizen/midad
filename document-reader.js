@@ -29,14 +29,20 @@
       if(!pdfjs)throw new Error("تعذرت تهيئة قارئ PDF.");
       pdfjs.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       const pdf=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
-      const pages=[];
+      const pages=[],pagesWithoutText=[];
       for(let p=1;p<=pdf.numPages;p++){
         const page=await pdf.getPage(p),content=await page.getTextContent();
-        pages.push(content.items.map(x=>x.str||"").join(" "));
+        const pageText=(content.items||[]).map(x=>x.str||"").join(" ").trim();
+        pages.push(pageText);
+        if(!pageText)pagesWithoutText.push(p);
         if(typeof onProgress==="function")onProgress({type:"pdf",done:p,total:pdf.numPages,message:"جارٍ استخراج PDF: الصفحة "+p+" من "+pdf.numPages});
       }
       const text=pages.join("\n\n").trim();
       if(!text)throw new Error("لم يُعثر على نص قابل للاستخراج. إذا كان PDF ممسوحاً ضوئياً، فحوّله إلى PDF قابل للبحث أو استخدم OCR.");
+      if(pagesWithoutText.length&&typeof onProgress==="function"){
+        const shown=pagesWithoutText.slice(0,12).join("، "),more=pagesWithoutText.length>12?"، ...":"";
+        onProgress({type:"warning",done:pdf.numPages,total:pdf.numPages,pages:pagesWithoutText,message:"تنبيه: لم يُستخرج نص من "+pagesWithoutText.length+" صفحة ("+shown+more+"). قد تكون فارغة أو ممسوحة ضوئياً؛ إذا كانت تحتوي نصاً فستحتاج إلى OCR."});
+      }
       return text;
     }
     throw new Error("الصيغ المدعومة: PDF وWord بصيغة DOCX فقط.");

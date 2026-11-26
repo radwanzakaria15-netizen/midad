@@ -67,3 +67,5 @@ jobs:
                   sys.exit(result.returncode)
           print(f"Checked {len(parser.scripts)} inline JavaScript blocks.")
           PY
+      - name: Run document-reader regression tests
+        run: node --test tests/document-reader.test.js
