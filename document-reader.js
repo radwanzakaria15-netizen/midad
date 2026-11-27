@@ -20,6 +20,8 @@
       const result=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
       const text=(result.value||"").trim();
       if(!text)throw new Error("لم نعثر على نص داخل ملف Word.");
+      const wordNotices=Array.isArray(result.messages)?result.messages.filter(message=>message&&(message.type==="warning"||message.type==="error")):[];
+      if(wordNotices.length&&typeof onProgress==="function")onProgress({type:"warning",done:1,total:1,message:"تنبيه: سجّل قارئ Word "+wordNotices.length+" ملاحظة أثناء التحويل. قد تكون بعض التنسيقات أو العناصر غير ممثلة بالكامل في النص المستخرج."});
       if(typeof onProgress==="function")onProgress({type:"word",done:1,total:1,message:"اكتمل استخراج نص Word."});
       return text;
     }
