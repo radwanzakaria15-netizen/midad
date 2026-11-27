@@ -31,6 +31,29 @@ function makeReader(pageItems) {
 }
 const pdfFile = { name: "sample.pdf", type: "application/pdf", size: 100, arrayBuffer: async () => new ArrayBuffer(1) };
 
+function makeWordReader(messages) {
+  const window = {};
+  const document = {
+    createElement(tag) { return { tagName: tag, src: "", async: false, onload: null, onerror: null }; },
+    head: {
+      appendChild(script) {
+        window.mammoth = {
+          extractRawText: async () => ({ value: "Extracted Word text", messages })
+        };
+        queueMicrotask(() => script.onload?.());
+      }
+    }
+  };
+  vm.runInNewContext(readerSource, { window, document, Uint8Array, Promise });
+  return window.midadExtractDocumentText;
+}
+const wordFile = {
+  name: "sample.docx",
+  type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  size: 100,
+  arrayBuffer: async () => new ArrayBuffer(1)
+};
+
 test("warns about pages without extractable text while preserving other pages", async () => {
   const extract = makeReader([[{ str: "Page one text" }], [], [{ str: "Page three text" }]]);
   const progress = [];
@@ -54,3 +77,21 @@ test("still rejects PDFs with no extractable text on any page", async () => {
   const extract = makeReader([[], []]);
   await assert.rejects(extract(pdfFile), /OCR/);
 });
+test("reports Mammoth Word conversion warnings without discarding extracted text", async () => {
+  const extract = makeWordReader([{ type: "warning", message: "unsupported style" }]);
+  const progress = [];
+  const text = await extract(wordFile, event => progress.push(event));
+  assert.equal(text, "Extracted Word text");
+  const warning = progress.find(event => event.type === "warning");
+  assert.ok(warning);
+  assert.match(warning.message, /1 ملاحظة/);
+});
+
+test("does not issue a Word warning when Mammoth reports no notices", async () => {
+  const extract = makeWordReader([]);
+  const progress = [];
+  const text = await extract(wordFile, event => progress.push(event));
+  assert.equal(text, "Extracted Word text");
+  assert.equal(progress.some(event => event.type === "warning"), false);
+});
+
